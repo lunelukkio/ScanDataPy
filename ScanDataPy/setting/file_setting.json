@@ -1,0 +1,29 @@
+{
+    "tsm": {
+        "num_ch": 2,
+        "num_elec_ch": 8,
+        "default_controllers": [
+          "TimeWindow0",
+          "TimeWindow1",
+          "Roi0",
+          "Roi1",
+          "Average",
+          "View",
+          "BlComp"
+        ],
+                               
+        "default_data_structure": {"ROI0": ["Ch0", "Ch1", "Ch2"], 
+                                   "ROI1": ["Ch0", "Ch1", "Ch2"], 
+                                   "IMAGE_CONTROLLER0": ["Ch0", "Ch1", "Ch2"],
+                                   "IMAGE_CONTROLLER1": ["Ch0", "Ch1", "Ch2"],
+                                   "ELEC_TRACE_CONTROLLER0": ["Ch1", "Ch2", "Ch3", "Ch4", "Ch5", "Ch6", "Ch7", "Ch8"],
+                                   "ELEC_TRACE_CONTROLLER1": ["Ch1", "Ch2", "Ch3", "Ch4", "Ch5", "Ch6", "Ch7", "Ch8"]
+                                  }
+            },
+    "da": {
+        "num_ch": 2,
+        "num_elec_ch": 8,
+        "default_controller": {"ROI":2, "ImageController":2, "ElecTraceController":2}
+    }
+          
+}

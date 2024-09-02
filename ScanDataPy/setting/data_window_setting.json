@@ -1,0 +1,37 @@
+{
+    "file_path": "./setting/",
+    
+    "main_window": {
+        "window_posX": 100,
+        "window_posY": 100,
+        "geometryX" : 1400,
+        "geometryY" : 700,
+         
+        "color"    : "#BCD2EE"
+     },
+    "ch_color": {
+        "CH0": "black",
+        "CH1": "red",
+        "CH2": "blue",
+        "ELEC0": "black",
+        "ELEC1": "black",
+        "ELEC2": "black",
+        "ELEC3": "black",
+        "ELEC4": "black",
+        "ELEC5": "black",
+        "ELEC6": "black",
+        "ELEC7": "black"
+    },
+    "controller_color": {
+        "ROI0": "white",
+        "ROI1": "red",
+        "ROI2": "blue",
+        "ROI3": "green",
+        "ROI4": "purple",
+        "ROI5": "brown",
+        "ROI6": "pink",
+        "ROI7": "olive",
+        "ROI8": "cyan",
+        "ROI9": "orange"
+    }
+}
