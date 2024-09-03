@@ -204,7 +204,7 @@ class TraceData(ValueObj):
 class TextData(ValueObj):
     def __init__(self, 
                  val, 
-                 key_dict={}):
+                 key_dict=None):
         super().__init__(val, key_dict)
 
     def show_data(self):
@@ -214,7 +214,7 @@ class TextData(ValueObj):
 """
 Value object for controller
 """
-class ROIVal:  # Should be called by the same class for __add__ and __sub__
+class RoiVal:  # Should be called by the same class for __add__ and __sub__
     def __init__(self, x: int, y: int, x_width: int, y_width: int, data_type=None):         
         if x < 0 or y < 0 :  # np.mean slice doesn't include end value. so width should be 1 or more than 1
             raise Exception('ROI x and y values should be 0 or more')
@@ -226,27 +226,27 @@ class ROIVal:  # Should be called by the same class for __add__ and __sub__
             self.__data_type = called_class.__class__.__name__
         else:
             self.__data_type = data_type
-        #print(self.__data_type + ' made a ROIVal' + '  myId= {}'.format(id(self)))
+        #print(self.__data_type + ' made a RoiVal' + '  myId= {}'.format(id(self)))
         
     def __del__(self):
         #print('.')
-        #print('Deleted a ROIVal object.' + '  myId={}'.format(id(self)))
+        #print('Deleted a RoiVal object.' + '  myId={}'.format(id(self)))
         pass
         
     #override for "+"
     def __add__(self, other: object)  -> object:
         if self.__data_type != other.data_type:
-            raise Exception('Wrong data! Only ROIVal can be added!')
+            raise Exception('Wrong data! Only RoiVal can be added!')
         new_val = self.__data + other.data
-        new_obj = ROIVal(*new_val)
+        new_obj = RoiVal(*new_val)
         new_obj.data_type = self.__data_type
         return new_obj
     
     def __sub__(self, other: object)  -> object:
         if self.__data_type != other.data_type:
-            raise Exception('Wrong data! Only ROIVal can be added!')
+            raise Exception('Wrong data! Only RoiVal can be added!')
         new_val = self.__data - other.data
-        new_obj = ROIVal(*new_val)
+        new_obj = RoiVal(*new_val)
         new_obj.data_type = self.__data_type
         return new_obj
         
@@ -256,7 +256,7 @@ class ROIVal:  # Should be called by the same class for __add__ and __sub__
     
     @data.setter
     def data(self, x, y, x_width=1, y_width=1):  
-        raise Exception('ROIVal is a value object (Immutable).')
+        raise Exception('RoiVal is a value object (Immutable).')
     
     @property
     def data_type(self) -> str:
