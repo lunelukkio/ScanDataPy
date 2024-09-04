@@ -6,8 +6,8 @@ Created on Wed Sep 27 11:47:25 2023
 """
 
 import json
-from SCANDATA.model.value_object import FramesData, ImageData, TraceData, TextData
-from SCANDATA.model.file_io import TsmFileIo, DaFileIo, HekaFileIO
+from ScanDataPy.model.value_object import FramesData, ImageData, TraceData, TextData
+from ScanDataPy.model.file_io import TsmFileIo, DaFileIo, HekaFileIO
   
 
 # This class define the names of controllers and data

@@ -15,13 +15,13 @@ import inspect
 Value object
 """
 class ValueObj(metaclass=ABCMeta): 
-    def __init__(self, val, key_dict):
+    def __init__(self, val, data_tag):
         self._data = val
         if isinstance(val, np.ndarray):
             self._shape = val.shape  # data dimension e.g. frames [pixel, pixel, frame]
         else:
             self._shape = None
-        self._key_dict = key_dict
+        self._data_tag = data_tag
         self._data_type = None
         
     def __del__(self):
@@ -31,7 +31,7 @@ class ValueObj(metaclass=ABCMeta):
         
     @property
     def data_type(self):
-        return self._key_dict['DataType']
+        return self._data_tag['DataType']
         
     @property
     def data(self) -> np.ndarray:
@@ -46,11 +46,11 @@ class ValueObj(metaclass=ABCMeta):
         return self._shape
 
     @property
-    def key_dict(self) -> list:
-        return self._key_dict
+    def data_tag(self) -> list:
+        return self._data_tag
     
-    @key_dict.setter
-    def key_dict(self, key_dict: list):
+    @data_tag.setter
+    def data_tag(self, data_tag: list):
         raise Exception('Value object should be Immutable.')
     
     @abstractmethod
@@ -60,10 +60,10 @@ class ValueObj(metaclass=ABCMeta):
 class FramesData(ValueObj):
     def __init__(self, 
                  val: np.ndarray, 
-                 key_dict=None,
+                 data_tag=None,
                  interval=0,
                  pixel_size=None):
-        super().__init__(val, key_dict)
+        super().__init__(val, data_tag)
         if val.ndim != 3: 
             raise Exception('The argument of FrameData should be numpy 3D data(x, y, t)')
             
@@ -86,9 +86,9 @@ class FramesData(ValueObj):
 class ImageData(ValueObj):
     def __init__(self, 
                  val: np.ndarray, 
-                 key_dict=None,
+                 data_tag=None,
                  pixel_size=None):
-        super().__init__(val, key_dict)
+        super().__init__(val, data_tag)
         if val.ndim != 2: 
             raise Exception('The argument of ImageData should be numpy 2D data(x, y)')
             
@@ -105,9 +105,9 @@ class ImageData(ValueObj):
 class TraceData(ValueObj):
     def __init__(self, 
                  val: np.ndarray,  
-                 key_dict=None,
+                 data_tag=None,
                  interval=0):
-        super().__init__(val, key_dict)
+        super().__init__(val, data_tag)
         if val.ndim != 1: 
             raise Exception('The argument of TraceData should be numpy 1D data(x)')
         if  val.shape[0] < 5: 
@@ -204,8 +204,8 @@ class TraceData(ValueObj):
 class TextData(ValueObj):
     def __init__(self, 
                  val, 
-                 key_dict=None):
-        super().__init__(val, key_dict)
+                 data_tag=None):
+        super().__init__(val, data_tag)
 
     def show_data(self):
         print("This is Text data")
