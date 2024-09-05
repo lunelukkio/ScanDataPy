@@ -37,7 +37,7 @@ class ModelInterface(metaclass=ABCMeta):
 
     # set modifier_values. e.g.:* args = (40, 40, 1, 1)
     @abstractmethod
-    def set_modifier_values(self, modifier_tag: dict, *args, **kwargs):
+    def set_modifier_val(self, modifier_tag: dict, *args, **kwargs):
         raise NotImplementedError()
 
     # make a new data save in the data_repository.
@@ -127,8 +127,8 @@ class DataService(ModelInterface):
     def remove_modifier(self, modifier_name):
         self.__modifier_service.remove_chain(modifier_name)
 
-    def set_modifier_values(self, modifier_tag: dict, *args, **kwargs):
-        pass
+    def set_modifier_val(self, modifier_name, *args, **kwargs):
+        self.__modifier_service.set_modifier_val(modifier_name, *args, **kwargs)
 
     def create_original_data(self, fullname):
         pass
