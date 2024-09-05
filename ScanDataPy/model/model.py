@@ -16,18 +16,17 @@ from ScanDataPy.model.builder import HekaBuilder
 
 
 class ModelInterface(metaclass=ABCMeta):
-
     """
     Model interface controlled by MainController
     It has a data repository which have whole value object data.
     Basically, call set_modifier_values > 
     """
-    
+
     # create data from experiments files.
     @abstractmethod
     def create_original_data(self, fullname):
         raise NotImplementedError()
-        
+
     @abstractmethod
     def add_modifier(self, modifier_name):
         raise NotImplementedError()
@@ -35,7 +34,7 @@ class ModelInterface(metaclass=ABCMeta):
     @abstractmethod
     def remove_modifier(self, modifier_name):
         raise NotImplementedError()
-        
+
     # set modifier_values. e.g.:* args = (40, 40, 1, 1)
     @abstractmethod
     def set_modifier_values(self, modifier_tag: dict, *args, **kwargs):
@@ -43,7 +42,8 @@ class ModelInterface(metaclass=ABCMeta):
 
     # make a new data save in the data_repository.
     @abstractmethod
-    def create_data(self, data_tag):  #Needs 'Filename', 'Attribute', 'Ch', 'Origin', 'ControllerName'
+    def create_data(self,
+                    data_tag):  # Needs 'Filename', 'Attribute', 'Ch', 'Origin', 'ControllerName'
         raise NotImplementedError()
 
     # return value object
@@ -54,6 +54,7 @@ class ModelInterface(metaclass=ABCMeta):
     @abstractmethod
     def get_list_of_repository_tag_dict(self, filename_key):
         raise NotImplementedError()
+
 
 
 
@@ -79,7 +80,7 @@ class ModelInterface(metaclass=ABCMeta):
     def print_infor(self, filename_key):
         raise NotImplementedError()
 
-        
+
 class DataService(ModelInterface):
     def __init__(self):
         # repository for Roi, TimeWindow, DFoF
@@ -102,7 +103,8 @@ class DataService(ModelInterface):
         else:
             raise Exception("This file is an undefineded file!!!")
 
-    def create_experiments(self, fullname): # Use the same name to delete a model
+    def create_experiments(self,
+                           fullname):  # Use the same name to delete a model
         # make a filename value obj from fullname
         filename_obj = self.__create_filename_obj(fullname)
 
@@ -131,7 +133,8 @@ class DataService(ModelInterface):
     def create_original_data(self, fullname):
         pass
 
-    def create_data(self, data_tag):  #Needs 'Filename', 'Attribute', 'Ch', 'Origin', 'ControllerName'
+    def create_data(self,
+                    data_tag):  # Needs 'Filename', 'Attribute', 'Ch', 'Origin', 'ControllerName'
         pass
 
     def get_data(self, data_tag, modifier_list=None):
@@ -142,10 +145,11 @@ class DataService(ModelInterface):
             print(f"DataService couldn't find {list(data_tag.values())} data")
             return
         for data in data_list:
-            modified_data = self.__modifier_service.apply_modifier(data, modifier_list)
+            modified_data = self.__modifier_service.apply_modifier(data,
+                                                                   modifier_list)
             # show gotten data
             print(modified_data.data_tag.values())
-            #make a list again
+            # make a list again
             modified_data_list.append(modified_data)
 
         print("----------> Dataservice: get_data Done")
@@ -178,9 +182,11 @@ class DataService(ModelInterface):
     def update_observer(self):
         pass
 
+
 """
 Repository
 """
+
 
 # ['Filename':'20408B002.tsm', 'Attribute':'Data', 'DataType':'FluoTraceCh1', 'Origin':'File']
 class Repository:
@@ -194,7 +200,8 @@ class Repository:
     def save(self, data):
         # get all match keys objects.
         target_key_set = set(data.data_tag.values())
-        extracted_data = [item for item in self._data if target_key_set.issubset(set(item.data_tag.values()))]
+        extracted_data = [item for item in self._data if
+                          target_key_set.issubset(set(item.data_tag.values()))]
         if extracted_data == []:
             self._data.append(data)
             print(f"Repository: Saved object {list(data.data_tag.values())}")
@@ -202,26 +209,31 @@ class Repository:
             for remove_data in extracted_data:
                 self._data.remove(remove_data)
                 self._data.append(data)
-                print(f"Repository: Overwrited overlapping object ({list(data.data_tag.values())})!!!")
+                print(
+                    f"Repository: Overwrited overlapping object ({list(data.data_tag.values())})!!!")
 
         # e.g.  find_by_keys({'Attribute':'Data'}, {'Origin':'File','DataType':'ElecTrace'})
 
     def find_by_keys(self, target_data_tag: dict, except_dict=None) -> list:
         target_key_set = set(target_data_tag.values())
-        extracted_data = [item for item in self._data if target_key_set.issubset(set(item.data_tag.values()))]
+        extracted_data = [item for item in self._data if
+                          target_key_set.issubset(set(item.data_tag.values()))]
         if extracted_data == []:
-            print(f"Repository: There is no data in {list(target_data_tag.values())}")
+            print(
+                f"Repository: There is no data in {list(target_data_tag.values())}")
         # remove data from extracted_data using except_dict.
         elif except_dict is not None:
             extracted_data = [data for data in extracted_data
-                              if not any(data.data_tag.get(key) == value for key,
-                value in except_dict.items())]
+                              if
+                              not any(data.data_tag.get(key) == value for key,
+                              value in except_dict.items())]
         # print(f"Repository: Found {list(target_data_tag.values())}.")
         return extracted_data
 
     def delete(self, target_data_tag: dict):
         target_key_set = set(target_data_tag.values())
-        extracted_data = [item for item in self._data if target_key_set.issubset(set(item.data_tag.values()))]
+        extracted_data = [item for item in self._data if
+                          target_key_set.issubset(set(item.data_tag.values()))]
         for remove_data in extracted_data:
             self._data.remove(remove_data)
         print(f"Repository: {list(target_data_tag.values())} removed.")
@@ -232,17 +244,21 @@ class Repository:
             extracted_data = self._data
         else:
             target_key_set = set(target_data_tag.values())
-            extracted_data = [item for item in self._data if target_key_set.issubset(set(item.data_tag.values()))]
+            extracted_data = [item for item in self._data if
+                              target_key_set.issubset(
+                                  set(item.data_tag.values()))]
             # remove data from extracted_data using except_dict.
             if except_dict:
                 extracted_data = [data for data in extracted_data
-                                  if not any(data.data_tag.get(key) == value for key,
-                    value in except_dict.items())]
+                                  if not any(
+                        data.data_tag.get(key) == value for key,
+                        value in except_dict.items())]
         for data in extracted_data:
             whole_list.append(data.data_tag)
         return whole_list
 
         # e.g.  print_infor({'Attribute':'Data'}, {'Origin':'File','DataType':'ElecTrace'})
+
     def print_infor(self, target_data_tag=None, except_dict=None):
         for tag_dict in self.get_list_of_tag_dict():
             print(f"Repository: Infor = {list(tag_dict.values())}")

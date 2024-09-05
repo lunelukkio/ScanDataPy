@@ -6,7 +6,7 @@ Created on Thu Aug 29 15:16:57 2024
 """
 
 from abc import ABCMeta, abstractmethod
-      
+
 
 class ModifierServiceInterface(metaclass=ABCMeta):
     """
@@ -25,21 +25,25 @@ class ModifierServiceInterface(metaclass=ABCMeta):
     def set_modifier_values(self, val):
         raise NotImplementedError()
 
+
 class ModifierService(ModifierServiceInterface):
     def __init__(self):
         self.__current_modifier = None
         # chain always should have start and end
         self.__start_modifier = StartModifier('StartModifier')
         # make a default modifier chain list
-        self.__modifier_chain_list = [self.__start_modifier, EndModifier('EndModifier')]
+        self.__modifier_chain_list = [self.__start_modifier,
+                                      EndModifier('EndModifier')]
         # make a modifier chain from the chain list
-        self.__modifier_chain = ModifierService.make_modifier_chain(self.__modifier_chain_list)
+        self.__modifier_chain = ModifierService.make_modifier_chain(
+            self.__modifier_chain_list)
         self.print_chain()
 
     # This is actual method run by DataService and return modified data
     def apply_modifier(self, data, modifier_list=None):
         # start the chain of responsibility and get modded data
-        modified_data = self.__start_modifier.apply_modifier(data, modifier_list)
+        modified_data = self.__start_modifier.apply_modifier(data,
+                                                             modifier_list)
         return modified_data
 
     def add_chain(self, modifier_name):
@@ -55,17 +59,22 @@ class ModifierService(ModifierServiceInterface):
         # add to the chain object list
         self.__modifier_chain_list.append(new_modifier)
         # sort and add start chain
-        self.__modifier_chain_list = ModifierService.sort_chain_list(self.__modifier_chain_list)
+        self.__modifier_chain_list = ModifierService.sort_chain_list(
+            self.__modifier_chain_list)
         # make a modifier chain from the chain list
-        self.__modifier_chain = ModifierService.make_modifier_chain(self.__modifier_chain_list)
+        self.__modifier_chain = ModifierService.make_modifier_chain(
+            self.__modifier_chain_list)
 
     def remove_chain(self, modifier_name):
         # remove modifier_name object from the list
-        self.__modifier_chain_list = [obj for obj in self.__modifier_chain_list if obj.modifier_name != modifier_name]
+        self.__modifier_chain_list = [obj for obj in self.__modifier_chain_list
+                                      if obj.modifier_name != modifier_name]
         # sort and add start chain
-        self.__modifier_chain_list = ModifierService.sort_chain_list(self.__modifier_chain_list)
+        self.__modifier_chain_list = ModifierService.sort_chain_list(
+            self.__modifier_chain_list)
         # make a modifier chain from the chain list
-        self.__modifier_chain = ModifierService.make_modifier_chain(self.__modifier_chain_list)
+        self.__modifier_chain = ModifierService.make_modifier_chain(
+            self.__modifier_chain_list)
 
     @staticmethod
     def check_modifier_type(modifier_name):
@@ -84,7 +93,8 @@ class ModifierService(ModifierServiceInterface):
 
     # To make a number for modifier.
     def __num_maker(self, modifier_name):
-        modifier_name_list = [modifier.modifier_name for modifier in self.__modifier_chain_list]
+        modifier_name_list = [modifier.modifier_name for modifier in
+                              self.__modifier_chain_list]
         # Count existing modifier name
         i = 0
         while True:
@@ -94,7 +104,7 @@ class ModifierService(ModifierServiceInterface):
             i += 1
         new_name = modifier_name + str(i)
         return new_name
-    
+
     # modifier list always should be done by this list order.
     @staticmethod
     def sort_chain_list(old_obj_list):
@@ -121,7 +131,8 @@ class ModifierService(ModifierServiceInterface):
         def set_chain(index):
             if index < len(modifier_chain_list) - 1:
                 # make chain with modifier in inner function
-                modifier_chain_list[index].set_next(modifier_chain_list[index + 1])
+                modifier_chain_list[index].set_next(
+                    modifier_chain_list[index + 1])
                 # next object
                 set_chain(index + 1)
 
@@ -151,13 +162,18 @@ class ModifierService(ModifierServiceInterface):
 
 
 """ abstract factory """
+
+
 class ModifierFactory(metaclass=ABCMeta):
     @abstractmethod
-    def create_modifier(self, modifier_name: dict):  # data_tag = controller_key dict
+    def create_modifier(self,
+                        modifier_name: dict):  # data_tag = controller_key dict
         raise NotImplementedError()
 
 
 """concrete factory"""
+
+
 class TimeWindowFactory(ModifierFactory):
     def create_modifier(self, modifier_name):
         return TimeWindow(modifier_name)
@@ -184,6 +200,8 @@ class BlCompFactory(ModifierFactory):
 
 
 """ super class """
+
+
 class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
     def __init__(self, modifier_name):
         self.__modifier_name = modifier_name
@@ -193,8 +211,8 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
     def set_next(self, next_modifier):
         self.__next_modifier = next_modifier
         return next_modifier
-    
-    def modifier_request(self,data, modifier_list):
+
+    def modifier_request(self, data, modifier_list):
         if self.__next_modifier:
             return self.__next_modifier.apply_modifier(data, modifier_list)
 
@@ -206,11 +224,14 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
     def next_modifier(self):
         return self.__next_modifier
 
+
 """concrete modifier"""
+
 
 class StartModifier(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
+
     def apply_modifier(self, data, modifier_list):
         return super().modifier_request(data, modifier_list)
 
