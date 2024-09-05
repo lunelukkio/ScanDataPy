@@ -51,7 +51,9 @@ class ModelInterface(metaclass=ABCMeta):
     def get_data(self, data_tag):
         raise NotImplementedError()
 
-
+    @abstractmethod
+    def get_list_of_repository_tag_dict(self, filename_key):
+        raise NotImplementedError()
 
 
 
@@ -149,18 +151,21 @@ class DataService(ModelInterface):
         print("----------> Dataservice: get_data Done")
         return modified_data_list
 
-    def get_modifier_name(self):
+    def get_modifier_list(self):
         return self.__modifier_service.get_chain_list()
+
+    def get_list_of_repository_tag_dict(self):
+        return self.__data_repository.get_list_of_tag_dict()
 
     def print_infor(self, tag_dict=None, except_dict=None):
         print("Dataservice: print_infor ---------->")
         if tag_dict is None:
             self.__modifier_service.print_chain()
-            self.__data_repository.get_infor()
+            self.__data_repository.print_infor()
         elif tag_dict == 'Modifier':
             self.__modifier_service.print_chain()
         else:
-            self.__data_repository.get_infor(tag_dict, except_dict)
+            self.__data_repository.print_infor(tag_dict, except_dict)
         print("----------> Dataservice: print_infor END")
         print("")
 
@@ -177,7 +182,7 @@ class DataService(ModelInterface):
 Repository
 """
 
-# ['Filename':'20408B002.tsm', 'ControllerName:'UserController', 'ControllerName':'ROI1', 'Ch':'Ch1', 'Origin':'File']
+# ['Filename':'20408B002.tsm', 'Attribute':'Data', 'DataType':'FluoTraceCh1', 'Origin':'File']
 class Repository:
     def __init__(self):
         self._data = []  # list of object pointer
@@ -221,12 +226,10 @@ class Repository:
             self._data.remove(remove_data)
         print(f"Repository: {list(target_data_tag.values())} removed.")
 
-        # e.g.  print_infor({'Attribute':'Data'}, {'Origin':'File','DataType':'ElecTrace'})
-
-    def get_infor(self, target_data_tag=None, except_dict=None):
+    def get_list_of_tag_dict(self, target_data_tag=None, except_dict=None):
+        whole_list = []
         if target_data_tag is None:
             extracted_data = self._data
-            print("Show all infor:")
         else:
             target_key_set = set(target_data_tag.values())
             extracted_data = [item for item in self._data if target_key_set.issubset(set(item.data_tag.values()))]
@@ -236,4 +239,10 @@ class Repository:
                                   if not any(data.data_tag.get(key) == value for key,
                     value in except_dict.items())]
         for data in extracted_data:
-            print(f"Repository: Infor = {list(data.data_tag.values())}")
+            whole_list.append(data.data_tag)
+        return whole_list
+
+        # e.g.  print_infor({'Attribute':'Data'}, {'Origin':'File','DataType':'ElecTrace'})
+    def print_infor(self, target_data_tag=None, except_dict=None):
+        for tag_dict in self.get_list_of_tag_dict():
+            print(f"Repository: Infor = {list(tag_dict.values())}")

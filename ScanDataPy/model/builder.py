@@ -50,13 +50,13 @@ class TsmBuilder:
         data_interval = file_io.get_infor()   # get interval infor from the io
         frames_list = file_io.get_3d()  # frames list
         # make a full frames
-        full_frames = [FramesData(frames_list[0],  {'Filename':filename_obj.name, 'Attribute':'Data', 'DataType':'FluoFrames', 'Ch':'Ch0', 'Origin':'File'}, data_interval[0])]
+        full_frames = [FramesData(frames_list[0],  {'Filename':filename_obj.name, 'Attribute':'Data', 'DataType':'FluoFramesCh0', 'Origin':'File'}, data_interval[0])]
         # make a ch frames list
-        ch_frames = [FramesData(frames_list[i], {'Filename':filename_obj.name, 'Attribute':'Data', 'DataType':'FluoFrames', 'Ch':'Ch'+str(i), 'Origin':'File'}, data_interval[i]) for i in range(1, num_ch+1)]
+        ch_frames = [FramesData(frames_list[i], {'Filename':filename_obj.name, 'Attribute':'Data', 'DataType':'FluoFramesCh'+str(i), 'Origin':'File'}, data_interval[i]) for i in range(1, num_ch+1)]
         frames = full_frames + ch_frames
         # make an elec list
         trace_list = file_io.get_1d()
-        elec_trace_list = [TraceData(trace_list[:, ch], {'Filename':filename_obj.name, 'Attribute':'Data', 'DataType':'ElecTrace', 'Ch':'Ch'+str(ch+1), 'Origin':'File'}, data_interval[1+num_ch+ch]) for ch in range(num_elec_ch)]
+        elec_trace_list = [TraceData(trace_list[:, ch], {'Filename':filename_obj.name, 'Attribute':'Data', 'DataType':'ElecTraceCh'+str(ch+1), 'Origin':'File'}, data_interval[1+num_ch+ch]) for ch in range(num_elec_ch)]
 
         del file_io   # release the io object to allow file changes during recording.
         
