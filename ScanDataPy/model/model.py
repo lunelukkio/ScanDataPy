@@ -176,8 +176,12 @@ class DataService(ModelInterface):
     def reset(self):
         pass
 
-    def set_observer(self):
-        pass
+    def set_observer(self, modifier_tag, observer):
+        print(f"DataService: set_observer ({observer.__class__.__name__} to {modifier_tag}) ---------->")
+        modifier_list = self.__modifier_service.get_chain_list()
+        for modifier in modifier_list:
+            modifier.set_observer(observer)
+        print("----------> Dataservice: set_observer Done")
 
     def update_observer(self):
         pass

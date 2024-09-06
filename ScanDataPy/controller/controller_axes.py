@@ -33,7 +33,7 @@ class AxesController(metaclass=ABCMeta):
 
         self._mod_key_list = []
 
-        # color selection for traces and ROIBoxes
+        # color selection for traces and ROiooxes
         try:
             with open("../setting/data_window_setting.json", "r") as json_file:
                 setting = json.load(json_file)
@@ -42,6 +42,18 @@ class AxesController(metaclass=ABCMeta):
                 setting = json.load(json_file)
         self._ch_colors = setting.get("ch_color")
         self._controller_colors = setting.get("controller_color")
+
+    def set_observer(self, modifier_tag) -> None:
+        self._model.set_observer(modifier_tag, self)
+
+
+
+
+
+
+
+
+
 
     def set_key(self, dict_name, key, val=None):
         self._key_manager.set_key(dict_name, key, val)
@@ -80,8 +92,7 @@ class AxesController(metaclass=ABCMeta):
         else:
             return data_dict
 
-    def set_observer(self, controller_key) -> None:
-        self._model.set_observer(controller_key, self)
+
 
     def set_mod_key_list(self, mod_key):
         if mod_key == 'Original':
@@ -179,9 +190,9 @@ class TraceAxesController(AxesController):
                                     color=self._controller_colors[key]))
 
     def set_marker(self):
-        # get flag data from IMAGE_AXES
+        # get flag data from ImageAxes
         image_canvas, image_axes = self._main_controller.get_canvas_axes(
-            "IMAGE_AXES")
+            "ImageAxes")
         # get a true flag list of dict
         true_controller_list = self._key_manager.get_key_dicts(True)
         for controller_dict in true_controller_list:
@@ -205,7 +216,7 @@ class TraceAxesController(AxesController):
             if controller_key in self._marker_obj:
                 self._marker_obj[controller_key].set_roi(box_pos)
             else:
-                self._marker_obj[controller_key] = ROIBox(
+                self._marker_obj[controller_key] = RoiBox(
                     self._controller_colors[controller_key])
                 self._marker_obj[controller_key].set_roi(box_pos)
                 # put the ROI BOX on the top of images.
@@ -219,7 +230,7 @@ class TraceAxesController(AxesController):
             self._ax_obj.clear()
             self._ax_obj.setBackground('w')
             self.set_view_data()  # See each subclass.
-            self.set_marker()  # for ROIBOX
+            self.set_marker()  # for RoiBOX
             self._ax_obj.autoRange()
             print(f"AxesController: {self.__class__.__name__} updated")
         else:
@@ -260,7 +271,7 @@ class ImageAxesController(AxesController):
             pass
 
 
-class ROIBox():
+class RoiBox():
     # """ class variable """
     # color_selection = ['white', 'red', 'blue', 'green', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'orange']
 

@@ -11,7 +11,6 @@ from ScanDataPy.controller.controller_axes import TraceAxesController, \
     ImageAxesController
 from ScanDataPy.common_class import FileService, KeyManager, Tools
 import os
-import psutil  # for memory check
 import copy
 
 
@@ -87,7 +86,7 @@ class MainController():
         self.__model = DataService()
         self.__file_service = FileService()
         self.__key_manager = KeyManager()
-        self.__ax_dict = {}  # {"IMAGE_AXES": ImageAxsis class, FLUO_AXES: TraceAx class, ELEC_AXES: TraceAx class}\
+        self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, FluoAxes: TraceAx class}\
 
     def __del__(self):
         print('.')
@@ -101,10 +100,10 @@ class MainController():
     """ MainController """
 
     def add_axes(self, ax_type, axes_name: str, canvas, ax: object) -> None:
-        if ax_type == "IMAGE":
+        if ax_type == 'Image':
             new_axes_controller = ImageAxesController(self, self.__model,
                                                       canvas, ax)
-        elif ax_type == "TRACE":
+        elif ax_type == 'Trace':
             new_axes_controller = TraceAxesController(self, self.__model,
                                                       canvas, ax)
         else:
@@ -234,30 +233,24 @@ class MainController():
         print("=============================================")
         print("To Do: default setting should be moved into a json file")
 
+        self.set_observer('FluoAxes', 'ROI0')
+        self.set_observer('FluoAxes', 'ROI1')
+        self.set_observer('ImageAxes', 'TimeWindow0')
+        self.set_observer('ImageAxes', 'TimeWindow1')
+        self.set_observer('ElecAxes', 'TimeWindow2')
+
+
+
+
+        # this is for test
+        self.__model.set_modifier_val('Roi1',[40,40,5,5])
 
 
 
 
 
 
-        # background for bg_comp, (controller_key, AXES number)
-        self.set_observer(
-            {'Attribute': 'UserController', 'ControllerName': 'ROI0'},'FLUO_AXES')
-        self.set_observer(
-            {'Attribute': 'UserController', 'ControllerName': 'ROI1'},
-            'FLUO_AXES')
-        self.set_observer({'Attribute': 'UserController',
-                           'ControllerName': 'ImageController0'},
-                          'IMAGE_AXES')  # base image for difference image
-        self.set_observer({'Attribute': 'UserController',
-                           'ControllerName': 'ImageController1'},
-                          'IMAGE_AXES')  # base image for difference image
-        self.set_observer({'Attribute': 'UserController',
-                           'ControllerName': 'ElecTraceController0'},
-                          'ELEC_AXES')  # no use
-        self.set_observer({'Attribute': 'UserController',
-                           'ControllerName': 'ElecTraceController1'},
-                          'ELEC_AXES')  # no use
+
 
         # Reset controller flags
         self.__key_manager.set_key('controller_name_dict', 'ALL',
@@ -281,19 +274,19 @@ class MainController():
             ax.set_key('ch_dict', 'ALL', False)
 
         # for the fluo trace window
-        self.ax_dict['FLUO_AXES'].set_key('controller_name_dict', 'ROI1', True)
-        self.ax_dict['FLUO_AXES'].set_key('ch_dict', 'Ch1', True)
-        # self.ax_dict['FLUO_AXES'].set_key('ch_dict', 'Ch2', True)
+        self.ax_dict['FluoAxes'].set_key('controller_name_dict', 'ROI1', True)
+        self.ax_dict['FluoAxes'].set_key('ch_dict', 'Ch1', True)
+        # self.ax_dict['FluoAxes'].set_key('ch_dict', 'Ch2', True)
 
         # for the image window
-        self.ax_dict['IMAGE_AXES'].set_key('controller_name_dict',
+        self.ax_dict['ImageAxes'].set_key('controller_name_dict',
                                            'ImageController1', True)
-        self.ax_dict['IMAGE_AXES'].set_key('ch_dict', 'Ch1', True)
+        self.ax_dict['ImageAxes'].set_key('ch_dict', 'Ch1', True)
 
         # for the elec trace window
-        self.ax_dict['ELEC_AXES'].set_key('controller_name_dict',
+        self.ax_dict['ElecAxes'].set_key('controller_name_dict',
                                           'ElecTraceController1', True)
-        self.ax_dict['ELEC_AXES'].set_key('ch_dict', 'Ch1', True)
+        self.ax_dict['ElecAxes'].set_key('ch_dict', 'Ch1', True)
 
         print("===================== MainController =========================")
         self.__key_manager.print_infor()
@@ -304,9 +297,9 @@ class MainController():
 
         # Mod settings
         print("tempral 88888888888888888888888888888888888888888888")
-        # self.set_trace_type('FLUO_AXES', 'DFoF')
-        # self.set_trace_type('FLUO_AXES', 'Normalize')
-        self.set_trace_type('FLUO_AXES', 'BlComp')
+        # self.set_trace_type('FluoAxes', 'DFoF')
+        # self.set_trace_type('FluoAxes', 'Normalize')
+        self.set_trace_type('FluoAxes', 'BlComp')
 
         # Set ROI0 as background in ROI1 controller
         # send background ROI. but it done outside of the model.
@@ -318,20 +311,33 @@ class MainController():
         print("========== End of default settings ==========")
         print("")
 
-    def get_memory_infor(self):
-        pid = os.getpid()
-        process = psutil.Process(pid)
-        memory_infor = process.memory_info().rss
-        maximum_memory = psutil.virtual_memory().total
-        available_memory = psutil.virtual_memory().available
-        return memory_infor, maximum_memory, available_memory
+    def set_observer(self, ax_name: str, modifier_tag: str) -> None:
+        self.__ax_dict[ax_name].set_observer(modifier_tag)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def onclick_axes(self, event, axes_name):
         axes_name = axes_name.upper()
 
-        if axes_name == "IMAGE_AXES":
+        if axes_name == "ImageAxes":
             image_pos = self.__ax_dict[
-                "IMAGE_AXES"]._ax_obj.getView().mapSceneToView(event.scenePos())
+                "ImageAxes"]._ax_obj.getView().mapSceneToView(event.scenePos())
             if event.button() == 1:  # left click
                 x = round(image_pos.x())
                 y = round(image_pos.y())
@@ -351,7 +357,7 @@ class MainController():
                     # get data
                     self.__model.set_val(controller_dict, val)
                     self.__model.set_data(data_dict)
-                self.update_view("FLUO_AXES")
+                self.update_view("FluoAxes")
 
             elif event.button() == 2:
                 pass
@@ -359,14 +365,14 @@ class MainController():
             elif event.button() == 3:
                 # move and copy ch boolen value
                 self.__operating_controller_set.next_controller_to_true("ROI")
-                self.__ax_dict["FLUO_AXES"].next_controller_to_true("ROI")
-                self.update_view("FLUO_AXES")
-        elif axes_name == "FLUO_AXES":
-            if event.inaxes == self.__ax_dict["FLUO_AXES"]:
+                self.__ax_dict["FluoAxes"].next_controller_to_true("ROI")
+                self.update_view("FluoAxes")
+        elif axes_name == "FluoAxes":
+            if event.inaxes == self.__ax_dict["FluoAxes"]:
                 raise NotImplementedError()
-            elif event.inaxes == self.__ax_dict["ELEC_AXES"]:
+            elif event.inaxes == self.__ax_dict["ElecAxes"]:
                 raise NotImplementedError()
-        elif axes_name == "ELEC_AXES":
+        elif axes_name == "ElecAxes":
             raise NotImplementedError()
 
     def change_roi_size(self, val: list):
@@ -403,7 +409,7 @@ class MainController():
             self.__model.set_val(controller_dict, new_roi_pos)
             self.__model.set_data(data_dict)
             controller_name.append(controller_dict['ControllerName'])
-        self.update_view("FLUO_AXES")
+        self.update_view("FluoAxes")
 
     """ Delegation to the Model """
 
@@ -451,7 +457,7 @@ class MainController():
             self.__ax_dict[controller_axes].set_mod_key_list('Normalize')
         elif selected_text == 'BlComp':
             self.__ax_dict[controller_axes].set_mod_key_list('BlComp')
-        self.update_view("FLUO_AXES")
+        self.update_view("FluoAxes")
 
     """ Delegation to the AxesController """
 
@@ -475,10 +481,9 @@ class MainController():
         self.__ax_dict[ax_key].print_infor()
 
     def set_roibox(self, controller_key, roi_box_pos):
-        self.__ax_dict["IMAGE_AXES"].set_roibox(controller_key, roi_box_pos)
+        self.__ax_dict["ImageAxes"].set_roibox(controller_key, roi_box_pos)
 
-    def set_observer(self, controller_key: str, ax_name: str) -> None:
-        self.__ax_dict[ax_name].set_observer(controller_key)
+
 
     """ Delegation to the ModController """
 

@@ -11,6 +11,8 @@ import sys
 import glob
 import copy
 import re
+import numpy as np
+import psutil  # for memory check
 import itertools
 
 from conda.base.context import mockable_context_envs_dirs
@@ -161,7 +163,7 @@ class KeyManager:
 
         self._time_window_dict = {}  # {'TimeWindow0':True}
         self._roi_dict = {}  # {'Roi0':False, 'Roi1':True, 'Roi2':False}
-        self._view_dict = {}  # {'DFoF':True, 'Normalize':False}
+        self._scale_dict = {}  # {'DFoF':True, 'Normalize':False}
         self._bl_comp_dict = {}  # {'BlComp':True}
 
     @property
@@ -203,8 +205,8 @@ class KeyManager:
                 self._time_window_dict[key] = False
             elif 'Roi' in key:
                 self._roi_dict[key] = False
-            elif 'View' in key:
-                self._view_dict[key] = False
+            elif 'Scale' in key:
+                self._scale_dict[key] = False
             elif 'BlComp' in key:
                 self._bl_comp_dict[key] = False
 
@@ -292,12 +294,14 @@ class KeyManager:
         print("")
         print(f"time_window_dict     = {self._time_window_dict}")
         print(f"roi_dict             = {self._roi_dict}")
-        print(f"view_dict            = {self._view_dict}")
+        print(f"scale_dict            = {self._scale_dict}")
         print(f"bl_comp_dict         = {self._bl_comp_dict}")
         print("===========================================================")
 
 
 class Tools:
+
+    """ key modify"""
 
     # extract dict from original.  e.g. extract_list=['Filename', 'Ch', 'Origin'] original_dict={'Filename': '20408B002.tsm', 'ControllerName': 'ROI1', 'Ch': 'Ch1'}
     @staticmethod
@@ -311,3 +315,73 @@ class Tools:
     def remove_tail_numbers(input_string):
         result = re.sub(r'\d+$', '', input_string)
         return result
+
+    @staticmethod
+    def take_ch_from_str(input_string):
+        pattern = r"Ch\d+"
+        return re.search(pattern, input_string)
+
+    """ calculation """
+
+    @staticmethod
+    def create_df_over_f(trace_obj) -> object:
+        f = Tools.f_value(trace_obj)
+        df_over_f = (trace_obj / f - 1) * 100
+        # return value object
+        return df_over_f
+
+    @staticmethod
+    def f_value(trace_obj) -> float:  # trace is value object.
+        average_start = 1  # this is for a F value
+        average_length = 4  # This is for a F value
+        part_trace = trace_obj.data[
+                     average_start: average_start + average_length]
+        average = np.average(part_trace)
+        return average
+
+    @staticmethod
+    def create_normalize(trace_obj) -> object:
+        min_val = np.min(trace_obj.data)
+        pre_trace_obj = trace_obj - min_val
+        max_val = np.max(pre_trace_obj.data)
+        norm_obj = pre_trace_obj / max_val
+        # return value object
+        return norm_obj
+
+    @staticmethod
+    def delta_f(trace_obj, bl_trace_obj) -> object:
+        # return value object
+        return trace_obj - bl_trace_obj
+
+    @staticmethod
+    def create_bl_comp(trace_obj, bl_trace_obj, degreePoly=2):
+        # get f value
+        f_trace = Tools.f_value(trace_obj)
+        # get fitting curve from baseline trace
+        coefficients = np.polyfit(bl_trace_obj.time, bl_trace_obj.data,
+                                  degreePoly)
+        y_fit = np.polyval(coefficients, bl_trace_obj.time)
+
+        bl_trace_fit_obj = TraceData(y_fit, trace_obj.key_dict,
+                                     trace_obj.interval)
+
+        # calculate baseline compensated trace
+        delta_f_trace = Tools.delta_f(trace_obj, bl_trace_fit_obj)
+        # trace_obj.show_data()
+        # bl_trace_fit_obj.show_data()
+        # trace_obj.show_data()
+        # delta_F_trace.show_data()
+        bl_comp_trace = delta_f_trace + f_trace
+        # bl_comp_trace = f_trace
+        return bl_comp_trace
+
+    """ misc """
+
+    @staticmethod
+    def get_memory_infor():
+        pid = os.getpid()
+        process = psutil.Process(pid)
+        memory_infor = process.memory_info().rss
+        maximum_memory = psutil.virtual_memory().total
+        available_memory = psutil.virtual_memory().available
+        return memory_infor, maximum_memory, available_memory

@@ -6,11 +6,14 @@ Created on Thu Aug 29 15:16:57 2024
 """
 
 from abc import ABCMeta, abstractmethod
-from ScanDataPy.model.value_object import TraceData
+import numpy as np
+
+from ScanDataPy.model.value_object import FramesData
 from ScanDataPy.model.value_object import ImageData
+from ScanDataPy.model.value_object import TraceData
 from ScanDataPy.model.value_object import RoiVal
 from ScanDataPy.model.value_object import TimeWindowVal
-import numpy as np
+from ScanDataPy.common_class import Tools
 
 
 class ModifierServiceInterface(metaclass=ABCMeta):
@@ -89,12 +92,12 @@ class ModifierService(ModifierServiceInterface):
             return RoiFactory()
         elif 'Average' in modifier_name:
             return AverageFactory()
-        elif 'View' in modifier_name:
-            return ViewFactory()
+        elif 'Scale' in modifier_name:
+            return ScaleFactory()
         elif 'BlComp' in modifier_name:
             return BlCompFactory()
         else:
-            print(f"{modifier_name} Factory done not exist.")
+            raise ValueError(f"{modifier_name} Factory done not exist.")
 
     # To make a number for modifier.
     def __num_maker(self, modifier_name):
@@ -118,7 +121,7 @@ class ModifierService(ModifierServiceInterface):
             'TimeWindow',
             'Roi',
             'Average',
-            'View',
+            'Scale',
             'BlComp',
             'EndModifier'
         ]
@@ -196,9 +199,9 @@ class AverageFactory(ModifierFactory):
         return Average(modifier_name)
 
 
-class ViewFactory(ModifierFactory):
+class ScaleFactory(ModifierFactory):
     def create_modifier(self, modifier_name):
-        return View(modifier_name)
+        return Scale(modifier_name)
 
 
 class BlCompFactory(ModifierFactory):
@@ -228,6 +231,17 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
     def modifier_request(self, data, modifier_list):
         if self.__next_modifier:
             return self.__next_modifier.apply_modifier(data, modifier_list)
+
+    def apply_modifier(self, data, modifier_list):
+        if self.modifier_name in modifier_list:
+            self.set_data(data)
+            # set True of update on each AxesController
+            self.observer.notify_observer()
+        return super().modifier_request(data, modifier_list)
+
+    @abstractmethod
+    def set_data(self, data):
+        raise NotImplementedError()
 
     @property
     def modifier_name(self):
@@ -261,6 +275,9 @@ class StartModifier(ModifierHandler):
     def apply_modifier(self, data, modifier_list):
         return super().modifier_request(data, modifier_list)
 
+    def set_data(self, data):
+        pass
+
 
 class TimeWindow(ModifierHandler):
     def __init__(self, modifier_name):
@@ -272,25 +289,18 @@ class TimeWindow(ModifierHandler):
         print(f"----- Deleted a TimeWindow object. + {format(id(self))}")
         #pass
 
-    def apply_modifier(self, data, modifier_list):
-        if self.modifier_name in modifier_list:
-            self.set_data(data)
-        return super().modifier_request(data, modifier_list)
-
-        # make a new ROI value object
-
     def set_val(self, val: list):  # val = [start, width]
         window_value_list = val
         start = window_value_list[0]
         width = window_value_list[1]
         self._val_obj = TimeWindowVal(start,
                                       width)  # replace the roi
-        print(f"set ImageController: {self._val_obj.data}")
+        print(f"set TimeWindow: {self._val_obj.data}")
 
     # calculate a image from a single frames data with a time window value object
     def set_data(self, origin_data):
         if origin_data is None:
-            raise Exception("ImageController: origin_data is empty.")
+            raise Exception("TimeWindow: origin_data is empty.")
         elif 'FluoFrames' not in origin_data.key_dict.values():
             # print("ImageController: {origin_data.key_dict['DataType']} is not FluoFrames value object. Skip This data.")
             return
@@ -299,21 +309,23 @@ class TimeWindow(ModifierHandler):
         # make raw trace data
         start = self._val_obj.data[0]
         width = self._val_obj.data[1]
+        # slice end is end+1
+        data = origin_data.data[:, :, start:start + width]
 
-        val = np.mean(origin_data.data[:, :, start:start + width],
-                      axis=2)  # slice end is end+1
         print(
-            "ImageController: An average Cell image from frame# {start} to {start+width-1}")
-        self.observer.notify_observer()
-        return ImageData(
-            val,
+            "TimeWindow: A frames from frame# {start} to {start+width-1}")
+        # take Ch from DataType
+        ch = Tools.take_ch_from_str(origin_data.key_dict['DataType'])
+        return FramesData(
+            data,
             {
                 'Filename': origin_data.key_dict['Filename'],
                 'Attribute': 'Data',
-                'DataType': 'FluoImage' + origin_data.key_dict['Ch'],
+                'DataType': 'FluoFrames' + ch,
                 'Origin': self.modifier_name
             },
-            [0, 0]  # pixel size
+            origin_data.interval,
+            origin_data.pixel_size
         )
 
     @staticmethod
@@ -386,17 +398,17 @@ class Roi(ModifierHandler):
         # make raw trace data
         x, y, x_width, y_width = roi_obj.data[:4]
 
-        mean_data = np.mean(origin_data.data[x:x + x_width, y:y + y_width, :],
-                            axis=(0, 1))  # slice end doesn't include to slice
+        data = origin_data.data[x:x + x_width, y:y + y_width, :]
         # make a trace value object
-        print(f"ROI:New trace with {roi_obj.data}")
-        self.observer.notify_observer()
+        print(f"Roi:A frames from {roi_obj.data}")
+        # take Ch from DataType
+        ch = Tools.take_ch_from_str(origin_data.key_dict['DataType'])
         return TraceData(
-            mean_data,
+            data,
             {
                 'Filename': origin_data.key_dict['Filename'],
                 'Attribute': 'Data',
-                'DataType': 'FluoTrace' + origin_data.key_dict['Ch'],
+                'DataType': 'FluoFrames' + ch,
                 'Origin': self.modifier_name
             },
             origin_data.interval
@@ -424,32 +436,94 @@ class Roi(ModifierHandler):
 
 
 class Average(ModifierHandler):
-    pass
-    average_mode = 1 # average direction. 1 is for images, 2 is for traces
+    def __init__(self, modifier_name):
+        super().__init__(modifier_name)
+        self.average_mode = 'Image' # 'Image' or 'Trace'
 
-    val = np.mean(origin_data.data[:, :, start:start + width],
-                  axis=2)  # slice end is end+1
-    print(
-        "ImageController: An average Cell image from frame# {start} to {start+width-1}")
-    self.observer.notify_observer()
-    return ImageData(
-        val,
-        {
-            'Filename': origin_data.key_dict['Filename'],
-            'Attribute': 'Data',
-            'DataType': 'FluoImage' + origin_data.key_dict['Ch'],
-            'Origin': self.modifier_name
-        },
-        [0, 0]  # pixel size
-    )
+    def __del__(self):  # make a message when this object is deleted.
+        print('.')
+        print(f"----- Deleted a Average object. + {format(id(self))}")
+        # pass
+
+    # average direction. 1 is for images, 2 is for traces
+    def set_val(self, val: str):  # val = [start, width]
+        self.average_mode = val
+
+        print(f"set Average: {self.average_mode}  1=image, 2=trace")
+
+    def set_data(self, data):
+        if self.average_mode == 'Image':
+            # mean to image
+            data = np.mean(data, axis=2)
+            print("Average: Averaged a FluoFrames to an image")
+            # take Ch from DataType
+            ch = Tools.take_ch_from_str(data.key_dict['DataType'])
+            return ImageData(
+                data,
+                {
+                    'Filename': data.key_dict['Filename'],
+                    'Attribute': 'Data',
+                    'DataType': 'FluoImage' + ch,
+                    'Origin': self.modifier_name
+                },
+                [0, 0]  # pixel size
+        )
+        if self.average_mode == 'Trace':
+            # mean to trace
+            data = np.mean(data, axis=(0, 1))
+            # make a trace value object
+            print(f"Average: Averaged a FluoFrames to a trace")
+            # take Ch from DataType
+            ch = Tools.take_ch_from_str(data.key_dict['DataType'])
+            return TraceData(
+                data,
+                {
+                    'Filename': data.key_dict['Filename'],
+                    'Attribute': 'Data',
+                    'DataType': 'FluoTrace' + ch,
+                    'Origin': self.modifier_name
+                },
+                data.interval
+            )
 
 
-class View(ModifierHandler):
-    pass
+class Scale(ModifierHandler):
+    def __init__(self, modifier_name):
+        super().__init__(modifier_name)
+        self.scale_mode = 'Normal' # 'DFoF' or 'Normalize'
+
+    def __del__(self):  # make a message when this object is deleted.
+        print('.')
+        print(f"----- Deleted a Scale object. + {format(id(self))}")
+        # pass
+
+    # 'Normal' or 'DFoF' or 'Normalize'
+    def set_val(self, val: str):  # 'DFoF' or 'Normalize'
+        self.scale_mode = val
+        print(f"set Scale: {val}")
+
+    def set_data(self, data) -> object:
+        if self.scale_mode == 'Normal':
+            print("Scale: Normal -> No modified")
+
+        elif self.scale_mode == 'DFoF':
+            # make dF/F value object
+            df_over_f = Tools.create_df_over_f(data)
+            return df_over_f
+
+        elif self.scale_mode == 'Normalize':
+            normalized_data = Tools.create_normalize(data)
+            # return Normalized value object
+            return normalized_data
+
+        else:
+            raise ValueError(f"No such a scale mode -> {self.scale_mode} "
+                             f"check set_val in Scale" )
 
 
 class BlComp(ModifierHandler):
-    pass
+    def set_data(self, data):
+        pass
 
 
 class EndModifier(ModifierHandler):
@@ -458,6 +532,9 @@ class EndModifier(ModifierHandler):
 
     def apply_modifier(self, data, modifier_list):
         return data
+
+    def set_data(self, data):
+        pass
 
 
 class Observer:

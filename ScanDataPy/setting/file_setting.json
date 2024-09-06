@@ -5,11 +5,15 @@
     "default_controllers": [
       "TimeWindow0",
       "TimeWindow1",
+      "TimeWindow2",
       "Roi0",
       "Roi1",
       "Average",
-      "View",
+      "Scale",
       "BlComp"
+    ],
+    "default_observer": [
+
     ]
   },
   "da": {

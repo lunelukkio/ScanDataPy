@@ -73,8 +73,8 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.verticalSplitter.addWidget(trace_ax1)
         self.verticalSplitter.addWidget(trace_ax2)
 
-        trace_ax1.setBackground("white")
-        trace_ax2.setBackground("white")
+        trace_ax1.setBackground('white')
+        trace_ax2.setBackground('white')
         trace_ax1.getAxis('bottom').setPen(pg.mkPen(color=(0, 0, 0), width=2))
         trace_ax1.getAxis('left').setPen(pg.mkPen(color=(0, 0, 0), width=2))
         trace_ax2.getAxis('bottom').setPen(pg.mkPen(color=(0, 0, 0), width=2))
@@ -91,29 +91,29 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.verticalSplitter.setSizes([450, 150])
 
         self.__main_controller.add_axes(
-            "IMAGE",
-            "IMAGE_AXES",
+            'Image',
+            'ImageAxes',
             self,
             image_ax
         )  # ax_dict["ImageAxes"]
         self.__main_controller.add_axes(
-            "TRACE",
-            "FLUO_AXES",
+            'Trace',
+            'FluoAxes',
             self,
             trace_ax1
         )
         self.__main_controller.add_axes(
-            "TRACE",
-            "ELEC_AXES",
+            'Trace',
+            'ElecAxes',
             self,
             trace_ax2
         )
 
         # connect x axis of windows
         self.__main_controller.ax_dict[
-            "FLUO_AXES"].ax_obj.sigXRangeChanged.connect(self.sync_x_axes)
+            "FluoAxes"].ax_obj.sigXRangeChanged.connect(self.sync_x_axes)
         self.__main_controller.ax_dict[
-            "ELEC_AXES"].ax_obj.sigXRangeChanged.connect(self.sync_x_axes)
+            "ElecAxes"].ax_obj.sigXRangeChanged.connect(self.sync_x_axes)
 
         # main buttons
         bottom_btn_layout = QtWidgets.QHBoxLayout(centralWidget)
@@ -205,7 +205,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         image_ax.getView().scene().sigMouseClicked.connect(
             lambda event: self.__main_controller.onclick_axes(
                 event,
-                "IMAGE_AXES"
+                "ImageAxes"
             )
         )
 
@@ -235,7 +235,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
             'ElecTraceController1',
             False)
 
-        # self.__main_controller.set_view_flag("FLUO_AXES", "ROI0", "CH1", True)  # This is for showing ROI0 data.
+        # self.__main_controller.set_view_flag("FluoAxes", "ROI0", "CH1", True)  # This is for showing ROI0 data.
 
         self.__main_controller.show_data(
             {'Attribute': 'Data'},
@@ -251,18 +251,18 @@ class QtDataWindow(QtWidgets.QMainWindow):
     def sync_x_axes(self, view):
         # get the x axis setting of the fluo axes
         x_range1 = \
-            self.__main_controller.ax_dict["FLUO_AXES"].ax_obj.viewRange()[0]
+            self.__main_controller.ax_dict["FluoAxes"].ax_obj.viewRange()[0]
 
         # set the x axis of the elec axes
-        self.__main_controller.ax_dict["ELEC_AXES"].ax_obj.setXRange(
+        self.__main_controller.ax_dict["ElecAxes"].ax_obj.setXRange(
             x_range1[0], x_range1[1], padding=0)
 
         # get the x axis setting of the elec axes
         x_range2 = \
-            self.__main_controller.ax_dict["ELEC_AXES"].ax_obj.viewRange()[0]
+            self.__main_controller.ax_dict["ElecAxes"].ax_obj.viewRange()[0]
 
         # set the x axis of the fluo axes
-        self.__main_controller.ax_dict["FLUO_AXES"].ax_obj.setXRange(
+        self.__main_controller.ax_dict["FluoAxes"].ax_obj.setXRange(
             x_range2[0], x_range2[1], padding=0)
 
     def live_view(self):
@@ -270,14 +270,14 @@ class QtDataWindow(QtWidgets.QMainWindow):
 
     def bl_comp(self):
         self.__main_controller.set_trace_type(
-            "FLUO_AXES",
+            "FluoAxes",
             "BLCOMP"
         )
 
     def switch_bl_roi(self, state):
         self.__main_controller.single_operation("ROI0", "ALL")
         self.__main_controller.set_view_flag(
-            "FLUO_AXES",
+            "FluoAxes",
             "ROI0",
             "CH1"
         )  # (ax, controller_key, data_key, value)
@@ -286,7 +286,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.__main_controller.operating_controller_set.next_controller_to_true(
             "ROI")
         # need modify
-        # self.__main_controller.set_view_flag("FLUO_AXES", "ROI0", "CH1")  # (ax, controller_key, data_key, value)
+        # self.__main_controller.set_view_flag("FluoAxes", "ROI0", "CH1")  # (ax, controller_key, data_key, value)
 
     def dFoverF(self, button):
         if self.current_checked_button != button:
@@ -297,7 +297,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
                 if button.text() == "dF/F":
                     text = "DFOF"
                 self.__main_controller.set_trace_type(
-                    "FLUO_AXES",
+                    "FluoAxes",
                     text)
         else:
             return
