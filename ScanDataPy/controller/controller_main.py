@@ -176,15 +176,15 @@ class MainController():
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
-    def get_modifier_list(self):
-        return self.__model.get_modifier_list()
+    def get_modifier_name_list(self):
+        return self.__model.get_modifier_name_list()
 
         # take keys from data_repository and put them into the key_manager
 
     def set_keys_manager(self):
         print("MainController: set_keys_manager() ----->")
         # get the modifier name list
-        modifier_name_list = self.get_modifier_list()
+        modifier_name_list = self.get_modifier_name_list()
         # set list into key_manager
         self.__key_manager.set_key_list_to_dict(modifier_name_list)
         # get data_tag_dict
@@ -233,8 +233,8 @@ class MainController():
         print("=============================================")
         print("To Do: default setting should be moved into a json file")
 
-        self.set_observer('FluoAxes', 'ROI0')
-        self.set_observer('FluoAxes', 'ROI1')
+        self.set_observer('FluoAxes', 'Roi0')
+        self.set_observer('FluoAxes', 'Roi1')
         self.set_observer('ImageAxes', 'TimeWindow0')
         self.set_observer('ImageAxes', 'TimeWindow1')
         self.set_observer('ElecAxes', 'TimeWindow2')

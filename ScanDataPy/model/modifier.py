@@ -47,6 +47,10 @@ class ModifierService(ModifierServiceInterface):
             self.__modifier_chain_list)
         self.print_chain()
 
+    @property
+    def modifier_chain_list(self):
+        return self.__modifier_chain_list
+
     # This is actual method run by DataService and return modified data
     def apply_modifier(self, data, modifier_list=None):
         # start the chain of responsibility and get modded data
@@ -151,7 +155,7 @@ class ModifierService(ModifierServiceInterface):
             # return the chain
         return modifier_chain_list[0] if modifier_chain_list else None
 
-    def get_chain_list(self):
+    def get_chain_name_list(self):
         list = []
         for modifier in self.__modifier_chain_list:
             list.append(modifier.modifier_name)

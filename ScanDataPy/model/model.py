@@ -155,8 +155,8 @@ class DataService(ModelInterface):
         print("----------> Dataservice: get_data Done")
         return modified_data_list
 
-    def get_modifier_list(self):
-        return self.__modifier_service.get_chain_list()
+    def get_modifier_name_list(self):
+        return self.__modifier_service.get_chain_name_list()
 
     def get_list_of_repository_tag_dict(self):
         return self.__data_repository.get_list_of_tag_dict()
@@ -178,11 +178,15 @@ class DataService(ModelInterface):
 
     def set_observer(self, modifier_tag, observer):
         print(f"DataService: set_observer ({observer.__class__.__name__} to {modifier_tag}) ---------->")
-        modifier_list = self.__modifier_service.get_chain_list()
-        for modifier in modifier_list:
-            modifier.set_observer(observer)
+        found = False
+        modifier_obj_list = self.__modifier_service.modifier_chain_list
+        for modifier_obj in modifier_obj_list:
+            if modifier_obj.modifier_name == modifier_tag:
+                modifier_obj.set_observer(observer)
+                found = True
         print("----------> Dataservice: set_observer Done")
-
+        if found is not True:
+            raise ValueError(f"These is no much tag {modifier_tag}")
     def update_observer(self):
         pass
 

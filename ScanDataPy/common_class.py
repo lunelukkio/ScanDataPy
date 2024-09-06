@@ -13,10 +13,10 @@ import copy
 import re
 import numpy as np
 import psutil  # for memory check
-import itertools
+#import itertools
 
-from conda.base.context import mockable_context_envs_dirs
-from sqlalchemy import modifier
+#from conda.base.context import mockable_context_envs_dirs
+#from sqlalchemy import modifier
 
 try:
     from PyQt5.QtWidgets import QFileDialog, QApplication
@@ -294,7 +294,7 @@ class KeyManager:
         print("")
         print(f"time_window_dict     = {self._time_window_dict}")
         print(f"roi_dict             = {self._roi_dict}")
-        print(f"scale_dict            = {self._scale_dict}")
+        print(f"scale_dict           = {self._scale_dict}")
         print(f"bl_comp_dict         = {self._bl_comp_dict}")
         print("===========================================================")
 
