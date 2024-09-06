@@ -13,15 +13,19 @@ import copy
 import re
 import itertools
 
+from conda.base.context import mockable_context_envs_dirs
+from sqlalchemy import modifier
+
 try:
     from PyQt5.QtWidgets import QFileDialog, QApplication
 except:
     import tkinter as tk
 
+
 class FileService:
     def __init__(self):
         self.filename_obj_list = []
-        
+
     def open_file(self, *filename):  # it can catch variable num of filenames.
         if filename == ():
             fullname = self.get_fullname()  # This is str filename
@@ -34,7 +38,7 @@ class FileService:
         new_filename_obj = WholeFilename(new_full_filename)
         self.filename_obj_list.append(new_filename_obj)
         return new_filename_obj
-    
+
     # Function to rename multiple files: https://www.youtube.com/watch?v=uhpnT8hGTnY&t=511s
     def rename_files(self):
         folder_path = "C:/Users/lunel/Documents/python/nnUNetFrame/testfolder"
@@ -44,37 +48,37 @@ class FileService:
             dst = f"{folder_path}/{dst}"
             # rename() function will rename all the files
             os.rename(src, dst)
-    
+
     @staticmethod
     def get_fullname(event=None):
-        
+
         try:
             app = QApplication.instance()
             if app is None:
                 app = QApplication(sys.argv)
 
             fullname, _ = QFileDialog.getOpenFileName(
-            None,
-            "Open File",
-            os.getcwd(),
-            "All files (*.*);;"
-            "Tsm files (*.tsm);;"
-            "Da files (*.da);;"
-            "Axon files (*.abf);;"
-            "WinCP files (*.wcp)"
+                None,
+                "Open File",
+                os.getcwd(),
+                "All files (*.*);;"
+                "Tsm files (*.tsm);;"
+                "Da files (*.da);;"
+                "Axon files (*.abf);;"
+                "WinCP files (*.wcp)"
             )
         except:
             # open file dialog
             fullname = tk.filedialog.askopenfilename(
-                initialdir = os.getcwd(), # current dir
-                filetypes=(('All files', '*.*'), 
+                initialdir=os.getcwd(),  # current dir
+                filetypes=(('All files', '*.*'),
                            ('Tsm files', '*.tsm'),
-                           ('Da files', '*.da'), 
+                           ('Da files', '*.da'),
                            ('Axon files', '*.abf'),
                            ('WinCP files', '*.wcp')
-                          ))
+                           ))
         return fullname
-    
+
     def get_filename_obj(self):
         return self.filename_obj_list
 
@@ -83,58 +87,60 @@ class FileService:
 Value object
 """
 
+
 class WholeFilename:  # Use it only in a view and controller
     def __init__(self, fullname: str):
-        self.__fullname = os.path.join(fullname)  # replace separater for each OS
+        self.__fullname = os.path.join(
+            fullname)  # replace separater for each OS
         self.__filename = os.path.basename(self.__fullname)
         self.__filepath = os.path.dirname(self.__fullname) + os.sep
-        self.__abspath = os.path.abspath(fullname)# absolute path
+        self.__abspath = os.path.abspath(fullname)  # absolute path
         split_filename = os.path.splitext(self.__filename)
         self.__file_name_no_ext = split_filename[0]
-        self.__extension =  split_filename[1]  # get only extension
-        
+        self.__extension = split_filename[1]  # get only extension
+
         self.__filename_list = self.__make_filename_list()
-        
+
     # List need A000-Z999 in the last of filenames
     def __make_filename_list(self) -> list:
-        
-        find = os.path.join(os.path.dirname(self.__abspath), '*' + str(self.__extension))
+        find = os.path.join(os.path.dirname(self.__abspath),
+                            '*' + str(self.__extension))
         filename_list = [os.path.basename(f) for f in glob.glob(find)]
-        return  filename_list
-    
+        return filename_list
+
     def __del__(self):
-        #print('.')
-        #print('Deleted a ImageData object.' + '  myId= {}'.format(id(self)))
+        # print('.')
+        # print('Deleted a ImageData object.' + '  myId= {}'.format(id(self)))
         pass
-        
+
     @property
     def fullname(self) -> str:
         return self.__fullname
-    
+
     @property
     def name(self) -> str:
         return self.__filename
-    
+
     @property
     def path(self) -> str:
         return self.__filepath
-    
+
     @property
     def abspath(self) -> str:
         return self.__abspath
-    
+
     @property
     def file_name_no_ext(self) -> str:
         return self.__file_name_no_ext
-    
+
     @property
     def extension(self) -> str:
         return self.__extension
-    
+
     @property
     def filename_list(self) -> list:
         return self.__filename_list
-    
+
     def print_infor(self) -> None:
         print('THe absolute path = ' + self.__abspath)
         print('The full path = ' + self.__fullname)
@@ -142,45 +148,42 @@ class WholeFilename:  # Use it only in a view and controller
         print('The file path = ' + self.__filepath)
         print('The file name without extension = ' + self.__file_name_no_ext)
         print('The file extension = ' + self.__extension)
-        print('The file name list in the same folder = ' + str(self.__filename_list))
-        
+        print('The file name list in the same folder = ' + str(
+            self.__filename_list))
+
+
 class KeyManager:
     def __init__(self):
-        self._filename_dict = {}          # e.g. {'70505A001':Ture}
-        self._attribute_dict = {}         # e.g. {'Usercontroller':True, 'Data':False, 'text':False}
-        self._data_type_dict = {}         # e.g. {'FluoFrames':False, 'FluoTrace':True, 'ElecTrace':False, 'Header':False, 'Default':False}
-        self._origin_dict = {}            # e.g. {'File':False, 'ROI1':Ture, 'ImageController1':False, 'ElecTraceController1':False}
-        self._controller_name_dict = {}   # e.g. {'ROI0':False','ROI1':Ture, 'ImageController1':False, 'ElecTraceController1':False}
-        self._ch_dict = {}                # e.g. {'Ch0':False, 'Ch1':True, 'Ch2':False}
-    
+        self._filename_dict = {}
+        self._attribute_dict = {}  # {'Data':False, 'Text':False}
+        self._data_type_dict = {}  # {'FluoFrames1':False, 'FluoTrace1':True, 'ElecTrace1':False, 'Header':False, 'Default':False}
+        self._origin_dict = {}  # {'File':False, 'Roi1':True}
+
+        self._time_window_dict = {}  # {'TimeWindow0':True}
+        self._roi_dict = {}  # {'Roi0':False, 'Roi1':True, 'Roi2':False}
+        self._view_dict = {}  # {'DFoF':True, 'Normalize':False}
+        self._bl_comp_dict = {}  # {'BlComp':True}
+
     @property
     def filename_dict(self) -> dict:
         return self._filename_dict
-    
+
     @property
     def attribute_dict(self) -> dict:
         return self._attribute_dict
-    
+
     @property
     def data_type_dict(self) -> dict:
         return self._data_type_dict
-    
+
     @property
     def origin_dict(self) -> dict:
         return self._origin_dict
-    
-    @property
-    def controller_name_dict(self) -> dict:
-        return self._controller_name_dict
-    
-    @property
-    def ch_dict(self) -> dict:
-        return self._ch_dict
-    
+
     @filename_dict.setter
     def filename_dict(self, filename_dict) -> None:
         self._filename_dict = filename_dict
-    
+
     @attribute_dict.setter
     def attribute_dict(self, attribute_dict) -> None:
         self._attribute_dict = attribute_dict
@@ -193,24 +196,44 @@ class KeyManager:
     def origin_dict(self, origin_dict) -> None:
         self._origin_dict = origin_dict
 
-    @controller_name_dict.setter
-    def controller_name_dict(self, controller_name_dict) -> None:
-        self._controller_name_dict = controller_name_dict
+    def set_key_list_to_dict(self, key_list):
+        # copy modifier names from the ModifierService to the KeyManager
+        for key in key_list:
+            if 'TimeWindow' in key:
+                self._time_window_dict[key] = False
+            elif 'Roi' in key:
+                self._roi_dict[key] = False
+            elif 'View' in key:
+                self._view_dict[key] = False
+            elif 'BlComp' in key:
+                self._bl_comp_dict[key] = False
 
-    @ch_dict.setter
-    def ch_dict(self, ch_dict) -> None:
-        self._ch_dict = ch_dict
-        
-    def set_key(self, dict_name, key, val=None):  # e.g. (filename_dict, '30503A001.tsm',Ture)
-        dictionary = getattr(self, f'_{dict_name}') # get dict 
-        
+    def set_dict_to_dict(self, key_dict):
+        print(key_dict)
+        for key, value in key_dict.items():
+            if 'Filename' in key:
+                self._filename_dict[value] = True
+            elif 'Attribute' in key:
+                self._attribute_dict[value] = True
+            elif 'DataType' in key:
+                self._data_type_dict[value] = True
+            elif 'DataType' in key:
+                self._data_type_dict[value] = True
+            elif 'Origin' in key:
+                self._origin_dict[value] = True
+
+    def set_key(self, dict_name, key,
+                val=None):  # e.g. (filename_dict, '30503A001.tsm',Ture)
+        dictionary = getattr(self, f'_{dict_name}')  # get dict
+
         # inner function to update key
         def update_key(key):
             if key is not None:
                 dictionary[key] = val
             else:
-                dictionary[key] = not dictionary.get(key, False)  # if there is no key, return False
-        
+                dictionary[key] = not dictionary.get(key,
+                                                     False)  # if there is no key, return False
+
         # if key == 'ALL', every key will be changed
         if key == 'ALL':
             for key in dictionary:
@@ -222,9 +245,10 @@ class KeyManager:
         dictionary = getattr(self, f'_{dict_name}')
         return [key for key, value in dictionary.items() if value]
 
+    # get dict key conbinations. val = True: True conbination, False: False conbination, None: whole conbination
     def get_key_dicts(self, val=None) -> list:
         result = []
-        
+
         dicts = [
             (self._filename_dict, 'Filename'),
             (self._attribute_dict, 'Attribute'),
@@ -233,36 +257,57 @@ class KeyManager:
             (self._controller_name_dict, 'ControllerName'),
             (self._ch_dict, 'Ch')
         ]
-    
+
         def recursive_combinations(current_combination, remaining_dicts):
-            if not remaining_dicts:  # if there is no remaining_dicts, 
+            if not remaining_dicts:  # if there is no remaining_dicts,
                 result.append(current_combination)  # add a dict to the list
                 return
             current_dict, field_name = remaining_dicts[0]
             if current_dict == {}:
-                new_combination = current_combination.copy()  # shallow copy for non effect of original data
-                recursive_combinations(new_combination, remaining_dicts[1:]) # delete the current remainging object
+                # shallow copy for non effect of original data
+                new_combination = current_combination.copy()
+                # delete the current remaining object
+                recursive_combinations(new_combination, remaining_dicts[
+                                                        1:])
                 return
             for key, status in current_dict.items():
                 if val is None or status == val:
-                    new_combination = current_combination.copy()  # shallow copy for non effect of original data
+                    # shallow copy for non effect of original data
+                    new_combination = current_combination.copy()
                     new_combination[field_name] = key
-                    recursive_combinations(new_combination, remaining_dicts[1:]) # delete the current remainging object
-    
+                    # delete the current remainging object
+                    recursive_combinations(new_combination, remaining_dicts[
+                                                            1:])
+
         recursive_combinations({}, dicts)
-    
+
         return result
 
-    def show_keys(self):
+    def print_infor(self):
         print("===================== Key Manager =========================")
         print(f"filename_dict        = {self._filename_dict}")
         print(f"attribute_dict       = {self._attribute_dict}")
         print(f"data_type_dict       = {self._data_type_dict}")
         print(f"origin_dict          = {self._origin_dict}")
-        print(f"controller_name_dict = {self._controller_name_dict}")
-        print(f"ch_dict              = {self._ch_dict}")
+        print("")
+        print(f"time_window_dict     = {self._time_window_dict}")
+        print(f"roi_dict             = {self._roi_dict}")
+        print(f"view_dict            = {self._view_dict}")
+        print(f"bl_comp_dict         = {self._bl_comp_dict}")
         print("===========================================================")
 
 
+class Tools:
 
-   
+    # extract dict from original.  e.g. extract_list=['Filename', 'Ch', 'Origin'] original_dict={'Filename': '20408B002.tsm', 'ControllerName': 'ROI1', 'Ch': 'Ch1'}
+    @staticmethod
+    def extract_key(original_dict, extract_list):
+        return {key: original_dict[key] for key in extract_list if
+                key in original_dict}
+
+        # delete tail numbers
+
+    @staticmethod
+    def remove_tail_numbers(input_string):
+        result = re.sub(r'\d+$', '', input_string)
+        return result

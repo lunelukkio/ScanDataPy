@@ -241,27 +241,14 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
     def val_obj(self):
         return self._val_obj
 
-    @abstractmethod
-    def set_val(self, val_list: list):  # e.g. roi value
-        raise NotImplementedError()
-
     def get_val(self):  # e.g. roi value
         return self._val_obj
-
-    # get a value object from experiments.
-    @abstractmethod
-    def set_data(self, frames_obj) -> object:
-        raise NotImplementedError()
 
     def set_observer(self, observer):
         self.observer.set_observer(observer)
 
     def notify_observer(self):
         self.observer.notify_observer()
-
-    @abstractmethod
-    def reset(self) -> None:
-        raise NotImplementedError()
 
 
 """concrete modifier"""
@@ -307,17 +294,16 @@ class TimeWindow(ModifierHandler):
         elif 'FluoFrames' not in origin_data.key_dict.values():
             # print("ImageController: {origin_data.key_dict['DataType']} is not FluoFrames value object. Skip This data.")
             return
-        time_window_obj = self._val_obj
         # check value is correct
-        self.__check_val(origin_data, time_window_obj)
+        TimeWindow.check_val(origin_data, self._val_obj)
         # make raw trace data
-        start = time_window_obj.data[0]
-        width = time_window_obj.data[1]
+        start = self._val_obj.data[0]
+        width = self._val_obj.data[1]
 
         val = np.mean(origin_data.data[:, :, start:start + width],
                       axis=2)  # slice end is end+1
         print(
-            "ImageController: An avarage Cell image from frame# {start} to {start+width-1}")
+            "ImageController: An average Cell image from frame# {start} to {start+width-1}")
         self.observer.notify_observer()
         return ImageData(
             val,
@@ -330,7 +316,8 @@ class TimeWindow(ModifierHandler):
             [0, 0]  # pixel size
         )
 
-    def __check_val(self, frames_obj, time_window_obj) -> bool:
+    @staticmethod
+    def check_val(frames_obj, time_window_obj) -> bool:
         # convert to raw values
         time_window = time_window_obj.data
         # check the value is correct. See TimeWindowVal class.
@@ -395,7 +382,7 @@ class Roi(ModifierHandler):
             return
         roi_obj = self._val_obj
         # check value is correct
-        self.__check_val(origin_data, roi_obj)
+        Roi.check_val(origin_data, roi_obj)
         # make raw trace data
         x, y, x_width, y_width = roi_obj.data[:4]
 
@@ -415,7 +402,8 @@ class Roi(ModifierHandler):
             origin_data.interval
         )
 
-    def __check_val(self, frames_obj, roi_obj) -> bool:
+    @staticmethod
+    def check_val(frames_obj, roi_obj) -> bool:
         # convert to raw values
         roi = roi_obj.data
         # check the value is correct. See ROIVal class.
@@ -437,6 +425,23 @@ class Roi(ModifierHandler):
 
 class Average(ModifierHandler):
     pass
+    average_mode = 1 # average direction. 1 is for images, 2 is for traces
+
+    val = np.mean(origin_data.data[:, :, start:start + width],
+                  axis=2)  # slice end is end+1
+    print(
+        "ImageController: An average Cell image from frame# {start} to {start+width-1}")
+    self.observer.notify_observer()
+    return ImageData(
+        val,
+        {
+            'Filename': origin_data.key_dict['Filename'],
+            'Attribute': 'Data',
+            'DataType': 'FluoImage' + origin_data.key_dict['Ch'],
+            'Origin': self.modifier_name
+        },
+        [0, 0]  # pixel size
+    )
 
 
 class View(ModifierHandler):
