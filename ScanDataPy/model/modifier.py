@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Aug 29 15:16:57 2024
+Created on Thu ug 29 15:16:57 2024
 
 @author: lunelukkio
 """

@@ -123,20 +123,14 @@ class MainController():
         open_experiments = self.create_experiments(filename_obj)
         if open_experiments is True:
             self.__key_manager.set_key('filename_dict', filename_obj.name, True)
-            print(
-                "============================================================================")
-            print(
-                f"========== MainController: Open {filename_obj.name}: suceeded!!! ==========          :)")
-            print(
-                "============================================================================")
+            print("============================================================================")
+            print(f"========== MainController: Open {filename_obj.name}: suceeded!!! ==========          :)")
+            print("============================================================================")
             print("")
         else:
-            print(
-                "=============================================================")
-            print(
-                "========== MainController: Failed to open the file ==========                :(")
-            print(
-                "=============================================================")
+            print("=============================================================")
+            print("========== MainController: Failed to open the file ==========                :(")
+            print("=============================================================")
             print("")
 
     def create_experiments(self, filename_obj: object):
@@ -165,22 +159,16 @@ class MainController():
         print("-----> MainController: create_default_modifier() Done")
 
         self.__model.print_infor('Modifier')
-        print(
-            "=======================================================================")
-        print(
-            "========== MainController: Made new Modifiers chain ==================")
-        print(
-            "=======================================================================")
+        print("=======================================================================")
+        print("========== MainController: Made new Modifiers chain ==================")
+        print("=======================================================================")
         print("")
 
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
-    def get_modifier_name_list(self):
-        return self.__model.get_modifier_name_list()
 
         # take keys from data_repository and put them into the key_manager
-
     def set_keys_manager(self):
         print("MainController: set_keys_manager() ----->")
         # get the modifier name list
@@ -200,6 +188,9 @@ class MainController():
             ax.key_manager = copy.deepcopy(self.__key_manager)
         print("------> MainController: set_keys_manager() Done")
 
+    def get_modifier_name_list(self):
+        return self.__model.get_modifier_name_list()
+
     # set data into controllers and generate data
     def set_data(self, val=None):  # val = None, True, False
         # get key dict whole conbinations
@@ -208,23 +199,7 @@ class MainController():
         for key_dict in key_dict_list:
             self.__model.set_data(key_dict)
 
-    def get_controller_infor(self, controller_key=None) -> dict:
-        if controller_key is None:
-            data_infor = self.__model.get_infor()
-        else:
-            data_infor = self.__model.get_infor(controller_key)
-        return data_infor
 
-    def update_view(self, axes=None) -> None:
-        if axes is None:
-            for ax in self.__ax_dict.values():
-                ax.update()
-                ax.set_update_flag(False)  # return to deactive
-        else:
-            self.__ax_dict[axes].update()
-            self.__ax_dict[axes].set_update_flag(False)  # return to deactive
-        print("Main controller: Update done!")
-        print("")
 
     def default_settings(self, filename_key):
 
@@ -239,11 +214,13 @@ class MainController():
         self.set_observer('ImageAxes', 'TimeWindow1')
         self.set_observer('ElecAxes', 'TimeWindow2')
 
-        # Reset controller flags. see KeyManager in classcommon_class
-        self.__key_manager.set_key('attribute_dict', 'ALL',False)
-        self.__key_manager.set_key('attribute_dict', 'ALL',False) 
-
-
+        # Reset controller flags. see KeyManager in classcommon_class set_key_list_to_dict, set_dict_to_dict
+        self.__key_manager.set_key('attribute_dict', 'Data',True)
+        self.__key_manager.set_key('data_type_dict', 'FluloFramesCh0',True)
+        self.__key_manager.set_key('data_type_dict', 'FluloFramesCh1',True)
+        self.__key_manager.set_key('time_window_dict', 'TimeWindow1',True)
+        self.__key _manager.set_key('roi_dict', 'Roi0',True)
+        self.__key_manager.set_key('roi_dict', 'Roi1',True)
 
 
         # this is for test
@@ -257,23 +234,11 @@ class MainController():
 
 
 
-        self.__key_manager.set_key('ch_dict', 'ALL', False)
-
-        # set controller flags for operation
-        self.__key_manager.set_key('controller_name_dict', 'ROI0', True)
-        self.__key_manager.set_key('controller_name_dict', 'ROI1', True)
-        self.__key_manager.set_key('controller_name_dict', 'ImageController1',
-                                   True)
-        self.__key_manager.set_key('controller_name_dict',
-                                   'ElecTraceController1', True)
-        self.__key_manager.set_key('ch_dict', 'Ch1', True)
-        # self.__key_manager.set_key('ch_dict', 'Ch2', True)
-
         # set ax view flags
         for ax in self.ax_dict.values():
-            ax.set_key('controller_name_dict', 'ALL',
+            ax.set_key('controller_name_dict', 'All',
                        False)  # see KeyManager in classcommon_class
-            ax.set_key('ch_dict', 'ALL', False)
+            ax.set_key('ch_dict', 'All', False)
 
         # for the fluo trace window
         self.ax_dict['FluoAxes'].set_key('controller_name_dict', 'ROI1', True)
@@ -331,7 +296,23 @@ class MainController():
 
 
 
+    def get_controller_infor(self, controller_key=None) -> dict:
+        if controller_key is None:
+            data_infor = self.__model.get_infor()
+        else:
+            data_infor = self.__model.get_infor(controller_key)
+        return data_infor
 
+    def update_view(self, axes=None) -> None:
+        if axes is None:
+            for ax in self.__ax_dict.values():
+                ax.update()
+                ax.set_update_flag(False)  # return to deactive
+        else:
+            self.__ax_dict[axes].update()
+            self.__ax_dict[axes].set_update_flag(False)  # return to deactive
+        print("Main controller: Update done!")
+        print("")
 
 
     def onclick_axes(self, event, axes_name):
@@ -465,7 +446,7 @@ class MainController():
 
     def set_view_flag(self, ax_key, controller_key, ch_key,
                       bool_val=None) -> None:
-        if ax_key == "ALL":
+        if ax_key == "All":
             for ax in self.__ax_dict.values():
                 ax.set_flag(controller_key, ch_key, bool_val)
         else:

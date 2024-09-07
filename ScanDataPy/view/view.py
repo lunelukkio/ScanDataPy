@@ -275,7 +275,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         )
 
     def switch_bl_roi(self, state):
-        self.__main_controller.single_operation("ROI0", "ALL")
+        self.__main_controller.single_operation("ROI0", "All")
         self.__main_controller.set_view_flag(
             "FluoAxes",
             "ROI0",

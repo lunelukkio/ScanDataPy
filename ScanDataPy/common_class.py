@@ -216,11 +216,11 @@ class KeyManager:
             if 'Filename' in key:
                 self._filename_dict[value] = True
             elif 'Attribute' in key:
-                self._attribute_dict[value] = True
+                self._attribute_dict[value] = False
             elif 'DataType' in key:
-                self._data_type_dict[value] = True
+                self._data_type_dict[value] = False
             elif 'DataType' in key:
-                self._data_type_dict[value] = True
+                self._data_type_dict[value] = False
             elif 'Origin' in key:
                 self._origin_dict[value] = True
 
@@ -236,8 +236,8 @@ class KeyManager:
                 dictionary[key] = not dictionary.get(key,
                                                      False)  # if there is no key, return False
 
-        # if key == 'ALL', every key will be changed
-        if key == 'ALL':
+        # if key == 'All', every key will be changed
+        if key == 'All':
             for key in dictionary:
                 update_key(key)
         else:
