@@ -239,9 +239,9 @@ class MainController():
         self.set_observer('ImageAxes', 'TimeWindow1')
         self.set_observer('ElecAxes', 'TimeWindow2')
 
-        # Reset controller flags
-        self.__key_manager.set_key('attribute_dict', 'ALL',False)  # see KeyManager in classcommon_class
-
+        # Reset controller flags. see KeyManager in classcommon_class
+        self.__key_manager.set_key('attribute_dict', 'ALL',False)
+        self.__key_manager.set_key('attribute_dict', 'ALL',False) 
 
 
 
