@@ -199,7 +199,8 @@ class MainController():
     def set_data(self, val=None):  # val = None, True, False
         # get key dict whole conbinations
         key_dict_list = self._key_manager.get_key_dicts(val)
-        # print(key_dict_list)
+        print("11111111111111111111111111111111111111")
+        print(key_dict_list)
         for key_dict in key_dict_list:
             self.__model.set_data(key_dict)
     def default_settings(self, filename_key):

@@ -235,7 +235,6 @@ class KeyManager:
             else:
                 dictionary[key] = not dictionary.get(key,
                                                      False)  # if there is no key, return False
-
         # if key == 'All', every key will be changed
         if key == 'All':
             for key in dictionary:
@@ -247,40 +246,42 @@ class KeyManager:
         dictionary = getattr(self, f'_{dict_name}')
         return [key for key, value in dictionary.items() if value]
 
-    # get dict key conbinations. val = True: True conbination, False: False conbination, None: whole conbination
+    # get key dict combinations from whole dict.  convert variable names to 'dictionary keys'.
+    # val = True: True combination, False: False combination, None: whole combination
     def get_key_dicts(self, val=None) -> list:
         result = []
-
         dicts = [
-            (self._filename_dict, 'Filename'),
+            (self._filename_dict, 'Filename'),  # the second name because a key of dictionary
             (self._attribute_dict, 'Attribute'),
             (self._data_type_dict, 'DataType'),
             (self._origin_dict, 'Origin'),
-            (self._controller_name_dict, 'ControllerName'),
-            (self._ch_dict, 'Ch')
-        ]
 
+            (self._time_window_dict, 'TimeWindow'),
+            (self._roi_dict, 'Roi'),
+            (self._scale_dict, 'Scale'),
+            (self._bl_comp_dict, 'BlComp')
+        ]
+        # internal function
         def recursive_combinations(current_combination, remaining_dicts):
             if not remaining_dicts:  # if there is no remaining_dicts,
                 result.append(current_combination)  # add a dict to the list
                 return
             current_dict, field_name = remaining_dicts[0]
             if current_dict == {}:
+                print("22222222222222222222222222222222222222")
+                print(current_dict)
                 # shallow copy for non effect of original data
                 new_combination = current_combination.copy()
                 # delete the current remaining object
-                recursive_combinations(new_combination, remaining_dicts[
-                                                        1:])
+                recursive_combinations(new_combination, remaining_dicts[1:])
                 return
             for key, status in current_dict.items():
                 if val is None or status == val:
                     # shallow copy for non effect of original data
                     new_combination = current_combination.copy()
                     new_combination[field_name] = key
-                    # delete the current remainging object
-                    recursive_combinations(new_combination, remaining_dicts[
-                                                            1:])
-
+                    # delete the current remaining object
+                    recursive_combinations(new_combination, remaining_dicts[1:])
         recursive_combinations({}, dicts)
 
         return result
