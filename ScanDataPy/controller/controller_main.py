@@ -85,7 +85,7 @@ class MainController():
     def __init__(self, view=None):
         self.__model = DataService()
         self.__file_service = FileService()
-        self.__key_manager = KeyManager()
+        self._key_manager = KeyManager()
         self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, FluoAxes: TraceAx class}\
 
     def __del__(self):
@@ -96,6 +96,10 @@ class MainController():
     @property
     def ax_dict(self):
         return self.__ax_dict
+
+    @property
+    def key_manager(self):
+        return self._key_manager
 
     """ MainController """
 
@@ -122,7 +126,7 @@ class MainController():
         # make experiments data
         open_experiments = self.create_experiments(filename_obj)
         if open_experiments is True:
-            self.__key_manager.set_key('filename_dict', filename_obj.name, True)
+            self._key_manager.set_key('filename_dict', filename_obj.name, True)
             print("============================================================================")
             print(f"========== MainController: Open {filename_obj.name}: suceeded!!! ==========          :)")
             print("============================================================================")
@@ -147,14 +151,14 @@ class MainController():
     def create_default_modifier(self, filename_number):
         print("MainController: create_default_modifiers() ----->")
 
-        filename = self.__key_manager.get_true_keys('filename_dict')[
+        filename = self._key_manager.get_true_keys('filename_dict')[
             filename_number]
         # get default information from text data in the json file
         default = self.__model.get_data(
             {'Filename': filename, 'Attribute': 'Default', 'DataType': 'Text'})
 
         # default[0] because default is returned as value object list
-        for modifier_name in default[0].data['default_controllers']:
+        for modifier_name in default[0].data['default_settings']['default_controllers']:
             self.create_modifier(modifier_name)
         print("-----> MainController: create_default_modifier() Done")
 
@@ -174,18 +178,18 @@ class MainController():
         # get the modifier name list
         modifier_name_list = self.get_modifier_name_list()
         # set list into key_manager
-        self.__key_manager.set_key_list_to_dict(modifier_name_list)
+        self._key_manager.set_key_list_to_dict(modifier_name_list)
         # get data_tag_dict
         list_of_tag_dict = self.__model.get_list_of_repository_tag_dict()
         # set data_tag to key_manager
         for tag_dict in list_of_tag_dict:
-            self.__key_manager.set_dict_to_dict(tag_dict)
+            self._key_manager.set_dict_to_dict(tag_dict)
         print("===================== MainController =========================")
         # show key flags
-        self.__key_manager.print_infor()
+        self._key_manager.print_infor()
         # copy key manager to AxesController
         for ax in self.__ax_dict.values():
-            ax.key_manager = copy.deepcopy(self.__key_manager)
+            ax.key_manager = copy.deepcopy(self._key_manager)
         print("------> MainController: set_keys_manager() Done")
 
     def get_modifier_name_list(self):
@@ -194,13 +198,10 @@ class MainController():
     # set data into controllers and generate data
     def set_data(self, val=None):  # val = None, True, False
         # get key dict whole conbinations
-        key_dict_list = self.__key_manager.get_key_dicts(val)
+        key_dict_list = self._key_manager.get_key_dicts(val)
         # print(key_dict_list)
         for key_dict in key_dict_list:
             self.__model.set_data(key_dict)
-
-
-
     def default_settings(self, filename_key):
 
         print("=============================================")
@@ -208,37 +209,55 @@ class MainController():
         print("=============================================")
         print("To Do: default setting should be moved into a json file")
 
-        self.set_observer('FluoAxes', 'Roi0')
-        self.set_observer('FluoAxes', 'Roi1')
-        self.set_observer('ImageAxes', 'TimeWindow0')
-        self.set_observer('ImageAxes', 'TimeWindow1')
-        self.set_observer('ElecAxes', 'TimeWindow2')
+        # get default information from text data in the json file
+        #get the first of the filename true list
+        filename = self._key_manager.get_true_keys('filename_dict')[0]
 
-        # Reset controller flags. see KeyManager in classcommon_class set_key_list_to_dict, set_dict_to_dict
-        self.__key_manager.set_key('attribute_dict', 'Data',True)
-        self.__key_manager.set_key('data_type_dict', 'FluloFramesCh0',True)
-        self.__key_manager.set_key('data_type_dict', 'FluloFramesCh1',True)
-        self.__key_manager.set_key('time_window_dict', 'TimeWindow1',True)
-        self.__key _manager.set_key('roi_dict', 'Roi0',True)
-        self.__key_manager.set_key('roi_dict', 'Roi1',True)
+        # get default information from JSON
+        default = self.__model.get_data(
+            {'Filename': filename, 'Attribute': 'Default', 'DataType': 'Text'})
+        default_observer = default[0].data['default_settings']['default_observer']
+        # set_observer. see KeyManager and  file_setting.json
+        for key, item_list in default_observer.items():
+            for value in item_list:
+                self.set_observer(key, value)
+
+        default_key = default[0].data['default_settings']['default_key']
+        # set_keys.   see KeyManager and file_setting.json in class common_class set_key_list_to_dict, set_dict_to_dict
+        for key, item_list in default_key.items():
+            for value in item_list:
+                self._key_manager.set_key(key, value, True)
+        # show the final default infor of the main controller
+        self._key_manager.print_infor()
+
+        # set ax view flags
+        fluo_default_key = default[0].data['default_settings']['trace_ax_default_key']
+
+        for key, item_list in fluo_default_key.items():
+            for value in item_list:
+                self.ax_dict['FluoAxes']._key_manager.set_key(key, value, True)
+        # show the final default infor of the main controller
+        self._key_manager.print_infor()
+
+
+
+        self.ax_dict['FluoAxes'].set_key('controller_name_dict', 'ROI1', True)
+
+
+
+
+        print("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
+        ax._key_manager.print_infor()
+
 
 
         # this is for test
-        self.__model.set_modifier_val('Roi1',[40,40,5,5])
+        #self.__model.set_modifier_val('Roi1',[40,40,5,5])
 
 
 
 
 
-
-
-
-
-        # set ax view flags
-        for ax in self.ax_dict.values():
-            ax.set_key('controller_name_dict', 'All',
-                       False)  # see KeyManager in classcommon_class
-            ax.set_key('ch_dict', 'All', False)
 
         # for the fluo trace window
         self.ax_dict['FluoAxes'].set_key('controller_name_dict', 'ROI1', True)
@@ -256,7 +275,7 @@ class MainController():
         self.ax_dict['ElecAxes'].set_key('ch_dict', 'Ch1', True)
 
         print("===================== MainController =========================")
-        self.__key_manager.print_infor()
+        self._key_manager.print_infor()
         print("")
         print("===================== AxesController =========================")
         for ax in self.ax_dict.values():
@@ -327,7 +346,7 @@ class MainController():
                 val = [x, y, None, None]
 
                 # get True dict from key_manager of main controller
-                whole_dict_list = self.__key_manager.get_key_dicts(True)
+                whole_dict_list = self._key_manager.get_key_dicts(True)
                 roi_dict_list = [item for item in whole_dict_list if
                                  'ROI' in item['ControllerName']]
                 for main_controller_dict in roi_dict_list:
@@ -361,7 +380,7 @@ class MainController():
     def change_roi_size(self, val: list):
         controller_name = []
         new_roi_pos = []
-        whole_dict_list = self.__key_manager.get_key_dicts(True)
+        whole_dict_list = self._key_manager.get_key_dicts(True)
         roi_dict_list = [item for item in whole_dict_list if
                          'ROI' in item['ControllerName']]
         for main_controller_dict in roi_dict_list:
@@ -410,7 +429,7 @@ class MainController():
         print(f"{controller_list}: ", end='')
 
     def set_key(self, dict_name, key, val=None):
-        self.__key_manager.set_key(dict_name, key, val)
+        self._key_manager.set_key(dict_name, key, val)
 
     def print_infor(self):
         print("======================================")
@@ -418,7 +437,7 @@ class MainController():
         print("======================================")
         self.__model.print_infor()
         print("Operating controller list ---------->")
-        self.__key_manager.print_infor()
+        self._key_manager.print_infor()
         print("Axes controller infor ---------->")
         for ax in self.__ax_dict.values():
             ax.print_infor()

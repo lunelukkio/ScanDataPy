@@ -140,15 +140,22 @@ class DataService(ModelInterface):
     def get_data(self, data_tag, modifier_list=None):
         modified_data_list = []
         print(f"DataService: get_data ({list(data_tag.values())}) ---------->")
+        # get data from repository
         data_list = self.__data_repository.find_by_keys(data_tag)
         if data_list is None:
             print(f"DataService couldn't find {list(data_tag.values())} data")
-            return
-        for data in data_list:
-            modified_data = self.__modifier_service.apply_modifier(data,
+            # return data without data
+        # pass or modify
+        if modifier_list is None:
+            modified_data_list = data_list
+            print(f"DataService: get data without modified-> {modified_data_list[0].data_tag.values()}")
+        else:
+            for data in data_list:
+                # modify data
+                modified_data = self.__modifier_service.apply_modifier(data,
                                                                    modifier_list)
             # show gotten data
-            print(modified_data.data_tag.values())
+                print(f"DataService: get modified data -> {modified_data.data_tag.values()}")
             # make a list again
             modified_data_list.append(modified_data)
 

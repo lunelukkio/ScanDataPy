@@ -30,12 +30,12 @@ class TsmBuilder:
                 setting = json.load(json_file)
         num_ch = setting["tsm"]["num_ch"]
         num_elec_ch = setting["tsm"]["num_elec_ch"]
-        default_controllers = setting["tsm"]["default_controllers"]
+        default_settings = setting["tsm"]["default_settings"]
 
         default_dict = {
             'num_ch': num_ch,
             'num_elec_ch': num_elec_ch,
-            'default_controllers': default_controllers,
+            'default_settings': default_settings,
         }
 
         default = TextData(default_dict, {

@@ -2,19 +2,46 @@
   "tsm": {
     "num_ch": 2,
     "num_elec_ch": 8,
-    "default_controllers": [
-      "TimeWindow0",
-      "TimeWindow1",
-      "TimeWindow2",
-      "Roi0",
-      "Roi1",
-      "Average",
-      "Scale",
-      "BlComp"
-    ],
-    "default_observer": [
-
-    ]
+    "default_settings": {
+      "default_controllers": [
+        "TimeWindow0",
+        "TimeWindow1",
+        "TimeWindow2",
+        "Roi0",
+        "Roi1",
+        "Average",
+        "Scale",
+        "BlComp"
+      ],
+      "default_observer": {
+        "FluoAxes": ["Roi0", "Roi1"],
+        "ImageAxes": ["TimeWindow0", "TimeWindow1", "TimeWindow2"]
+      },
+      "default_key": {
+        "attribute_dict": ["Data"],
+        "data_type_dict": ["FluoFramesCh0", "FluoFramesCh1"],
+        "time_window_dict": ["TimeWindow1"],
+        "roi_dict": ["Roi0", "Roi1"]
+      },
+      "image_ax_default_key": {
+        "attribute_dict": ["Data"],
+        "data_type_dict": ["FluoFramesCh1"],
+        "time_window_dict": ["TimeWindow1"],
+        "roi_dict": []
+      },
+      "trace_ax_default_key": {
+        "attribute_dict": ["Data"],
+        "data_type_dict": ["FluoFramesCh1"],
+        "time_window_dict": ["TimeWindow1"],
+        "roi_dict": ["Roi1"]
+      },
+      "elec_ax_default_key": {
+        "attribute_dict": ["Data"],
+        "data_type_dict": ["ElecTraceCh1"],
+        "time_window_dict": [],
+        "roi_dict": []
+      }
+    }
   },
   "da": {
     "num_ch": 2,
