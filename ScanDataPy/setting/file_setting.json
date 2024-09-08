@@ -17,7 +17,7 @@
         "FluoAxes": ["Roi0", "Roi1"],
         "ImageAxes": ["TimeWindow0", "TimeWindow1", "TimeWindow2"]
       },
-      "default_key": {
+      "main_default_key": {
         "attribute_dict": ["Data"],
         "data_type_dict": ["FluoFramesCh0", "FluoFramesCh1"],
         "time_window_dict": ["TimeWindow1"],

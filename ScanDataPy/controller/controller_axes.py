@@ -43,6 +43,10 @@ class AxesController(metaclass=ABCMeta):
         self._ch_colors = setting.get("ch_color")
         self._controller_colors = setting.get("controller_color")
 
+    @property
+    def key_manager(self):
+        return self._key_manager
+
     def set_observer(self, modifier_tag) -> None:
         self._model.set_observer(modifier_tag, self)
 

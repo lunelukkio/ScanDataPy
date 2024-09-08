@@ -221,81 +221,46 @@ class MainController():
         for key, item_list in default_observer.items():
             for value in item_list:
                 self.set_observer(key, value)
-
-        default_key = default[0].data['default_settings']['default_key']
+        # MainController default settings from file_setting.json
+        main_default_key = default[0].data['default_settings']['main_default_key']
         # set_keys.   see KeyManager and file_setting.json in class common_class set_key_list_to_dict, set_dict_to_dict
-        for key, item_list in default_key.items():
+        for key, item_list in main_default_key.items():
             for value in item_list:
                 self._key_manager.set_key(key, value, True)
         # show the final default infor of the main controller
+        print("============ MainController key manager infor =============")
         self._key_manager.print_infor()
 
         # set ax view flags
         fluo_default_key = default[0].data['default_settings']['trace_ax_default_key']
-
         for key, item_list in fluo_default_key.items():
             for value in item_list:
-                self.ax_dict['FluoAxes']._key_manager.set_key(key, value, True)
+                self.ax_dict['FluoAxes'].key_manager.set_key(key, value, True)
         # show the final default infor of the main controller
-        self._key_manager.print_infor()
+        print("========== Trace AxesController key manager infor =========")
+        self.ax_dict['FluoAxes']._key_manager.print_infor()
 
+        image_default_key = default[0].data['default_settings']['image_ax_default_key']
+        for key, item_list in image_default_key.items():
+            for value in item_list:
+                self.ax_dict['ImageAxes'].key_manager.set_key(key, value, True)
+        # show the final default infor of the main controller
+        print("========== Image AxesController key manager infor =========")
+        self.ax_dict['ImageAxes']._key_manager.print_infor()
 
-
-        self.ax_dict['FluoAxes'].set_key('controller_name_dict', 'ROI1', True)
-
-
-
-
-        print("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
-        ax._key_manager.print_infor()
-
-
-
-        # this is for test
-        #self.__model.set_modifier_val('Roi1',[40,40,5,5])
-
-
-
-
-
-
-        # for the fluo trace window
-        self.ax_dict['FluoAxes'].set_key('controller_name_dict', 'ROI1', True)
-        self.ax_dict['FluoAxes'].set_key('ch_dict', 'Ch1', True)
-        # self.ax_dict['FluoAxes'].set_key('ch_dict', 'Ch2', True)
-
-        # for the image window
-        self.ax_dict['ImageAxes'].set_key('controller_name_dict',
-                                           'ImageController1', True)
-        self.ax_dict['ImageAxes'].set_key('ch_dict', 'Ch1', True)
-
-        # for the elec trace window
-        self.ax_dict['ElecAxes'].set_key('controller_name_dict',
-                                          'ElecTraceController1', True)
-        self.ax_dict['ElecAxes'].set_key('ch_dict', 'Ch1', True)
-
-        print("===================== MainController =========================")
-        self._key_manager.print_infor()
-        print("")
-        print("===================== AxesController =========================")
-        for ax in self.ax_dict.values():
-            ax.print_infor()
-
-        # Mod settings
-        print("tempral 88888888888888888888888888888888888888888888")
-        # self.set_trace_type('FluoAxes', 'DFoF')
-        # self.set_trace_type('FluoAxes', 'Normalize')
-        self.set_trace_type('FluoAxes', 'BlComp')
-
-        # Set ROI0 as background in ROI1 controller
-        # send background ROI. but it done outside of the model.
-        # background_dict = self.get_controller_data("ROI0")
-        # self.set_mod_val("ROI1", "BGCOMP", background_dict)
-        # Turn on the flag of BGCOMP for ROI1.
-        # self.set_mod_key("ROI1", "BGCOMP")
+        elec_default_key = default[0].data['default_settings']['elec_ax_default_key']
+        for key, item_list in elec_default_key.items():
+            for value in item_list:
+                self.ax_dict['ElecAxes'].key_manager.set_key(key, value, True)
+        # show the final default infor of the main controller
+        print("========== Elec AxesController key manager infor ==========")
+        self.ax_dict['ElecAxes']._key_manager.print_infor()
 
         print("========== End of default settings ==========")
         print("")
+
+        # this is for test
+        #self.__model.set_modifier_val('Roi1',[40,40,5,5])
 
     def set_observer(self, ax_name: str, modifier_tag: str) -> None:
         self.__ax_dict[ax_name].set_observer(modifier_tag)
