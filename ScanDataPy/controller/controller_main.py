@@ -197,12 +197,14 @@ class MainController():
 
     # set data into controllers and generate data
     def set_data(self, val=None):  # val = None, True, False
-        # get key dict whole conbinations
+        # get key dict whole combinations
         key_dict_list = self._key_manager.get_key_dicts(val)
-        print("11111111111111111111111111111111111111")
-        print(key_dict_list)
+        # get modifier list, but not combinations
+        modifier_list = self._key_manager.get_modifier_list(val)
+        print("3333333333333333333333333")
+        print(modifier_list)
         for key_dict in key_dict_list:
-            self.__model.set_data(key_dict)
+            self.__model.get_data(key_dict, modifier_list)
     def default_settings(self, filename_key):
 
         print("=============================================")
@@ -218,10 +220,12 @@ class MainController():
         default = self.__model.get_data(
             {'Filename': filename, 'Attribute': 'Default', 'DataType': 'Text'})
         default_observer = default[0].data['default_settings']['default_observer']
+
         # set_observer. see KeyManager and  file_setting.json
         for key, item_list in default_observer.items():
             for value in item_list:
                 self.set_observer(key, value)
+
         # MainController default settings from file_setting.json
         main_default_key = default[0].data['default_settings']['main_default_key']
         # set_keys.   see KeyManager and file_setting.json in class common_class set_key_list_to_dict, set_dict_to_dict

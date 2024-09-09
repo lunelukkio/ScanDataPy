@@ -6,6 +6,8 @@ Created on Thu Aug 29 14:49:22 2024
 """
 
 from abc import ABCMeta, abstractmethod
+import copy
+from logging import raiseExceptions
 
 from ScanDataPy.common_class import Tools
 from ScanDataPy.common_class import WholeFilename
@@ -55,16 +57,17 @@ class ModelInterface(metaclass=ABCMeta):
     def get_list_of_repository_tag_dict(self, filename_key):
         raise NotImplementedError()
 
-
-
-
-
-
-
     # set an axes observer of view into modifier. If observer is empty, update all controllers.
     @abstractmethod
     def set_observer(self, controller_key, observer: object):
         raise NotImplementedError()
+
+
+
+
+
+
+
 
     # update_observer without changing.
     @abstractmethod
@@ -141,9 +144,12 @@ class DataService(ModelInterface):
         modified_data_list = []
         print(f"DataService: get_data ({list(data_tag.values())}) ---------->")
         # get data from repository
+        print("444444444444444444444444444444444")
+        print(data_tag)
         data_list = self.__data_repository.find_by_keys(data_tag)
+        print(data_list)
         if data_list is None:
-            print(f"DataService couldn't find {list(data_tag.values())} data")
+            raise Exception(f"DataService couldn't find {list(data_tag.values())} data")
             # return data without data
         # pass or modify
         if modifier_list is None:

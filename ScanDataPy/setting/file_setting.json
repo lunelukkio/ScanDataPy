@@ -19,27 +19,25 @@
       },
       "main_default_key": {
         "attribute_dict": ["Data"],
-        "data_type_dict": ["FluoFramesCh0", "FluoFramesCh1"],
+        "data_type_dict": ["FluoFramesCh1"],
+        "origin_dict": ["File"],
         "time_window_dict": ["TimeWindow1"],
         "roi_dict": ["Roi0", "Roi1"]
       },
       "image_ax_default_key": {
         "attribute_dict": ["Data"],
         "data_type_dict": ["FluoFramesCh1"],
-        "time_window_dict": ["TimeWindow1"],
-        "roi_dict": []
+        "origin_dict" : ["TimeWindow1"]
       },
       "trace_ax_default_key": {
         "attribute_dict": ["Data"],
         "data_type_dict": ["FluoFramesCh1"],
-        "time_window_dict": ["TimeWindow1"],
-        "roi_dict": ["Roi1"]
+        "origin_dict" : ["Roi1"]
       },
       "elec_ax_default_key": {
         "attribute_dict": ["Data"],
         "data_type_dict": ["ElecTraceCh1"],
-        "time_window_dict": [],
-        "roi_dict": []
+        "origin_dict" : ["File"]
       }
     }
   },
