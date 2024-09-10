@@ -171,7 +171,6 @@ class MainController():
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
-
         # take keys from data_repository and put them into the key_manager
     def set_keys_manager(self):
         print("MainController: set_keys_manager() ----->")
@@ -268,7 +267,16 @@ class MainController():
     def set_observer(self, ax_name: str, modifier_tag: str) -> None:
         self.__ax_dict[ax_name].set_observer(modifier_tag)
 
-
+    def update_view(self, axes=None) -> None:
+        if axes is None:
+            for ax in self.__ax_dict.values():
+                ax.update()
+                ax.set_update_flag(False)  # return to deactive
+        else:
+            self.__ax_dict[axes].update()
+            self.__ax_dict[axes].set_update_flag(False)  # return to deactive
+        print("Main controller: Update done!")
+        print("")
 
 
 
@@ -290,16 +298,7 @@ class MainController():
             data_infor = self.__model.get_infor(controller_key)
         return data_infor
 
-    def update_view(self, axes=None) -> None:
-        if axes is None:
-            for ax in self.__ax_dict.values():
-                ax.update()
-                ax.set_update_flag(False)  # return to deactive
-        else:
-            self.__ax_dict[axes].update()
-            self.__ax_dict[axes].set_update_flag(False)  # return to deactive
-        print("Main controller: Update done!")
-        print("")
+
 
 
     def onclick_axes(self, event, axes_name):

@@ -218,7 +218,16 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.__main_controller.default_settings(filename_obj.name)
 
         self.__main_controller.set_data(True)
-        self.__main_controller.update_view()v
+
+
+
+
+
+
+
+
+
+        self.__main_controller.update_view()
         "The first time need ROI0 data because of dF/F"
         self.__main_controller.set_key(
             'controller_name_dict',

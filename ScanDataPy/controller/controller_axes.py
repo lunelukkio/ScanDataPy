@@ -31,7 +31,7 @@ class AxesController(metaclass=ABCMeta):
         self.update_flag = False  # Ture or False or empty: flip flag.
         self.update_flag_lock = False  # to skip ImageAxe update
 
-        self._mod_key_list = []
+
 
         # color selection for traces and ROiooxes
         try:
@@ -46,21 +46,6 @@ class AxesController(metaclass=ABCMeta):
     @property
     def key_manager(self):
         return self._key_manager
-
-    def set_observer(self, modifier_tag) -> None:
-        self._model.set_observer(modifier_tag, self)
-
-
-
-
-
-
-
-
-
-
-    def set_key(self, dict_name, key, val=None):
-        self._key_manager.set_key(dict_name, key, val)
 
     @property
     def view_flag_set(self):
@@ -77,6 +62,28 @@ class AxesController(metaclass=ABCMeta):
     @key_manager.setter
     def key_manager(self, key_dict):
         self._key_manager = key_dict
+
+    def set_key(self, dict_name, key, val=None):
+        self._key_manager.set_key(dict_name, key, val)
+
+    def set_observer(self, modifier_tag) -> None:
+        self._model.set_observer(modifier_tag, self)
+
+
+
+    @abstractmethod
+    def update(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def set_view_data(self, active_controller_dict):
+        raise NotImplementedError()
+
+
+
+
+
+
 
     def next_controller_to_true(self, controller):
         self._view_flag_set.next_controller_to_true(controller)
@@ -118,9 +125,7 @@ class AxesController(metaclass=ABCMeta):
         print(
             f"AxesController: Current mod set[{self.__class__.__name__}]: {self._mod_key_list}")
 
-    @abstractmethod
-    def set_view_data(self, active_controller_dict):
-        raise NotImplementedError()
+
 
     def update_flag_lock_sw(self, val=None) -> None:
         if val is True:
@@ -137,9 +142,7 @@ class AxesController(metaclass=ABCMeta):
         else:
             self.update_flag = update_flag
 
-    @abstractmethod
-    def update(self):
-        raise NotImplementedError()
+
 
     def print_infor(self):
         print(f"{self.__class__.__name__} current data list = ")
@@ -150,6 +153,26 @@ class TraceAxesController(AxesController):
     def __init__(self, main_controller, model, canvas,
                  ax):  # controller is for getting ROI information from FLU-AXES.
         super().__init__(main_controller, model, canvas, ax)
+
+    def update(self):
+        if self.update_flag is True:
+            # clear axes variables
+            #self._ax_obj.clear()
+            # delete old image objects. not delete box
+            print("88888888888888888888888888888888888888888888888888888888888888888888888888888888 should be not clear?")
+            self.ax_item_dict = {}
+            # make white background
+            print("999999999999999999999999999999999999999999999999999999999999999999999999999999999 should it be here?")
+            self._ax_obj.setBackground('w')
+            # See each subclass.
+            self.set_view_data()
+            # for RoiBOX
+            self.set_marker()
+            # axes method
+            self._ax_obj.autoRange()
+            print(f"AxesController: {self.__class__.__name__} updated")
+        else:
+            pass
 
     # from the flag, get data from the model and show data. 
     def set_view_data(self):
@@ -228,17 +251,7 @@ class TraceAxesController(AxesController):
                 image_axes.addItem(
                     self._marker_obj[controller_key].rectangle_obj)
 
-    # override
-    def update(self):
-        if self.update_flag is True:
-            self._ax_obj.clear()
-            self._ax_obj.setBackground('w')
-            self.set_view_data()  # See each subclass.
-            self.set_marker()  # for RoiBOX
-            self._ax_obj.autoRange()
-            print(f"AxesController: {self.__class__.__name__} updated")
-        else:
-            pass
+
 
 
 class ImageAxesController(AxesController):
@@ -265,10 +278,9 @@ class ImageAxesController(AxesController):
 
     # override    shold be in main conrtoller         
     def update(self) -> None:
-        print(self.update_flag)
         if self.update_flag is True:
-            # delete old image objects
-            self.ax_item_list = {}
+            # delete old image objects. not delete box
+            self.ax_item_dict = {}
             self.set_view_data()  # This belong to Image Controller
             print(f"AxesController: {self.__class__.__name__} updated")
         else:
