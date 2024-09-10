@@ -201,8 +201,6 @@ class MainController():
         key_dict_list = self._key_manager.get_key_dicts(val)
         # get modifier list, but not combinations
         modifier_list = self._key_manager.get_modifier_list(val)
-        print("3333333333333333333333333")
-        print(modifier_list)
         for key_dict in key_dict_list:
             self.__model.get_data(key_dict, modifier_list)
     def default_settings(self, filename_key):

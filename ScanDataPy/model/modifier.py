@@ -241,7 +241,7 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
             self.set_data(data)
             # set True of update on each AxesController
             self.observer.notify_observer()
-        return super().modifier_request(data, modifier_list)
+        return self.modifier_request(data, modifier_list)
 
     @abstractmethod
     def set_data(self, data):

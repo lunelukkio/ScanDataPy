@@ -144,10 +144,7 @@ class DataService(ModelInterface):
         modified_data_list = []
         print(f"DataService: get_data ({list(data_tag.values())}) ---------->")
         # get data from repository
-        print("444444444444444444444444444444444")
-        print(data_tag)
         data_list = self.__data_repository.find_by_keys(data_tag)
-        print(data_list)
         if data_list is None:
             raise Exception(f"DataService couldn't find {list(data_tag.values())} data")
             # return data without data

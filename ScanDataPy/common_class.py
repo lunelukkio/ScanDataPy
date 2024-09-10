@@ -291,23 +291,23 @@ class KeyManager:
         extracted_dict_list = [dict for dict in all_dicts if any(dict.values())]
         #list = [key for dict in extracted_list for key, value in dict.items() if value == val]
         # internal function
-        def recursive_combinations(current_combination, remaining_list):
+        def recursive_combinations(current_combination, remaining_dicts):
             if not remaining_dicts:  # if there is no remaining_dicts,
                 # after the last dict, the result has dict combinations
                 result.append(current_combination)  # add a dict to the list
                 return
-            # take the first from the remaining lists
-            current_list = remaining_list[0]
+            # take the first from the remaining dicts
+            current_dict = remaining_dicts[0]
             # check key is the same as status
-            for modifier in current_list:
+            for key, status in current_dict.items():
                 if status == val:
                     # shallow copy for non effect of original data
                     new_combination = current_combination.copy()
-                    new_combination[field_name] = key
+                    new_combination.append(key)
                     # delete the current remaining object
                     recursive_combinations(new_combination, remaining_dicts[1:])
         # start from this line
-        recursive_combinations({}, extracted_dict_list)
+        recursive_combinations([], extracted_dict_list)
 
         return result
 
