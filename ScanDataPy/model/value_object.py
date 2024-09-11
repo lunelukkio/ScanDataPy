@@ -77,6 +77,10 @@ class FramesData(ValueObj):
     @property
     def interval(self):
         return self.__interval
+
+    @property
+    def pixel_size(self):
+        return self.__pixel_size
         
     def show_data(self, frame_num, plt=pg) -> object:  # plt should be an axes in a view class object = AxesImage
         return plt.setImage(self._data[:, :, frame_num])
@@ -93,6 +97,10 @@ class ImageData(ValueObj):
             raise Exception('The argument of ImageData should be numpy 2D data(x, y)')
             
         self.__pixel_size = pixel_size
+
+    @property
+    def pixel_size(self):
+        return self.__pixel_size
 
     # This is for difference image
     def __sub__(self):
@@ -121,6 +129,21 @@ class TraceData(ValueObj):
         self.__length = val.shape[0]  # the number of data points
         self.__interval = interval  # data interval
 
+    @property
+    def time(self) -> np.ndarray:
+        return self.__time
+
+    @time.setter
+    def time(self, val):
+        raise Exception('TimeData is a value object (Immutable).')
+
+    @property
+    def length(self) -> int:
+        return self.__length
+
+    @property
+    def interval(self) -> float:
+        return self.__interval
     
     def __add__(self, sum_val) -> object:
         if type(sum_val) == float or \
@@ -177,21 +200,7 @@ class TraceData(ValueObj):
         shifted_time_val = time_val - time_val[0]  # This is for shifting the first data to 0ms.
         return shifted_time_val
         
-    @property
-    def time(self) -> np.ndarray:
-        return self.__time
-    
-    @time.setter
-    def time(self, val):
-        raise Exception('TimeData is a value object (Immutable).')
-            
-    @property
-    def length(self) -> int:
-        return self.__length
 
-    @property
-    def interval(self) -> float:
-        return self.__interval
     
     def check_length(self, data: object) -> bool:
         return bool(self.__length == data.__length)

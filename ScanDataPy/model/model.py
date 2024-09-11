@@ -24,10 +24,6 @@ class ModelInterface(metaclass=ABCMeta):
     Basically, call set_modifier_values > 
     """
 
-    # create data from experiments files.
-    @abstractmethod
-    def create_original_data(self, fullname):
-        raise NotImplementedError()
 
     @abstractmethod
     def add_modifier(self, modifier_name):
@@ -42,15 +38,13 @@ class ModelInterface(metaclass=ABCMeta):
     def set_modifier_val(self, modifier_tag: dict, *args, **kwargs):
         raise NotImplementedError()
 
-    # make a new data save in the data_repository.
     @abstractmethod
-    def create_data(self,
-                    data_tag):  # Needs 'Filename', 'Attribute', 'Ch', 'Origin', 'ControllerName'
+    def set_data(self, data_tag, modifier_list_list=None):
         raise NotImplementedError()
 
     # return value object
     @abstractmethod
-    def get_data(self, data_tag):
+    def get_data(self, data_tag, modifier_list_list=None):
         raise NotImplementedError()
 
     @abstractmethod
@@ -133,14 +127,21 @@ class DataService(ModelInterface):
     def set_modifier_val(self, modifier_name, *args, **kwargs):
         self.__modifier_service.set_modifier_val(modifier_name, *args, **kwargs)
 
-    def create_original_data(self, fullname):
-        pass
+        # This is for saving data to repository
+    def set_data(self, data_tag, modifier_list_list=None):
+        # create data
+        modified_data_list = self.__create_data(data_tag, modifier_list_list)
+        # save in the repository
+        for data in modified_data_list:
+            self.__data_repository.save(data)
 
-    def create_data(self,
-                    data_tag):  # Needs 'Filename', 'Attribute', 'Ch', 'Origin', 'ControllerName'
-        pass
+        # This is for sending data to frontend.
+    def get_data(self, data_tag, modifier_list_list=None):
+        # create data
+        modified_data_list = self.__create_data(data_tag, modifier_list_list)
+        return modified_data_list
 
-    def get_data(self, data_tag, modifier_list=None):
+    def __create_data(self, data_tag, modifier_list_list=None):
         modified_data_list = []
         print(f"DataService: get_data ({list(data_tag.values())}) ---------->")
         # get data from repository
@@ -149,20 +150,26 @@ class DataService(ModelInterface):
             raise Exception(f"DataService couldn't find {list(data_tag.values())} data")
             # return data without data
         # pass or modify
-        if modifier_list is None:
+        if modifier_list_list is None:
+            for data in data_list:
+                self.__data_repository.save(data)
             modified_data_list = data_list
+
             print(f"DataService: get data without modified-> {modified_data_list[0].data_tag.values()}")
         else:
             for data in data_list:
-                # modify data
-                modified_data = self.__modifier_service.apply_modifier(data,
-                                                                   modifier_list)
-            # show gotten data
-                print(f"DataService: get modified data -> {modified_data.data_tag.values()}")
-            # make a list again
-            modified_data_list.append(modified_data)
+                for modifier_list in modifier_list_list:
+                    # modify data
+                    modified_data = self.__modifier_service.apply_modifier(data,
+                                                                       modifier_list)
+                    # show gotten data
+                    print(f"DataService: get modified data -> {modified_data.data_tag.values()}")
+                    # make a list again
+                    modified_data_list.append(modified_data)
+                    self.__data_repository.save(modified_data)
 
         print("----------> Dataservice: get_data Done")
+
         return modified_data_list
 
     def get_modifier_name_list(self):

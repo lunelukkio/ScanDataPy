@@ -163,6 +163,7 @@ class KeyManager:
 
         self._time_window_dict = {}  # {'TimeWindow0':True}
         self._roi_dict = {}  # {'Roi0':False, 'Roi1':True, 'Roi2':False}
+        self._average_dict = {}  # {'average0':True}
         self._scale_dict = {}  # {'DFoF':True, 'Normalize':False}
         self._bl_comp_dict = {}  # {'BlComp':True}
 
@@ -198,18 +199,6 @@ class KeyManager:
     def origin_dict(self, origin_dict) -> None:
         self._origin_dict = origin_dict
 
-    def set_key_list_to_dict(self, key_list):
-        # copy modifier names from the ModifierService to the KeyManager
-        for key in key_list:
-            if 'TimeWindow' in key:
-                self._time_window_dict[key] = False
-            elif 'Roi' in key:
-                self._roi_dict[key] = False
-            elif 'Scale' in key:
-                self._scale_dict[key] = False
-            elif 'BlComp' in key:
-                self._bl_comp_dict[key] = False
-
     def set_dict_to_dict(self, key_dict):
         print(key_dict)
         for key, value in key_dict.items():
@@ -223,6 +212,21 @@ class KeyManager:
                 self._data_type_dict[value] = False
             elif 'Origin' in key:
                 self._origin_dict[value] = False
+
+    def set_key_list_to_dict(self, key_list):
+        # copy modifier names from the ModifierService to the KeyManager
+        for key in key_list:
+            if 'TimeWindow' in key:
+                self._time_window_dict[key] = False
+            elif 'Roi' in key:
+                self._roi_dict[key] = False
+            elif 'Average' in key:
+                self._average_dict[key] = False
+            elif 'Scale' in key:
+                self._scale_dict[key] = False
+            elif 'BlComp' in key:
+                self._bl_comp_dict[key] = False
+
 
     def set_key(self, dict_name, key,
                 val=None):  # e.g. (filename_dict, '30503A001.tsm',Ture)
@@ -284,6 +288,7 @@ class KeyManager:
         all_dicts = [
             self._time_window_dict,
             self._roi_dict,
+            self._average_dict,
             self._scale_dict,
             self._bl_comp_dict
         ]
@@ -320,6 +325,7 @@ class KeyManager:
         print("")
         print(f"time_window_dict     = {self._time_window_dict}")
         print(f"roi_dict             = {self._roi_dict}")
+        print(f"average_dict         = {self._average_dict}")
         print(f"scale_dict           = {self._scale_dict}")
         print(f"bl_comp_dict         = {self._bl_comp_dict}")
         print("===========================================================")
@@ -345,7 +351,12 @@ class Tools:
     @staticmethod
     def take_ch_from_str(input_string):
         pattern = r"Ch\d+"
-        return re.search(pattern, input_string)
+        match = re.search(pattern, input_string)
+        if match:
+            return match.group()
+        # if no match return None
+        return None
+
 
     """ calculation """
 

@@ -22,7 +22,8 @@
         "data_type_dict": ["FluoFramesCh1"],
         "origin_dict": ["File"],
         "time_window_dict": ["TimeWindow1"],
-        "roi_dict": ["Roi0", "Roi1"]
+        "roi_dict": ["Roi0", "Roi1"],
+        "average_dict": ["Average0"]
       },
       "image_ax_default_key": {
         "attribute_dict": ["Data"],

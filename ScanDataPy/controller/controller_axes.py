@@ -69,8 +69,6 @@ class AxesController(metaclass=ABCMeta):
     def set_observer(self, modifier_tag) -> None:
         self._model.set_observer(modifier_tag, self)
 
-
-
     @abstractmethod
     def update(self):
         raise NotImplementedError()
