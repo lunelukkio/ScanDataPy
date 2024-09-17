@@ -236,14 +236,9 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
         if self.modifier_name in modifier_list:
             new_data = self.set_data(data)
             # set True of update on each AxesController
-            self.observer.notify_observer()
         else:
             new_data = data
         return self.modifier_request(new_data, modifier_list)
-
-    @abstractmethod
-    def set_data(self, data):
-        raise NotImplementedError()
 
     @property
     def modifier_name(self):
@@ -257,8 +252,16 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
     def val_obj(self):
         return self._val_obj
 
+    @abstractmethod
+    def set_val(self):
+        raise NotImplementedError()
+
     def get_val(self):  # e.g. roi value
         return self._val_obj
+
+    @abstractmethod
+    def set_data(self, data):
+        raise NotImplementedError()
 
     def set_observer(self, observer):
         self.observer.set_observer(observer)
@@ -277,9 +280,11 @@ class StartModifier(ModifierHandler):
     def apply_modifier(self, data, modifier_list):
         return super().modifier_request(data, modifier_list)
 
-    def set_data(self, data):
+    def set_val(self):
         pass
 
+    def set_data(self, data):
+        pass
 
 class TimeWindow(ModifierHandler):
     def __init__(self, modifier_name):
@@ -297,7 +302,8 @@ class TimeWindow(ModifierHandler):
         width = window_value_list[1]
         self._val_obj = TimeWindowVal(start,
                                       width)  # replace the roi
-        print(f"set TimeWindow: {self._val_obj.data}")
+        self.observer.notify_observer()
+        print(f"set TimeWindow: {self._val_obj.data} and notified")
 
     # calculate a image from a single frames data with a time window value object
     def set_data(self, origin_data):
@@ -380,7 +386,8 @@ class Roi(ModifierHandler):
                 else:
                     roi_val[i] = self._val_obj.data[i] + roi_val[i]
         self._val_obj = RoiVal(*roi_val[:4])  # replace the roi
-        # print(f"set value = {self._val_obj.data}")
+        self.observer.notify_observer()
+        print(f"set Roi: {self._val_obj.data} and notified")
 
     # calculate a trace from a single frames data with a roi value object
     def set_data(self, origin_data: object):
@@ -450,8 +457,7 @@ class Average(ModifierHandler):
     # average direction. 1 is for images, 2 is for traces
     def set_val(self, val: str):  # val = [start, width]
         self.average_mode = val
-
-        print(f"set Average: {self.average_mode}  1=image, 2=trace")
+        print(f"set Average: {self.average_mode}  1=Image, 2=Trace")
 
     def set_data(self, data):
         if any('Image' in str for str in data.data_tag.values()):
@@ -504,9 +510,9 @@ class Scale(ModifierHandler):
         # pass
 
     # 'Normal' or 'DFoF' or 'Normalize'
-    def set_val(self, val: str):  # 'DFoF' or 'Normalize'
-        self.scale_mode = val
-        print(f"set Scale: {val}")
+    def set_val(self, mode: str):  # 'DFoF' or 'Normalize'
+        self.scale_mode = mode
+        print(f"set Scale: {mode}")
 
     def set_data(self, data) -> object:
         if self.scale_mode == 'Normal':
@@ -528,6 +534,9 @@ class Scale(ModifierHandler):
 
 
 class BlComp(ModifierHandler):
+    def set_val(self, data):  # data = baseline trace obj
+        pass
+
     def set_data(self, data):
         pass
 
@@ -546,6 +555,9 @@ class EndModifier(ModifierHandler):
 
     def apply_modifier(self, data, modifier_list):
         return data
+
+    def set_val(self):
+        pass
 
     def set_data(self, data):
         pass

@@ -6,12 +6,12 @@ main for controller
 """
 
 from abc import ABCMeta, abstractmethod
+
 from ScanDataPy.model.model import DataService
-from ScanDataPy.controller.controller_axes import TraceAxesController, \
-    ImageAxesController
+from ScanDataPy.controller.controller_axes import TraceAxesController
+from ScanDataPy.controller.controller_axes import ImageAxesController
 from ScanDataPy.common_class import FileService, KeyManager, Tools
-import os
-import copy
+
 
 
 class ControllerInterface(metaclass=ABCMeta):
@@ -170,14 +170,20 @@ class MainController():
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
-    # set data into controllers and generate data
-    def set_data(self, val=None):  # val = None, True, False
-        # get key dict whole combinations
-        key_dict_list = self._key_manager.get_key_dicts(val)
-        # get modifier list, but not combinations
-        modifier_list = self._key_manager.get_modifier_list(val)
-        for key_dict in key_dict_list:
-            self.__model.set_data(key_dict, modifier_list)
+    # set values into controllers
+    def get_data(self):
+        # get lists of the data tag list
+        lists_of_tag_list = self._key_manager.get_lists_of_tag_list()
+        # get modifier list
+        modifier_list = self._key_manager.get_modifier_list()
+        for tag_list in lists_of_tag_list:
+            self.__model.set_data(tag_list, modifier_list)
+
+
+
+
+
+
 
     def default_settings(self, filename_key):
 
@@ -237,6 +243,12 @@ class MainController():
         # show the final default infor of the main controller
         print("========== Elec AxesController key manager infor ==========")
         self.ax_dict['ElecAxes']._key_manager.print_infor()
+
+        # default modifiers values.
+        default_values_list = default[0].data['default_settings']['modifier_default_val']
+        for key, value in default_values_list.items():
+            self.__model.set_modifier_val(key, value)
+
 
         print("========== End of default settings ==========")
         print("")

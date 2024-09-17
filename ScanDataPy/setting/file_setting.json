@@ -15,6 +15,18 @@
         "Scale0",
         "BlComp0"
       ],
+      "modifier_default_val": {
+          "TimeWindow0": [0, 5],
+          "TimeWindow1": [0, 5],
+          "TimeWindow2": [0, 10],
+          "TimeWindow3": [0, -1],
+          "Roi0": [10, 10, 5, 5],
+          "Roi1": [40, 40, 1, 1],
+          "Average0": "Image",
+          "Average1": "Roi",
+          "Scale0": "DFoF",
+          "BlComp0": "None"
+      },
       "default_observer": {
         "FluoAxes": ["Roi0", "Roi1"],
         "ImageAxes": ["TimeWindow0", "TimeWindow1"],
@@ -22,7 +34,7 @@
       },
       "main_default_tag": {
         "attribute_list": ["Data"],
-        "data_type_list": ["FluoFramesCh1"],
+        "data_type_list": ["FluoFramesCh1", "FluoFramesCh2"],
         "origin_list": ["File"]
       },
       "image_ax_default_tag": {

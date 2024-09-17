@@ -216,7 +216,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
             0)  # make user controllers
         self.__main_controller.default_settings(filename_obj.name)
 
-        self.__main_controller.set_data(True)
+        self.__main_controller.get_data()
         self.__main_controller.print_infor()
 
 

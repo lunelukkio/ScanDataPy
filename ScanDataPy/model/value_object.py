@@ -282,7 +282,7 @@ class TimeWindowVal:  # Should be called by the same class for __add__ and __sub
     def __init__(self, start: int, width=1, data_type=None):
         if start < 0:
             raise Exception('TimeWindow start values should be 0 or more')
-        if width < 1:
+        if width < -1:
             raise Exception('FrameWindow width values should be 1 or more')
         self.__data = np.array([start, width])
         called_class = inspect.stack()[1].frame.f_locals['self']
