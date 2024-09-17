@@ -156,16 +156,12 @@ class WholeFilename:  # Use it only in a view and controller
 
 class KeyManager:
     def __init__(self):
-        self._filename_dict = {}
-        self._attribute_dict = {}  # {'Data':False, 'Text':False}
-        self._data_type_dict = {}  # {'FluoFrames1':False, 'FluoTrace1':True, 'ElecTrace1':False, 'Header':False, 'Default':False}
-        self._origin_dict = {}  # {'File':False, 'Roi1':True}
+        self.filename_list = []
+        self.attribute_list = []  # ['Data', 'Text']
+        self.data_type_list = []  # ['FluoFrames1', 'FluoTrace1', 'ElecTrace1', 'Header', 'Default']
+        self.origin_list = []  # ['File', 'Roi1']
 
-        self._time_window_dict = {}  # {'TimeWindow0':True}
-        self._roi_dict = {}  # {'Roi0':False, 'Roi1':True, 'Roi2':False}
-        self._average_dict = {}  # {'average0':True}
-        self._scale_dict = {}  # {'DFoF':True, 'Normalize':False}
-        self._bl_comp_dict = {}  # {'BlComp':True}
+        self.modifier_list = []  #
 
     @property
     def filename_dict(self) -> dict:
@@ -199,56 +195,13 @@ class KeyManager:
     def origin_dict(self, origin_dict) -> None:
         self._origin_dict = origin_dict
 
-    def set_dict_to_dict(self, key_dict):
-        print(key_dict)
-        for key, value in key_dict.items():
-            if 'Filename' in key:
-                self._filename_dict[value] = True
-            elif 'Attribute' in key:
-                self._attribute_dict[value] = False
-            elif 'DataType' in key:
-                self._data_type_dict[value] = False
-            elif 'DataType' in key:
-                self._data_type_dict[value] = False
-            elif 'Origin' in key:
-                self._origin_dict[value] = False
-
-    def set_key_list_to_dict(self, key_list):
-        # copy modifier names from the ModifierService to the KeyManager
-        for key in key_list:
-            if 'TimeWindow' in key:
-                self._time_window_dict[key] = False
-            elif 'Roi' in key:
-                self._roi_dict[key] = False
-            elif 'Average' in key:
-                self._average_dict[key] = False
-            elif 'Scale' in key:
-                self._scale_dict[key] = False
-            elif 'BlComp' in key:
-                self._bl_comp_dict[key] = False
-
-
-    def set_key(self, dict_name, key,
-                val=None):  # e.g. (filename_dict, '30503A001.tsm',Ture)
-        dictionary = getattr(self, f'_{dict_name}')  # get dict
-
-        # inner function to update key
-        def update_key(key):
-            if key is not None:
-                dictionary[key] = val
-            else:
-                dictionary[key] = not dictionary.get(key,
-                                                     False)  # if there is no key, return False
-        # if key == 'All', every key will be changed
-        if key == 'All':
-            for key in dictionary:
-                update_key(key)
+    # set list values
+    def set_key(self, tag_list_name, tag):  # e.g. (filename_dict, '30503A001.tsm')
+        list_name = getattr(self, f'{tag_list_name}')  # get dict
+        if tag in list_name:
+            list_name.remove(tag)
         else:
-            update_key(key)
-
-    def get_true_keys(self, dict_name: str):
-        dictionary = getattr(self, f'_{dict_name}')
-        return [key for key, value in dictionary.items() if value]
+            list_name.append(tag)
 
     # get key dict combinations from whole dict.  convert variable names to 'dictionary keys'.
     # val = True: True combination, False: False combination, None: whole combination
@@ -284,50 +237,16 @@ class KeyManager:
         return result
 
     def get_modifier_list(self, val=True) -> list:
-        result = []
-        all_dicts = [
-            self._time_window_dict,
-            self._roi_dict,
-            self._average_dict,
-            self._scale_dict,
-            self._bl_comp_dict
-        ]
-        # remove only False dict
-        extracted_dict_list = [dict for dict in all_dicts if any(dict.values())]
-        #list = [key for dict in extracted_list for key, value in dict.items() if value == val]
-        # internal function
-        def recursive_combinations(current_combination, remaining_dicts):
-            if not remaining_dicts:  # if there is no remaining_dicts,
-                # after the last dict, the result has dict combinations
-                result.append(current_combination)  # add a dict to the list
-                return
-            # take the first from the remaining dicts
-            current_dict = remaining_dicts[0]
-            # check key is the same as status
-            for key, status in current_dict.items():
-                if status == val:
-                    # shallow copy for non effect of original data
-                    new_combination = current_combination.copy()
-                    new_combination.append(key)
-                    # delete the current remaining object
-                    recursive_combinations(new_combination, remaining_dicts[1:])
-        # start from this line
-        recursive_combinations([], extracted_dict_list)
-
-        return result
+        return self._modifiers
 
     def print_infor(self):
         print("===================== Key Manager =========================")
-        print(f"filename_dict        = {self._filename_dict}")
-        print(f"attribute_dict       = {self._attribute_dict}")
-        print(f"data_type_dict       = {self._data_type_dict}")
-        print(f"origin_dict          = {self._origin_dict}")
+        print(f"filename_list        = {self.filename_list}")
+        print(f"attribute_list       = {self.attribute_list}")
+        print(f"data_type_list       = {self.data_type_list}")
+        print(f"origin_list          = {self.origin_list}")
         print("")
-        print(f"time_window_dict     = {self._time_window_dict}")
-        print(f"roi_dict             = {self._roi_dict}")
-        print(f"average_dict         = {self._average_dict}")
-        print(f"scale_dict           = {self._scale_dict}")
-        print(f"bl_comp_dict         = {self._bl_comp_dict}")
+        print(f"modifier_list        = {self.modifier_list}")
         print("===========================================================")
 
 

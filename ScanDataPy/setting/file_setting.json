@@ -3,42 +3,45 @@
     "num_ch": 2,
     "num_elec_ch": 8,
     "default_settings": {
-      "default_controllers": [
+      "default_modifiers": [
         "TimeWindow0",
         "TimeWindow1",
         "TimeWindow2",
+        "TimeWindow3",
         "Roi0",
         "Roi1",
-        "Average",
-        "Scale",
-        "BlComp"
+        "Average0",
+        "Average1",
+        "Scale0",
+        "BlComp0"
       ],
       "default_observer": {
         "FluoAxes": ["Roi0", "Roi1"],
-        "ImageAxes": ["TimeWindow0", "TimeWindow1", "TimeWindow2"]
+        "ImageAxes": ["TimeWindow0", "TimeWindow1"],
+        "ElecAxes": ["TimeWindow2", "TimeWindow3"]
       },
-      "main_default_key": {
-        "attribute_dict": ["Data"],
-        "data_type_dict": ["FluoFramesCh1"],
-        "origin_dict": ["File"],
-        "time_window_dict": ["TimeWindow1"],
-        "roi_dict": ["Roi0", "Roi1"],
-        "average_dict": ["Average0"]
+      "main_default_tag": {
+        "attribute_list": ["Data"],
+        "data_type_list": ["FluoFramesCh1"],
+        "origin_list": ["File"]
       },
-      "image_ax_default_key": {
-        "attribute_dict": ["Data"],
-        "data_type_dict": ["FluoFramesCh1"],
-        "origin_dict" : ["TimeWindow1"]
+      "image_ax_default_tag": {
+        "attribute_list": ["Data"],
+        "data_type_list": ["FluoFramesCh1"],
+        "origin_list": ["File"],
+        "modifier_list": ["TimeWindow1", "Average0"]
       },
-      "trace_ax_default_key": {
-        "attribute_dict": ["Data"],
-        "data_type_dict": ["FluoFramesCh1"],
-        "origin_dict" : ["Roi1"]
+      "trace_ax_default_tag": {
+        "attribute_list": ["Data"],
+        "data_type_list": ["FluoFramesCh1"],
+        "origin_list" : ["File"],
+        "modifier_list": ["Roi1", "Average1"]
       },
-      "elec_ax_default_key": {
-        "attribute_dict": ["Data"],
-        "data_type_dict": ["ElecTraceCh1"],
-        "origin_dict" : ["File"]
+      "elec_ax_default_tag": {
+        "attribute_list": ["Data"],
+        "data_type_list": ["ElecTraceCh1"],
+        "origin_list" : ["File"],
+        "modifier_list": ["TimeWindow2"]
       }
     }
   },

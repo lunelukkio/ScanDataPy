@@ -126,7 +126,7 @@ class MainController():
         # make experiments data
         open_experiments = self.create_experiments(filename_obj)
         if open_experiments is True:
-            self._key_manager.set_key('filename_dict', filename_obj.name, True)
+            self._key_manager.set_key('filename_list', filename_obj.name)
             print("============================================================================")
             print(f"========== MainController: Open {filename_obj.name}: suceeded!!! ==========          :)")
             print("============================================================================")
@@ -151,14 +151,13 @@ class MainController():
     def create_default_modifier(self, filename_number):
         print("MainController: create_default_modifiers() ----->")
 
-        filename = self._key_manager.get_true_keys('filename_dict')[
-            filename_number]
+        filename = self._key_manager.filename_list[0]
         # get default information from text data in the json file
         default = self.__model.get_data(
             {'Filename': filename, 'Attribute': 'Default', 'DataType': 'Text'})
 
         # default[0] because default is returned as value object list
-        for modifier_name in default[0].data['default_settings']['default_controllers']:
+        for modifier_name in default[0].data['default_settings']['default_modifiers']:
             self.create_modifier(modifier_name)
         print("-----> MainController: create_default_modifier() Done")
 
@@ -170,29 +169,6 @@ class MainController():
 
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
-
-        # take keys from data_repository and put them into the key_manager
-    def set_keys_manager(self):
-        print("MainController: set_keys_manager() ----->")
-        # get the modifier name list
-        modifier_name_list = self.get_modifier_name_list()
-        # set list into key_manager
-        self._key_manager.set_key_list_to_dict(modifier_name_list)
-        # get data_tag_dict
-        list_of_tag_dict = self.__model.get_list_of_repository_tag_dict()
-        # set data_tag to key_manager
-        for tag_dict in list_of_tag_dict:
-            self._key_manager.set_dict_to_dict(tag_dict)
-        print("===================== MainController =========================")
-        # show key flags
-        self._key_manager.print_infor()
-        # copy key manager to AxesController
-        for ax in self.__ax_dict.values():
-            ax.key_manager = copy.deepcopy(self._key_manager)
-        print("------> MainController: set_keys_manager() Done")
-
-    def get_modifier_name_list(self):
-        return self.__model.get_modifier_name_list()
 
     # set data into controllers and generate data
     def set_data(self, val=None):  # val = None, True, False
@@ -212,7 +188,7 @@ class MainController():
 
         # get default information from text data in the json file
         #get the first of the filename true list
-        filename = self._key_manager.get_true_keys('filename_dict')[0]
+        filename = self._key_manager.filename_list[0]
 
         # get default information from JSON
         default = self.__model.get_data(
@@ -225,36 +201,39 @@ class MainController():
                 self.set_observer(key, value)
 
         # MainController default settings from file_setting.json
-        main_default_key = default[0].data['default_settings']['main_default_key']
+        main_default_tag_list = default[0].data['default_settings']['main_default_tag']
         # set_keys.   see KeyManager and file_setting.json in class common_class set_key_list_to_dict, set_dict_to_dict
-        for key, item_list in main_default_key.items():
-            for value in item_list:
-                self._key_manager.set_key(key, value, True)
+        for tag_list_name, tag_list in main_default_tag_list.items():
+            for tag in tag_list:
+                self._key_manager.set_key(tag_list_name, tag)
         # show the final default infor of the main controller
         print("============ MainController key manager infor =============")
         self._key_manager.print_infor()
 
         # set ax view flags
-        fluo_default_key = default[0].data['default_settings']['trace_ax_default_key']
-        for key, item_list in fluo_default_key.items():
-            for value in item_list:
-                self.ax_dict['FluoAxes'].key_manager.set_key(key, value, True)
+        self.ax_dict['FluoAxes'].key_manager.set_key('filename_list', filename)
+        fluo_default_tag_list = default[0].data['default_settings']['trace_ax_default_tag']
+        for tag_list_name, tag_list in fluo_default_tag_list.items():
+            for tag in tag_list:
+                self.ax_dict['FluoAxes'].key_manager.set_key(tag_list_name, tag)
         # show the final default infor of the main controller
         print("========== Trace AxesController key manager infor =========")
         self.ax_dict['FluoAxes']._key_manager.print_infor()
 
-        image_default_key = default[0].data['default_settings']['image_ax_default_key']
-        for key, item_list in image_default_key.items():
-            for value in item_list:
-                self.ax_dict['ImageAxes'].key_manager.set_key(key, value, True)
+        self.ax_dict['ImageAxes'].key_manager.set_key('filename_list', filename)
+        image_default_tag_list = default[0].data['default_settings']['image_ax_default_tag']
+        for tag_list_name, tag_list in image_default_tag_list.items():
+            for tag in tag_list:
+                self.ax_dict['ImageAxes'].key_manager.set_key(tag_list_name, tag)
         # show the final default infor of the main controller
         print("========== Image AxesController key manager infor =========")
         self.ax_dict['ImageAxes']._key_manager.print_infor()
 
-        elec_default_key = default[0].data['default_settings']['elec_ax_default_key']
-        for key, item_list in elec_default_key.items():
-            for value in item_list:
-                self.ax_dict['ElecAxes'].key_manager.set_key(key, value, True)
+        self.ax_dict['ElecAxes'].key_manager.set_key('filename_list', filename)
+        elec_default_tag_list = default[0].data['default_settings']['elec_ax_default_tag']
+        for tag_list_name, tag_list in elec_default_tag_list.items():
+            for tag in tag_list:
+                self.ax_dict['ElecAxes'].key_manager.set_key(tag_list_name, tag)
         # show the final default infor of the main controller
         print("========== Elec AxesController key manager infor ==========")
         self.ax_dict['ElecAxes']._key_manager.print_infor()

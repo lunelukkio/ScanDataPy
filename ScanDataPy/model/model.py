@@ -172,9 +172,6 @@ class DataService(ModelInterface):
 
         return modified_data_list
 
-    def get_modifier_name_list(self):
-        return self.__modifier_service.get_chain_name_list()
-
     def get_list_of_repository_tag_dict(self):
         return self.__data_repository.get_list_of_tag_dict()
 

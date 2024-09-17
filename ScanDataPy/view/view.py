@@ -214,7 +214,6 @@ class QtDataWindow(QtWidgets.QMainWindow):
             filename_obj)  # make a model and get filename obj
         self.__main_controller.create_default_modifier(
             0)  # make user controllers
-        self.__main_controller.set_keys_manager()
         self.__main_controller.default_settings(filename_obj.name)
 
         self.__main_controller.set_data(True)

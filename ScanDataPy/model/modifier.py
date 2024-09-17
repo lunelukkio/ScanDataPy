@@ -157,12 +157,6 @@ class ModifierService(ModifierServiceInterface):
             # return the chain
         return modifier_chain_list[0] if modifier_chain_list else None
 
-    def get_chain_name_list(self):
-        list = []
-        for modifier in self.__modifier_chain_list:
-            list.append(modifier.modifier_name)
-        return list
-
     def print_chain(self):
         print("ModifierService: modifier_chain -> ", end="")
         current_modifier = self.__start_modifier
@@ -476,14 +470,12 @@ class Average(ModifierHandler):
                     'Filename': data.data_tag['Filename'],
                     'Attribute': 'Data',
                     'DataType': 'FluoImage' + ch,
-                    'Origin': data.data_tag['Origin']
+                    'Origin': self.modifier_name
                 },
                 [0, 0]  # pixel size
         )
         if self.average_mode == 'Roi':
             # mean to trace
-            print("66666666666666666666666666666666666666666666")
-            print(data.data)
             data = np.mean(data, axis=(0, 1))
             # make a trace value object
             print(f"Average: Averaged a FluoFrames to a trace")
@@ -495,7 +487,7 @@ class Average(ModifierHandler):
                     'Filename': data.data_tag['Filename'],
                     'Attribute': 'Data',
                     'DataType': 'FluoTrace' + ch,
-                    'Origin': data.data_tag['Origin']
+                    'Origin': self.modifier_name
                 },
                 data.interval
             )
