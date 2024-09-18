@@ -173,7 +173,7 @@ class MainController():
     # set values into controllers
     def get_data(self):
         # get lists of the data tag list
-        lists_of_tag_list = self._key_manager.get_lists_of_tag_list()
+        lists_of_tag_list = self._key_manager.get_dicts_from_tag_list()
         # get modifier list
         modifier_list = self._key_manager.get_modifier_list()
         for tag_list in lists_of_tag_list:

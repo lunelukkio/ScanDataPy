@@ -128,17 +128,17 @@ class DataService(ModelInterface):
         self.__modifier_service.set_modifier_val(modifier_name, *args, **kwargs)
 
         # This is for saving data to repository
-    #def set_data(self, data_tag, modifier_list=None):
+    def set_data(self, data_tag, modifier_list=None):
         # create data
-        #modified_data_list = self.__create_data(data_tag, modifier_list)
+        modified_data_list = self.__create_data(data_tag, modifier_list)
         # save in the repository
-        #for data in modified_data_list:
-        #    self.__data_repository.save(data)
+        for data in modified_data_list:
+            self.__data_repository.save(data)
 
         # This is for sending data to frontend.
-    def get_data(self, data_tag, modifier_list_list=None):
+    def get_data(self, data_tag, list_of_modifier_lists=None):
         # create data
-        modified_data_list = self.__create_data(data_tag, modifier_list_list)
+        modified_data_list = self.__create_data(data_tag, list_of_modifier_lists)
         return modified_data_list
 
     def __create_data(self, data_tag, modifier_list=None):
@@ -150,7 +150,7 @@ class DataService(ModelInterface):
             raise Exception(f"DataService couldn't find {list(data_tag.values())} data")
             # return data without data
         # pass or modify
-        if modifier_list_list is None:
+        if modifier_list is None:
             for data in data_list:
                 self.__data_repository.save(data)
             modified_data_list = data_list
@@ -158,7 +158,7 @@ class DataService(ModelInterface):
             print(f"DataService: get data without modified-> {modified_data_list[0].data_tag.values()}")
         else:
             for data in data_list:
-                for modifier_list in modifier_list_list:
+                for modifier_list in modifier_list:
                     # modify data
                     modified_data = self.__modifier_service.apply_modifier(data,
                                                                        modifier_list)
