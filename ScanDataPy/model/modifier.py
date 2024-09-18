@@ -56,8 +56,6 @@ class ModifierService(ModifierServiceInterface):
         # start the chain of responsibility and get modded data
         modified_data = self.__start_modifier.apply_modifier(data,
                                                              modifier_list)
-        print("77777777777777777777777777777777777777777")
-        print(modified_data)
         return modified_data
 
     def add_chain(self, modifier_name):
@@ -290,6 +288,7 @@ class TimeWindow(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
         self._val_obj = TimeWindowVal(0, 1)
+        self.average_mode = 'Frames'  # 'Frames' or 'Trace'
 
     def __del__(self):  #make a message when this object is deleted.
         print('.')
@@ -309,35 +308,63 @@ class TimeWindow(ModifierHandler):
     def set_data(self, origin_data):
         if origin_data is None:
             raise Exception("TimeWindow: origin_data is empty.")
-        elif all('FluoFrames' not in str for str in list(origin_data.data_tag.values())):
-            # print("ImageController: {origin_data.data_tag} is not FluoFrames value object. Skip This data.")
-            return
-        # check value is correct
-        TimeWindow.check_val(origin_data, self._val_obj)
-        # make raw trace data
-        start = self._val_obj.data[0]
-        width = self._val_obj.data[1]
-        # slice end is end+1
-        data = origin_data.data[:, :, start:start + width]
+        elif any('FluoFrames' in str for str in list(origin_data.data_tag.values())):
+            # check value is correct
+            TimeWindow.check_frames_val(origin_data, self._val_obj)
+            # make raw trace data
+            start = self._val_obj.data[0]
+            width = self._val_obj.data[1]
+            if width == -1 or width == 0:
+                # if width = 0 or 1, trace include the end of the trace
+                data = origin_data.data[:, :, start:]
+            else:
+                # slice end is end+1
+                data = origin_data.data[:, :, start:start + width]
+            print(
+                f"TimeWindow: A frames from frame# {start} to {start+width-1} (- means whole)")
+            # take Ch from DataType
+            ch, data_type = Tools.take_ch_from_str(origin_data.data_tag['DataType'])
+            return FramesData(
+                data,
+                {
+                    'Filename': origin_data.data_tag['Filename'],
+                    'Attribute': 'Data',
+                    'DataType': origin_data.data_tag['DataType'],
+                    'Origin': self.modifier_name
+                },
+                origin_data.interval,
+                origin_data.pixel_size
+            )
+        elif any('ElecTrace' in str for str in list(origin_data.data_tag.values())):
+            TimeWindow.check_trace_val(origin_data, self._val_obj)
+            start = self._val_obj.data[0]
+            width = self._val_obj.data[1]
+            if width == -1 or width == 0:
+                # if width = 0 or 1, trace include the end of the trace
+                data = origin_data.data[start:]
+            else:
+                # slice end is end+1
+                data = origin_data.data[start:start + width]
+            print(
+                f"TimeWindow: A Trace from data point# {start} to {start+width-1} (- means whole)")
+            # take Ch from DataType
+            ch, data_type = Tools.take_ch_from_str(origin_data.data_tag['DataType'])
+            return TraceData(
+                data,
+                {
+                    'Filename': origin_data.data_tag['Filename'],
+                    'Attribute': 'Data',
+                    'DataType': origin_data.data_tag['DataType'],
+                    'Origin': self.modifier_name
+                },
+                origin_data.interval,
+            )
 
-        print(
-            "TimeWindow: A frames from frame# {start} to {start+width-1}")
-        # take Ch from DataType
-        ch = Tools.take_ch_from_str(origin_data.data_tag['DataType'])
-        return FramesData(
-            data,
-            {
-                'Filename': origin_data.data_tag['Filename'],
-                'Attribute': 'Data',
-                'DataType': 'FluoFrames' + ch,
-                'Origin': self.modifier_name
-            },
-            origin_data.interval,
-            origin_data.pixel_size
-        )
+        else:
+            raise Exception("TimeWindow: This value object is not FluoFrames or ElecTrace.")
 
     @staticmethod
-    def check_val(frames_obj, time_window_obj) -> bool:
+    def check_frames_val(frames_obj, time_window_obj) -> bool:
         # convert to raw values
         time_window = time_window_obj.data
         # check the value is correct. See TimeWindowVal class.
@@ -345,10 +372,28 @@ class TimeWindow(ModifierHandler):
         # check the start and end values
         if time_window[0] < 0:
             raise Exception('The start frame should be 0 or more.')
-        if time_window[1] < 1:
-            raise Exception('The width should be 1 or more.')
-        # compare the val to frame lentgh
+        if time_window[1] < -1:
+            raise Exception('The width should be -1 or more.')
+        # compare the val to frame length
         if time_window[0] + time_window[1] > frame_length:
+            raise Exception(
+                f"The total frame should be less than {frame_length - 1}.")
+        else:
+            return True
+
+    @staticmethod
+    def check_trace_val(trace_obj, time_window_obj) -> bool:
+        # convert to raw values
+        time_window = time_window_obj.data
+        # check the value is correct. See TimeWindowVal class.
+        trace_length = trace_obj.data.shape
+        # check the start and end values
+        if time_window[0] < 0:
+            raise Exception('The start frame should be 0 or more.')
+        if time_window[1] < -1:
+            raise Exception('The width should be -1 or more.')
+        # compare the val to frame length
+        if time_window[0] + time_window[1] > trace_length:
             raise Exception(
                 f"The total frame should be less than {frame_length - 1}.")
         else:
@@ -401,22 +446,18 @@ class Roi(ModifierHandler):
         Roi.check_val(origin_data, roi_obj)
         # make raw trace data
         x, y, x_width, y_width = roi_obj.data[:4]
-        print("7777777777777777777777777777777777777777777")
-        print(x)
-        print(y)
-        print(np.shape(origin_data))
         data = origin_data.data[x:x + x_width, y:y + y_width, :]
         print(np.shape(data))
         # make a trace value object
         print(f"Roi:A frames from {roi_obj.data}")
         # take Ch from DataType
-        ch = Tools.take_ch_from_str(origin_data.data_tag['DataType'])
+        ch, data_type = Tools.take_ch_from_str(origin_data.data_tag['DataType'])
         new_data = FramesData(
             data,
             {
                 'Filename': origin_data.data_tag['Filename'],
                 'Attribute': 'Data',
-                'DataType': 'FluoFrames' + ch,
+                'DataType': origin_data.data_tag['DataType'],
                 'Origin': self.modifier_name
             },
             origin_data.interval
@@ -459,43 +500,43 @@ class Average(ModifierHandler):
         self.average_mode = val
         print(f"set Average: {self.average_mode}  1=Image, 2=Trace")
 
-    def set_data(self, data):
-        if any('Image' in str for str in data.data_tag.values()):
-            self.average_mode = 'Image'
-        elif any('Roi' in str for str in data.data_tag.values()):
-            self.average_mode = 'Roi'
+    def set_data(self, value_obj):
+        #if any('Image' in str for str in data.data_tag.values()):
+        #    self.average_mode = 'Image'
+        #elif any('Roi' in str for str in data.data_tag.values()):
+        #    self.average_mode = 'Roi'
         if self.average_mode == 'Image':
             # mean to image
-            data = np.mean(data, axis=2)
+            mean_data = np.mean(value_obj.data, axis=2)
             print("Average: Averaged a FluoFrames to an image")
             # take Ch from DataType
-            ch = Tools.take_ch_from_str(data.data_tag['DataType'])
+            ch, data_type = Tools.take_ch_from_str(value_obj.data_tag['DataType'])
             return ImageData(
-                data,
+                mean_data,
                 {
-                    'Filename': data.data_tag['Filename'],
+                    'Filename': value_obj.data_tag['Filename'],
                     'Attribute': 'Data',
                     'DataType': 'FluoImage' + ch,
                     'Origin': self.modifier_name
                 },
-                [0, 0]  # pixel size
+                value_obj.pixel_size  # pixel size
         )
         if self.average_mode == 'Roi':
             # mean to trace
-            data = np.mean(data, axis=(0, 1))
+            mean_data = np.mean(value_obj.data, axis=(0, 1))
             # make a trace value object
             print(f"Average: Averaged a FluoFrames to a trace")
             # take Ch from DataType
-            ch = Tools.take_ch_from_str(data.data_tag['DataType'])
+            ch, data_type = Tools.take_ch_from_str(value_obj.data_tag['DataType'])
             return TraceData(
-                data,
+                mean_data,
                 {
-                    'Filename': data.data_tag['Filename'],
+                    'Filename': value_obj.data_tag['Filename'],
                     'Attribute': 'Data',
                     'DataType': 'FluoTrace' + ch,
                     'Origin': self.modifier_name
                 },
-                data.interval
+                value_obj.interval
             )
 
 

@@ -269,10 +269,14 @@ class Tools:
         pattern = r"Ch\d+"
         match = re.search(pattern, input_string)
         if match:
-            return match.group()
+            matched_part = match.group()  # matched part
+            start = match.start()  # matched first cha
+            end = match.end()  # matched end cha
+            before_match = input_string[:start]  # before matched
+            after_match = input_string[end:]  # after matched
+            return matched_part, before_match
         # if no match return None
         return None
-
 
     """ calculation """
 

@@ -216,7 +216,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
             0)  # make user controllers
         self.__main_controller.default_settings(filename_obj.name)
 
-        self.__main_controller.get_data()
+
         self.__main_controller.print_infor()
 
 
@@ -226,6 +226,8 @@ class QtDataWindow(QtWidgets.QMainWindow):
 
 
         self.__main_controller.update_view()
+        #self.__main_controller.get_data()
+
         #"The first time need ROI0 data because of dF/F"
         self.__main_controller.set_key(
             'controller_name_dict',

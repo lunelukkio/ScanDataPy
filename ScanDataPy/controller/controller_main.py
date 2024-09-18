@@ -46,13 +46,6 @@ class ControllerInterface(metaclass=ABCMeta):
 
         # set a new user controller values such as ROIVal.
 
-    @abstractmethod
-    def set_controller_val(self, controller_key: str, val: list):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def print_infor(self):
-        raise NotImplementedError()
 
     """ Delegation to the AxesController """
 
@@ -60,25 +53,10 @@ class ControllerInterface(metaclass=ABCMeta):
     def ax_print_infor(self, ax_key: str) -> None:
         raise NotImplementedError()
 
-    @abstractmethod
-    def set_roibox(self, controller_key, roi_box_pos):
-        raise NotImplementedError()
 
     @abstractmethod
     def set_observer(self, controller_key: str, ax_num: int) -> None:
         raise NotImplementedError()
-
-    """ Delegation to the Model """
-
-    @abstractmethod
-    def set_mod_key(self, controller_key, mod_key, val=None):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def set_trace_type(self, selected_test):
-        raise NotImplementedError()
-
-    # class MainController(ControllerInterface):
 
 
 class MainController():
@@ -156,8 +134,7 @@ class MainController():
         default = self.__model.get_data(
             {'Filename': filename, 'Attribute': 'Default', 'DataType': 'Text'})
 
-        # default[0] because default is returned as value object list
-        for modifier_name in default[0].data['default_settings']['default_modifiers']:
+        for modifier_name in default.data['default_settings']['default_modifiers']:
             self.create_modifier(modifier_name)
         print("-----> MainController: create_default_modifier() Done")
 
@@ -179,10 +156,9 @@ class MainController():
         for tag_list in lists_of_tag_list:
             self.__model.get_data(tag_list, modifier_list)
 
-
-
-
-
+    # set modifier values e.g. 'Roi1', [40, 40, 1, 1]. Be called by view and self.default_settings.
+    def set_modifier_val(self, modifier, val):
+        self.__model.set_modifier_val(modifier, val)
 
 
     def default_settings(self, filename_key):
@@ -199,7 +175,7 @@ class MainController():
         # get default information from JSON
         default = self.__model.get_data(
             {'Filename': filename, 'Attribute': 'Default', 'DataType': 'Text'})
-        default_observer = default[0].data['default_settings']['default_observer']
+        default_observer = default.data['default_settings']['default_observer']
 
         # set_observer. see KeyManager and  file_setting.json
         for key, item_list in default_observer.items():
@@ -207,7 +183,7 @@ class MainController():
                 self.set_observer(key, value)
 
         # MainController default settings from file_setting.json
-        main_default_tag_list = default[0].data['default_settings']['main_default_tag']
+        main_default_tag_list = default.data['default_settings']['main_default_tag']
         # set_keys.   see KeyManager and file_setting.json in class common_class set_key_list_to_dict, set_dict_to_dict
         for tag_list_name, tag_list in main_default_tag_list.items():
             for tag in tag_list:
@@ -218,7 +194,7 @@ class MainController():
 
         # set ax view flags
         self.ax_dict['FluoAxes'].key_manager.set_key('filename_list', filename)
-        fluo_default_tag_list = default[0].data['default_settings']['trace_ax_default_tag']
+        fluo_default_tag_list = default.data['default_settings']['trace_ax_default_tag']
         for tag_list_name, tag_list in fluo_default_tag_list.items():
             for tag in tag_list:
                 self.ax_dict['FluoAxes'].key_manager.set_key(tag_list_name, tag)
@@ -227,7 +203,7 @@ class MainController():
         self.ax_dict['FluoAxes']._key_manager.print_infor()
 
         self.ax_dict['ImageAxes'].key_manager.set_key('filename_list', filename)
-        image_default_tag_list = default[0].data['default_settings']['image_ax_default_tag']
+        image_default_tag_list = default.data['default_settings']['image_ax_default_tag']
         for tag_list_name, tag_list in image_default_tag_list.items():
             for tag in tag_list:
                 self.ax_dict['ImageAxes'].key_manager.set_key(tag_list_name, tag)
@@ -236,7 +212,7 @@ class MainController():
         self.ax_dict['ImageAxes']._key_manager.print_infor()
 
         self.ax_dict['ElecAxes'].key_manager.set_key('filename_list', filename)
-        elec_default_tag_list = default[0].data['default_settings']['elec_ax_default_tag']
+        elec_default_tag_list = default.data['default_settings']['elec_ax_default_tag']
         for tag_list_name, tag_list in elec_default_tag_list.items():
             for tag in tag_list:
                 self.ax_dict['ElecAxes'].key_manager.set_key(tag_list_name, tag)
@@ -245,9 +221,9 @@ class MainController():
         self.ax_dict['ElecAxes']._key_manager.print_infor()
 
         # default modifiers values.
-        default_values_list = default[0].data['default_settings']['modifier_default_val']
-        for key, value in default_values_list.items():
-            self.__model.set_modifier_val(key, value)
+        default_values_list = default.data['default_settings']['modifier_default_val']
+        for modifier, value in default_values_list.items():
+            self.set_modifier_val(modifier, value)
 
 
         print("========== End of default settings ==========")
@@ -271,24 +247,6 @@ class MainController():
         print("")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-    def get_controller_infor(self, controller_key=None) -> dict:
-        if controller_key is None:
-            data_infor = self.__model.get_infor()
-        else:
-            data_infor = self.__model.get_infor(controller_key)
-        return data_infor
 
 
 

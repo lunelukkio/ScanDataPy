@@ -136,41 +136,39 @@ class DataService(ModelInterface):
             self.__data_repository.save(data)
 
         # This is for sending data to frontend.
-    def get_data(self, data_tag, list_of_modifier_lists=None):
+    def get_data(self, data_tag, modifier_list=None):
         # create data
-        modified_data_list = self.__create_data(data_tag, list_of_modifier_lists)
-        return modified_data_list
+        modified_value_obj = self.__create_data(data_tag, modifier_list)
+        return modified_value_obj
 
     def __create_data(self, data_tag, modifier_list=None):
-        modified_data_list = []
         print(f"DataService: get_data ({list(data_tag.values())}) ---------->")
         # get data from repository
         data_list = self.__data_repository.find_by_keys(data_tag)
         if data_list is None:
             raise Exception(f"DataService couldn't find {list(data_tag.values())} data")
             # return data without data
+        if len(data_list) >= 2:
+            raise Exception(
+                f"DataService found more than two data {list(data_tag.values())} data")
         # pass or modify
         if modifier_list is None:
-            for data in data_list:
-                self.__data_repository.save(data)
-            modified_data_list = data_list
+            modified_data = data_list[0]
 
-            print(f"DataService: get data without modified-> {modified_data_list[0].data_tag.values()}")
+            print(f"DataService: get data without modified-> {modified_data.data_tag.values()}")
         else:
-            for data in data_list:
-                for modifier_list in modifier_list:
-                    # modify data
-                    modified_data = self.__modifier_service.apply_modifier(data,
-                                                                       modifier_list)
-                    # show gotten data
-                    print(f"DataService: get modified data -> {modified_data.data_tag.values()}")
-                    # make a list again
-                    modified_data_list.append(modified_data)
-                    self.__data_repository.save(modified_data)
+            print("6666666666666666666666666666666666666666666666666")
+            print(data_list[0])
+            print(modifier_list)
+            # apply modifier. the number of data in data_list should be 0.
+            modified_data = self.__modifier_service.apply_modifier(data_list[0],
+                                                               modifier_list)
+            # show gotten data
+            print(f"DataService: get modified data -> {modified_data.data_tag.values()}")
+
 
         print("----------> Dataservice: get_data Done")
-
-        return modified_data_list
+        return modified_data
 
     def get_list_of_repository_tag_dict(self):
         return self.__data_repository.get_list_of_tag_dict()

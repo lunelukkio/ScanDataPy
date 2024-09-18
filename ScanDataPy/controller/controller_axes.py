@@ -74,7 +74,7 @@ class AxesController(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def set_view_data(self, active_controller_dict):
+    def set_view_data(self):
         raise NotImplementedError()
 
 
@@ -140,17 +140,52 @@ class AxesController(metaclass=ABCMeta):
         else:
             self.update_flag = update_flag
 
-
-
     def print_infor(self):
         print(f"{self.__class__.__name__} current data list = ")
         self._key_manager.print_infor()
+
+
+
+class ImageAxesController(AxesController):
+    def __init__(self, main_controller, model, canvas, ax):
+        super().__init__(main_controller, model, canvas, ax)
+        self.mode = None  # no use
+
+    def set_click_position(self, event):
+        raise NotImplementedError()
+
+    # from the flag, get data from the model and show data.
+    def set_view_data(self):
+        # get lists of the data tag list
+        lists_of_tag_dict = self._key_manager.get_dicts_from_tag_list()
+        # get modifier list
+        modifier_list = self._key_manager.get_modifier_list()
+
+        for tag_dict in lists_of_tag_dict:
+            value_obj = self._model.get_data(tag_dict, modifier_list)
+            # show data
+            plot_data = value_obj.show_data(self._ax_obj)
+            # combine keys  e.g. '20408B002.tsmDataFluoImageCh1Average0'
+            item_key = ''.join(value_obj.data_tag.values())
+            # make a new item dict for a graph
+            self.ax_item_dict[item_key] = plot_data
+
+    # override    should be in main controller
+    def update(self) -> None:
+        if self.update_flag is True:
+            # delete old image objects. not delete box
+            self.ax_item_dict = {}
+            self.set_view_data()  # This belong to Image Controller
+            print(f"AxesController: {self.__class__.__name__} updated")
+        else:
+            pass
 
 
 class TraceAxesController(AxesController):
     def __init__(self, main_controller, model, canvas,
                  ax):  # controller is for getting ROI information from FLU-AXES.
         super().__init__(main_controller, model, canvas, ax)
+        self.mode = 'CH_MODE'
 
     def update(self):
         if self.update_flag is True:
@@ -174,23 +209,23 @@ class TraceAxesController(AxesController):
 
     # from the flag, get data from the model and show data. 
     def set_view_data(self):
-        # get true key_dict list
-        true_dict_list = self._key_manager.get_key_dicts(True)
-        for true_dict in true_dict_list:
-            # get data list. This case list shold be only one value.
-            data = self._model.get_data(true_dict, self._mod_key_list)
-            # show data of the value object
-            plot_data = data[0].show_data(self._ax_obj)
-            # combaine keys
-            item_key = ''.join(true_dict.values())
+        # get lists of the data tag list
+        lists_of_tag_dict = self._key_manager.get_dicts_from_tag_list()
+        # get modifier list
+        modifier_list = self._key_manager.get_modifier_list()
+        for tag_dict in lists_of_tag_dict:
+            value_obj = self._model.get_data(tag_dict, modifier_list)
+            # show data
+            plot_data = value_obj.show_data(self._ax_obj)
+            # combine keys  e.g. '20408B002.tsmDataFluoTraceCh1Average0'
+            item_key = ''.join(value_obj.data_tag.values())
             # make a new item dict for a graph
             self.ax_item_dict[item_key] = plot_data
 
-            self.mode = 'CH_MODE'
-            color = None
+
             # color setting
             if self.mode == "CH_MODE":
-                for key in true_dict.values():
+                for key in tag_dict.values():
                     if 'Elec' in key:
                         plot_data.setPen(
                             pg.mkPen(color=self._ch_colors['Elec0']))
@@ -201,12 +236,12 @@ class TraceAxesController(AxesController):
                                 plot_data.setPen(
                                     pg.mkPen(color=self._ch_colors[key]))
             elif self.mode == "ROI_MODE":
-                for key in true_dict.values():
+                for key in tag_dict.values():
                     if 'Elec' in key:
                         plot_data.setPen(
                             pg.mkPen(color=self._ch_colors['Elec0']))
                         return
-                    print(true_dict.values())
+                    print(tag_dict.values())
                     for color in self._controller_colors:
                         if key in color:
                             if color:
@@ -219,12 +254,12 @@ class TraceAxesController(AxesController):
         image_canvas, image_axes = self._main_controller.get_canvas_axes(
             "ImageAxes")
         # get a true flag list of dict
-        true_controller_list = self._key_manager.get_key_dicts(True)
-        for controller_dict in true_controller_list:
+        lists_of_tag_dict = self._key_manager.get_dicts_from_tag_list()
+        for tag_dict in lists_of_tag_dict:
             # pick up ROI controller names
-            roi_controller_list = [key for key in controller_dict.values() if
+            roi_tag_list = [key for key in tag_dict.values() if
                                    "ROI" in key]
-        for controller_key in roi_controller_list:
+        for controller_key in roi_tag_list:
             # get roi value
             controller_list = self._model.get_controller(
                 {'Attribute': 'UserController',
@@ -252,40 +287,7 @@ class TraceAxesController(AxesController):
 
 
 
-class ImageAxesController(AxesController):
-    def __init__(self, main_controller, model, canvas, ax):
-        super().__init__(main_controller, model, canvas, ax)
-        self.mode = None  # no use
-
-    def set_click_position(self, event):
-        raise NotImplementedError()
-
-    # from the flag, get data from the model and show data. 
-    def set_view_data(self):
-        # get true key_dict list
-        true_dict_list = self._key_manager.get_key_dicts(True)
-        for true_dict in true_dict_list:
-            # get data list. This case list shold be only one value.
-            data = self._model.get_data(true_dict, self._mod_key_list)
-            # show data of the value object
-            plot_data = data[0].show_data(self._ax_obj)
-            # combaine keys
-            item_key = ''.join(true_dict.values())
-            # make a new item dict for a graph
-            self.ax_item_dict[item_key] = plot_data
-
-    # override    shold be in main conrtoller         
-    def update(self) -> None:
-        if self.update_flag is True:
-            # delete old image objects. not delete box
-            self.ax_item_dict = {}
-            self.set_view_data()  # This belong to Image Controller
-            print(f"AxesController: {self.__class__.__name__} updated")
-        else:
-            pass
-
-
-class RoiBox():
+class RoiBox:
     # """ class variable """
     # color_selection = ['white', 'red', 'blue', 'green', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'orange']
 
