@@ -177,7 +177,7 @@ class MainController():
         # get modifier list
         modifier_list = self._key_manager.get_modifier_list()
         for tag_list in lists_of_tag_list:
-            self.__model.set_data(tag_list, modifier_list)
+            self.__model.get_data(tag_list, modifier_list)
 
 
 

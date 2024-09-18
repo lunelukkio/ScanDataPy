@@ -205,7 +205,7 @@ class KeyManager:
 
     # get key dict combinations from whole dict.  convert variable names to 'dictionary keys'.
     # val = True: True combination, False: False combination, None: whole combination
-    def get_lists_of_tag_list(self) -> list:
+    def get_dicts_from_tag_list(self) -> list:
         result = []
         all_lists = [
             self.filename_list,
@@ -232,6 +232,51 @@ class KeyManager:
         recursive_combinations([], all_lists)
 
         return result
+
+
+
+
+
+
+        result = []
+        all_dicts = [
+            [self._filename_dict, 'Filename'],  # the second name because a key of dictionary
+            [self._attribute_dict, 'Attribute'],
+            [self._data_type_dict, 'DataType'],
+            [self._origin_dict, 'Origin']
+        ]
+        # remove dict which has only False
+        extracted_dicts = [dict_key_set for dict_key_set in all_dicts if any(dict_key_set[0].values())]
+        # internal function
+        def recursive_combinations(current_combination, remaining_dicts):
+            if not remaining_dicts:  # if there is no remaining_dicts,
+                # after the last dict, the result has dict combinations
+                result.append(current_combination)  # add a dict to the list
+                return
+            # take the first from the remaining dicts
+            current_dict, field_name = remaining_dicts[0]
+            # check key is the same as status
+            for key, status in current_dict.items():
+                if status == val:
+                    # shallow copy for non effect of original data
+                    new_combination = current_combination.copy()
+                    new_combination[field_name] = key
+                    # delete the current remaining object
+                    recursive_combinations(new_combination, remaining_dicts[1:])
+        # start from this line
+        recursive_combinations({}, extracted_dicts)
+
+        return result
+
+
+
+
+
+
+
+
+
+
 
     def get_modifier_list(self) -> list:
         return self.modifier_list
