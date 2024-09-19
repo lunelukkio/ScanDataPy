@@ -39,10 +39,10 @@ class ModifierService(ModifierServiceInterface):
         self.__current_modifier = None
         # chain always should have start and end
         self.__start_modifier = StartModifier('StartModifier')
-        # make a default modifier chain list
+        # make a default modifier chain list. It has modifier list.
         self.__modifier_chain_list = [self.__start_modifier,
                                       EndModifier('EndModifier')]
-        # make a modifier chain from the chain list
+        # make a modifier chain from the chain list. It has modifier order.
         self.__modifier_chain = ModifierService.make_modifier_chain(
             self.__modifier_chain_list)
         self.print_chain()
@@ -87,6 +87,12 @@ class ModifierService(ModifierServiceInterface):
         # make a modifier chain from the chain list
         self.__modifier_chain = ModifierService.make_modifier_chain(
             self.__modifier_chain_list)
+
+    # return modifier value_object taken for ROIBOX
+    def get_modifier_val(self, modifier_name):
+        for modifier_obj in self.modifier_chain_list:
+            if modifier_obj.modifier_name == modifier_name:
+                return modifier_obj.val_obj
 
     @staticmethod
     def check_modifier_type(modifier_name):
@@ -517,7 +523,7 @@ class Average(ModifierHandler):
                     'Filename': value_obj.data_tag['Filename'],
                     'Attribute': 'Data',
                     'DataType': 'FluoImage' + ch,
-                    'Origin': self.modifier_name
+                    'Origin': value_obj.data_tag['Origin']
                 },
                 value_obj.pixel_size  # pixel size
         )
@@ -534,7 +540,7 @@ class Average(ModifierHandler):
                     'Filename': value_obj.data_tag['Filename'],
                     'Attribute': 'Data',
                     'DataType': 'FluoTrace' + ch,
-                    'Origin': self.modifier_name
+                    'Origin': value_obj.data_tag['Origin']
                 },
                 value_obj.interval
             )

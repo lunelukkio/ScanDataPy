@@ -10,28 +10,28 @@
         "color"    : "#BCD2EE"
      },
     "ch_color": {
-        "CH0": "black",
-        "CH1": "red",
-        "CH2": "blue",
-        "ELEC0": "black",
-        "ELEC1": "black",
-        "ELEC2": "black",
-        "ELEC3": "black",
-        "ELEC4": "black",
-        "ELEC5": "black",
-        "ELEC6": "black",
-        "ELEC7": "black"
+        "FluoTraceCh0": "black",
+        "FluoTraceCh1": "red",
+        "FluoTraceCh2": "blue",
+        "ElecTraceCh0": "black",
+        "ElecTraceCh1": "black",
+        "ElecTraceCh2": "black",
+        "ElecTraceCh3": "black",
+        "ElecTraceCh4": "black",
+        "ElecTraceCh5": "black",
+        "ElecTraceCh6": "black",
+        "ElecTraceCh7": "black"
     },
     "controller_color": {
-        "ROI0": "white",
-        "ROI1": "red",
-        "ROI2": "blue",
-        "ROI3": "green",
-        "ROI4": "purple",
-        "ROI5": "brown",
-        "ROI6": "pink",
-        "ROI7": "olive",
-        "ROI8": "cyan",
-        "ROI9": "orange"
+        "Roi0": "white",
+        "Roi1": "red",
+        "Roi2": "blue",
+        "Roi3": "green",
+        "Roi4": "purple",
+        "Roi5": "brown",
+        "Roi6": "pink",
+        "Roi7": "olive",
+        "Roi8": "cyan",
+        "Roi9": "orange"
     }
 }

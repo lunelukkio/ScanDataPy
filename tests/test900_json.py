@@ -8,19 +8,19 @@ Created on Fri Dec  1 10:55:57 2023
 import json
 
 scandata_setting = {
-    "color_ch": {"CH0": "black", 
-                 "CH1": "red", 
-                 "CH2": "blue"},
-    "color_roi" : {"ROI1": "black", 
-                    "ROI2": "red", 
-                    "ROI3": "blue", 
-                    "ROI4": "green", 
-                    "ROI5": "purple", 
-                    "ROI6": "brown", 
-                    "ROI7": "pink", 
-                    "ROI8": "olive", 
-                    "ROI9": "cyan", 
-                    "ROI10": "orange"}
+    "color_ch": {"Ch0": "black",
+                 "Ch1": "red",
+                 "Ch2": "blue"},
+    "color_roi" : {"Roi1": "black",
+                    "Roi2": "red",
+                    "Roi3": "blue",
+                    "Roi4": "green",
+                    "Roi5": "purple",
+                    "Roi6": "brown",
+                    "Roi7": "pink",
+                    "Roi8": "olive",
+                    "Roi9": "cyan",
+                    "Roi10": "orange"}
     }
 
 

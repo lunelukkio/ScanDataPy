@@ -129,20 +129,23 @@ class DataService(ModelInterface):
 
         # This is for saving data to repository
     def set_data(self, data_tag, modifier_list=None):
+        print(f"DataService: set_data ({list(data_tag.values())}) ---------->")
         # create data
         modified_data_list = self.__create_data(data_tag, modifier_list)
         # save in the repository
         for data in modified_data_list:
             self.__data_repository.save(data)
+        print("----------> Dataservice: set_data Done")
 
         # This is for sending data to frontend.
     def get_data(self, data_tag, modifier_list=None):
+        print(f"DataService: get_data ({list(data_tag.values())}) ---------->")
         # create data
         modified_value_obj = self.__create_data(data_tag, modifier_list)
+        print("----------> Dataservice: get_data Done")
         return modified_value_obj
 
     def __create_data(self, data_tag, modifier_list=None):
-        print(f"DataService: get_data ({list(data_tag.values())}) ---------->")
         # get data from repository
         data_list = self.__data_repository.find_by_keys(data_tag)
         if data_list is None:
@@ -157,17 +160,12 @@ class DataService(ModelInterface):
 
             print(f"DataService: get data without modified-> {modified_data.data_tag.values()}")
         else:
-            print("6666666666666666666666666666666666666666666666666")
-            print(data_list[0])
-            print(modifier_list)
             # apply modifier. the number of data in data_list should be 0.
             modified_data = self.__modifier_service.apply_modifier(data_list[0],
                                                                modifier_list)
             # show gotten data
             print(f"DataService: get modified data -> {modified_data.data_tag.values()}")
 
-
-        print("----------> Dataservice: get_data Done")
         return modified_data
 
     def get_list_of_repository_tag_dict(self):
@@ -202,7 +200,8 @@ class DataService(ModelInterface):
     def update_observer(self):
         pass
 
-
+    def get_modifier_val(self, modifier_name):
+        return self.__modifier_service.get_modifier_val(modifier_name)
 """
 Repository
 """

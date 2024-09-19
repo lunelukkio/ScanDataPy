@@ -216,40 +216,10 @@ class QtDataWindow(QtWidgets.QMainWindow):
             0)  # make user controllers
         self.__main_controller.default_settings(filename_obj.name)
 
-
         self.__main_controller.print_infor()
-
-
-
-
-
-
-
         self.__main_controller.update_view()
-        #self.__main_controller.get_data()
 
-        #"The first time need ROI0 data because of dF/F"
-        self.__main_controller.set_key(
-            'controller_name_dict',
-            'ROI0',
-            False
-        )
-        self.__main_controller.set_key(
-            'controller_name_dict',
-            'ImageController1',
-            False
-        )
-        self.__main_controller.set_key(
-            'controller_name_dict',
-            'ElecTraceController1',
-            False)
-
-        # self.__main_controller.set_view_flag("FluoAxes", "ROI0", "CH1", True)  # This is for showing ROI0 data.
-
-        self.__main_controller.show_data(
-            {'Attribute': 'Data'},
-            {'Origin': 'File'}
-        )  # target dict and expect dict
+  
 
         "This is temporal. shold be deleted later"
         # self.dFoverF_trace.setChecked(True)

@@ -6,7 +6,7 @@ Created on Fri Dec 15 09:01:53 2023
 """
 
 from abc import ABCMeta, abstractmethod
-from ScanDataPy.common_class import KeyManager
+from ScanDataPy.common_class import KeyManager, Tools
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets
 
@@ -30,8 +30,6 @@ class AxesController(metaclass=ABCMeta):
 
         self.update_flag = False  # Ture or False or empty: flip flag.
         self.update_flag_lock = False  # to skip ImageAxe update
-
-
 
         # color selection for traces and ROiooxes
         try:
@@ -89,17 +87,7 @@ class AxesController(metaclass=ABCMeta):
     def get_canvas_axes(self):
         return self._canvas, self._ax_obj
 
-    # to get a controller valueobject
-    def get_controller_val(self, controller_key) -> object:
-        return self._model.get_controller_val(controller_key)
 
-    # get value object from controllers
-    def get_controller_data(self, controller_key) -> dict:
-        data_dict = self._model.get_controller_data(controller_key)
-        if data_dict is None:
-            print(f"Can't find data_dict in {controller_key}")
-        else:
-            return data_dict
 
 
 
@@ -185,7 +173,7 @@ class TraceAxesController(AxesController):
     def __init__(self, main_controller, model, canvas,
                  ax):  # controller is for getting ROI information from FLU-AXES.
         super().__init__(main_controller, model, canvas, ax)
-        self.mode = 'CH_MODE'
+        self.mode = 'ChMode'
 
     def update(self):
         if self.update_flag is True:
@@ -198,9 +186,10 @@ class TraceAxesController(AxesController):
             print("999999999999999999999999999999999999999999999999999999999999999999999999999999999 should it be here?")
             self._ax_obj.setBackground('w')
             # See each subclass.
-            self.set_view_data()
+            value_obj = self.set_view_data()
             # for RoiBOX
-            self.set_marker()
+            if 'FluoTrace' in value_obj.data_tag['DataType']:
+                self.set_marker(value_obj)
             # axes method
             self._ax_obj.autoRange()
             print(f"AxesController: {self.__class__.__name__} updated")
@@ -222,67 +211,58 @@ class TraceAxesController(AxesController):
             # make a new item dict for a graph
             self.ax_item_dict[item_key] = plot_data
 
-
             # color setting
-            if self.mode == "CH_MODE":
-                for key in tag_dict.values():
-                    if 'Elec' in key:
-                        plot_data.setPen(
-                            pg.mkPen(color=self._ch_colors['Elec0']))
-                        return
-                    for color in self._ch_colors:
-                        if key in color:
-                            if color:
-                                plot_data.setPen(
-                                    pg.mkPen(color=self._ch_colors[key]))
-            elif self.mode == "ROI_MODE":
-                for key in tag_dict.values():
-                    if 'Elec' in key:
-                        plot_data.setPen(
-                            pg.mkPen(color=self._ch_colors['Elec0']))
-                        return
+            if self.mode == "ChMode":
+                if 'Elec' in value_obj.data_tag['DataType']:
+                    plot_data.setPen(
+                        pg.mkPen(color=self._ch_colors[value_obj.data_tag['DataType']]))
+                elif 'Fluo' in value_obj.data_tag['DataType']:
+                    plot_data.setPen(
+                        pg.mkPen(color=self._ch_colors[value_obj.data_tag['DataType']]))
+                else:
+                    plot_data.setPen(
+                        pg.mkPen(color=self._ch_colors["black"]))
+            elif self.mode == "RoiMode":
+                if 'Elec' in value_obj.data_tag['DataType']:
+                    plot_data.setPen(
+                        pg.mkPen(color=self._ch_colors[value_obj.data_tag['DataType']]))
                     print(tag_dict.values())
-                    for color in self._controller_colors:
-                        if key in color:
-                            if color:
-                                print(self._controller_colors[key])
-                                plot_data.setPen(pg.mkPen(
-                                    color=self._controller_colors[key]))
+                elif 'Fluo' in value_obj.data_tag['Origin']:
+                    plot_data.setPen(
+                        pg.mkPen(color=self._ch_colors[
+                            value_obj.data_tag['Origin']]))
+                else:
+                    plot_data.setPen(
+                        pg.mkPen(color=self._ch_colors["black"]))
 
-    def set_marker(self):
+        return value_obj
+
+    def set_marker(self, value_obj):
+        roi_tag_list = []
         # get flag data from ImageAxes
         image_canvas, image_axes = self._main_controller.get_canvas_axes(
             "ImageAxes")
-        # get a true flag list of dict
-        lists_of_tag_dict = self._key_manager.get_dicts_from_tag_list()
-        for tag_dict in lists_of_tag_dict:
-            # pick up ROI controller names
-            roi_tag_list = [key for key in tag_dict.values() if
-                                   "ROI" in key]
-        for controller_key in roi_tag_list:
-            # get roi value
-            controller_list = self._model.get_controller(
-                {'Attribute': 'UserController',
-                 'ControllerName': controller_key})
-            for controller in controller_list:
-                roi_val = controller.val_obj.data
-                # if need, box_pos is for adjusting box posision as pixels 0.5
-                box_pos = [
-                    roi_val[0],
-                    roi_val[1],
-                    roi_val[2],
-                    roi_val[3]
-                ]
-            if controller_key in self._marker_obj:
-                self._marker_obj[controller_key].set_roi(box_pos)
-            else:
-                self._marker_obj[controller_key] = RoiBox(
-                    self._controller_colors[controller_key])
-                self._marker_obj[controller_key].set_roi(box_pos)
-                # put the ROI BOX on the top of images.
-                self._marker_obj[controller_key].rectangle_obj.setZValue(1)
-                image_axes.addItem(
-                    self._marker_obj[controller_key].rectangle_obj)
+        modifier_name = value_obj.data_tag['Origin']
+        modifier_val_obj = self._model.get_modifier_val(modifier_name)
+
+        roi_val = modifier_val_obj.data
+        # if need, box_pos is for adjusting box position as pixels 0.5
+        box_pos = [
+            roi_val[0],
+            roi_val[1],
+            roi_val[2],
+            roi_val[3]
+        ]
+        if modifier_name in self._marker_obj:
+            self._marker_obj[modifier_name].set_roi(box_pos)
+        else:
+            self._marker_obj[modifier_name] = RoiBox(
+                self._controller_colors[modifier_name])
+            self._marker_obj[modifier_name].set_roi(box_pos)
+            # put the ROI BOX on the top of images.
+            self._marker_obj[modifier_name].rectangle_obj.setZValue(1)
+            image_axes.addItem(
+                self._marker_obj[modifier_name].rectangle_obj)
 
 
 
