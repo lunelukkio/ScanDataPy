@@ -184,7 +184,8 @@ class DataService(ModelInterface):
         print("")
 
     def reset(self):
-        pass
+        self.__data_repository = Repository()
+        self.__modifier_service = ModifierService()
 
     def set_observer(self, modifier_tag, observer):
         print(f"DataService: set_observer ({observer.__class__.__name__} to {modifier_tag}) ---------->")

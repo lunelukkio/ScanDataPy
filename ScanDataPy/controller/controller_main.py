@@ -94,13 +94,13 @@ class MainController():
         self.__ax_dict[axes_name] = new_axes_controller
 
     def open_file(self, filename_obj=None) -> dict:
+        self.__reset()
         # get filename object
         if filename_obj is None:
             filename_obj = self.__file_service.open_file()
         elif filename_obj.name == "":
             print("MainController: File opening is Cancelled!!")
             return {}
-
         # make experiments data
         open_experiments = self.create_experiments(filename_obj)
         if open_experiments is True:
@@ -167,7 +167,6 @@ class MainController():
         print("=============================================")
         print("========== Start default settings. ==========")
         print("=============================================")
-        print("To Do: default setting should be moved into a json file")
 
         # get default information from text data in the json file
         #get the first of the filename true list
@@ -291,13 +290,12 @@ class MainController():
         self.__ax_dict['FluoAxes'].set_update_flag(True)
         self.update_view('FluoAxes')
 
-
-
-    def reset(self):
-        self.__model = DataService()
-        self.__file_service = FileService()
-        self._key_manager = KeyManager()
-
+    def __reset(self):
+        self.__model.reset()
+        self.__file_service.reset()
+        self._key_manager.reset()
+        for ax in self.__ax_dict.values():
+            ax.key_manager.reset()
 
 
 

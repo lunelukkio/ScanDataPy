@@ -84,6 +84,9 @@ class FileService:
     def get_filename_obj(self):
         return self.filename_obj_list
 
+    def reset(self):
+        self.filename_obj_list = []
+
 
 """
 Value object
@@ -245,6 +248,14 @@ class KeyManager:
         print("")
         print(f"modifier_list        = {self.modifier_list}")
         print("===========================================================")
+
+    def reset(self):
+        self.filename_list = []
+        self.attribute_list = []
+        self.data_type_list = []
+        self.origin_list = []
+
+        self.modifier_list = []
 
 
 class Tools:

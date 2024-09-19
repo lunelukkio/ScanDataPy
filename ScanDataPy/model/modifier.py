@@ -45,7 +45,6 @@ class ModifierService(ModifierServiceInterface):
         # make a modifier chain from the chain list. It has modifier order.
         self.__modifier_chain = ModifierService.make_modifier_chain(
             self.__modifier_chain_list)
-        self.print_chain()
 
     @property
     def modifier_chain_list(self):
@@ -162,11 +161,16 @@ class ModifierService(ModifierServiceInterface):
         return modifier_chain_list[0] if modifier_chain_list else None
 
     def print_chain(self):
+        print("")
+        print("++++++++++ Modifiers ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
         print("ModifierService: modifier_chain -> ", end="")
+
         current_modifier = self.__start_modifier
         while current_modifier:
             print(f"{current_modifier.modifier_name}.", end="")
             current_modifier = current_modifier.next_modifier
+        print("")
+        print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
         print("")
 
     def set_modifier_val(self, modifier_name, *args, **kwargs):
