@@ -158,7 +158,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.label = QtWidgets.QLabel("Selected: None")
         mainLayout.addWidget(self.label)
         # send a signal for selected
-        self.trace_type.buttonClicked.connect(self.dFoverF)
+        self.trace_type.buttonClicked.connect(self.scale)
 
         # file buttons
         load_btn = QtWidgets.QPushButton("Load...")
@@ -210,10 +210,11 @@ class QtDataWindow(QtWidgets.QMainWindow):
         )
 
     def open_file(self, filename_obj=None):
-        self.__main_controller.open_file(
-            filename_obj)  # make a model and get filename obj
-        self.__main_controller.create_default_modifier(
-            0)  # make user controllers
+        # make a model and get filename obj
+        #self.__main_controller.reset()
+        filename_obj = self.__main_controller.open_file(filename_obj)
+        # make user controllers
+        self.__main_controller.create_default_modifier(0)
         self.__main_controller.default_settings(filename_obj.name)
 
         self.__main_controller.print_infor()
@@ -252,23 +253,21 @@ class QtDataWindow(QtWidgets.QMainWindow):
         # need modify
         # self.__main_controller.set_view_flag("FluoAxes", "ROI0", "CH1")  # (ax, controller_key, data_key, value)
 
-    def dFoverF(self, button):
+    def scale(self, button):
         if self.current_checked_button != button:
             self.current_checked_button = button
             if button:
                 text = button.text()
                 self.label.setText(f"Selected: {text}")
                 # change to keys from labels
-                if button.text() == "Original":
-                    text = "Original"
                 if button.text() == "dF/F":
-                    text = "DFoF"
+                    selected_text = "DFoF"
                 elif button.text() == "Normalize":
-                    text = "Normalize"
+                    selected_text = "Normalize"
+                else:
+                    selected_text = "Original"
                 # send to main controller
-                self.__main_controller.set_trace_type(
-                    "FluoAxes",
-                    text)
+                self.__main_controller.set_trace_type(selected_text)
         else:
             return
 

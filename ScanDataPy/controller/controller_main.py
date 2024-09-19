@@ -114,6 +114,7 @@ class MainController():
             print("========== MainController: Failed to open the file ==========                :(")
             print("=============================================================")
             print("")
+        return filename_obj
 
     def create_experiments(self, filename_obj: object):
         print("MainController: create_experiments() ----->")
@@ -247,19 +248,19 @@ class MainController():
         print("")
 
     def onclick_axes(self, event, axes_name):
-        if axes_name == "ImageAxes":
+        if axes_name == 'ImageAxes':
             # get clicked position
-            image_pos = self.__ax_dict["ImageAxes"]._ax_obj.getView().mapSceneToView(event.scenePos())
+            image_pos = self.__ax_dict['ImageAxes']._ax_obj.getView().mapSceneToView(event.scenePos())
             if event.button() == 1:  # left click
                 x = round(image_pos.x())
                 y = round(image_pos.y())
                 val = [x, y, None, None]
                 # get Roi modifier name in FluoAxes key manager.
-                modifier_name_list = [name for name in self.__ax_dict["FluoAxes"]._key_manager.modifier_list if 'Roi' in name]
+                modifier_name_list = [name for name in self.__ax_dict['FluoAxes']._key_manager.modifier_list if 'Roi' in name]
                 for modifier_name in modifier_name_list:
                     # set modifier values
                     self.set_modifier_val(modifier_name, val)
-                self.update_view("FluoAxes")
+                self.update_view('FluoAxes')
 
             elif event.button() == 2:
                 pass
@@ -279,31 +280,37 @@ class MainController():
 
     def change_roi_size(self, val: list):
         modifier_name_list = [name for name in self.__ax_dict[
-            "FluoAxes"]._key_manager.modifier_list if 'Roi' in name]
+            'FluoAxes']._key_manager.modifier_list if 'Roi' in name]
         for modifier_name in modifier_name_list:
             # set modifier values
             self.set_modifier_val(modifier_name, val)
-        self.update_view("FluoAxes")
+        self.update_view('FluoAxes')
+
+    def set_trace_type(self, selected_text):
+        self.__model.set_modifier_val('Scale0', selected_text)
+        self.__ax_dict['FluoAxes'].set_update_flag(True)
+        self.update_view('FluoAxes')
 
 
 
-    """ Delegation to the Model """
+    def reset(self):
+        self.__model = DataService()
+        self.__file_service = FileService()
+        self._key_manager = KeyManager()
 
-    def create_user_controller(self, controller_key):
-        new_key = self.__model.create_user_controller(controller_key)
-        return new_key
 
-    # set UserController value. but not calculate data. Currently, self.update calculate data.
-    def set_controller_val(self, val: list,
-                           key_type=None):  # e.g. val = [x, y, None, None]
-        controller_list = self.__operating_controller_set.get_true_list(
-            "CONTROLLER", key_type)  # e.g. key_type = "ROI"
-        for controller_key in controller_list:
-            self.__model.set_controller_val(controller_key, val)
-        print(f"{controller_list}: ", end='')
+
+
+
+
+
+
+
 
     def set_key(self, dict_name, key, val=None):
         self._key_manager.set_key(dict_name, key, val)
+
+
 
     def print_infor(self):
         print("======================================")
@@ -318,22 +325,12 @@ class MainController():
         print("========== Data Information End ==========")
         print("")
 
-    def get_key_dict(self):
-        return self.__singleton_key_dict.get_dict()
+
 
     def get_canvas_axes(self, view_controller) -> object:
         return self.__ax_dict[view_controller].get_canvas_axes()
 
-    def set_trace_type(self, controller_axes, selected_text):
-        if selected_text == 'Original':
-            self.__ax_dict[controller_axes].set_modifier_list('Original')
-        elif selected_text == 'DFoF':
-            self.__ax_dict[controller_axes].set_modifier_list('DFoF')
-        elif selected_text == 'Normalize':
-            self.__ax_dict[controller_axes].set_modifier_list('Normalize')
-        elif selected_text == 'BlComp':
-            self.__ax_dict[controller_axes].set_modifier_list('BlComp')
-        self.update_view("FluoAxes")
+
 
     """ Delegation to the AxesController """
 
@@ -356,15 +353,12 @@ class MainController():
     def ax_print_infor(self, ax_key):
         self.__ax_dict[ax_key].print_infor()
 
-    def set_roibox(self, controller_key, roi_box_pos):
-        self.__ax_dict["ImageAxes"].set_roibox(controller_key, roi_box_pos)
 
 
 
     """ Delegation to the ModController """
 
-    def set_modifier_list(self, controller_key, mod_key):
-        self.__model.set_mod_key(controller_key, mod_key, mod_val)
+
 
     def show_data(self, target_dict, except_dict):
         # show datain data_repository

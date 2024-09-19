@@ -33,7 +33,7 @@ class AxesController(metaclass=ABCMeta):
 
         # color selection for traces and ROiooxes
         try:
-            with open("../setting/data_window_setting.json", "r") as json_file:
+            with open("./setting/data_window_setting.json", "r") as json_file:
                 setting = json.load(json_file)
         except:
             with open("../setting/data_window_setting.json", "r") as json_file:
@@ -81,6 +81,13 @@ class AxesController(metaclass=ABCMeta):
 
 
 
+
+
+
+
+
+
+
     def next_controller_to_true(self, controller):
         self._view_flag_set.next_controller_to_true(controller)
 
@@ -91,25 +98,7 @@ class AxesController(metaclass=ABCMeta):
 
 
 
-    def set_mod_key_list(self, mod_key):
-        if mod_key == 'Original':
-            self._mod_key_list = []
-        elif mod_key == 'DFoF':
-            if 'Normalize' in self._mod_key_list:
-                self._mod_key_list.remove('Normalize')
-            self._mod_key_list.append('DFoF')
-        elif mod_key == 'Normalize':
-            if 'DFoF' in self._mod_key_list:
-                self._mod_key_list.remove('DFoF')
-            self._mod_key_list.append('Normalize')
-        elif mod_key == 'BlComp':
-            if 'BlComp' in self._mod_key_list:
-                self._mod_key_list.remove('BlComp')
-            else:
-                self._mod_key_list.append('BlComp')
 
-        print(
-            f"AxesController: Current mod set[{self.__class__.__name__}]: {self._mod_key_list}")
 
 
 
@@ -202,6 +191,7 @@ class TraceAxesController(AxesController):
         modifier_list = self._key_manager.get_modifier_list()
         for tag_dict in lists_of_tag_dict:
             value_obj = self._model.get_data(tag_dict, modifier_list)
+
             # show data
             plot_data = value_obj.show_data(self._ax_obj)
             # combine keys  e.g. '20408B002.tsmDataFluoTraceCh1Average0'

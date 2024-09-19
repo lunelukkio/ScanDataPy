@@ -157,7 +157,7 @@ class TraceData(ValueObj):
             sub_trace = np.sum(self._data, sum_val.data)
         else:
             raise Exception('Wrong value. This value object should be divided by int or float or other value object')
-        return TraceData(sub_trace, self.__interval, self._data_type)
+        return TraceData(sub_trace, self._data_tag, self.__interval)
         
     def __sub__(self, sub_val) -> object:
         if type(sub_val) == float or \
@@ -173,7 +173,7 @@ class TraceData(ValueObj):
             print(f"TraceData class: {self._data_type} - {sub_val.data_type}")
             raise Exception('Wrong value. This value object should be divided by int or float or other value object')
             
-        return TraceData(sub_trace, self.__interval, self._data_type)
+        return TraceData(sub_trace, self._data_tag, self.__interval)
         
     def __truediv__(self, div_val) -> object:
         if type(div_val) != float and \
@@ -182,7 +182,7 @@ class TraceData(ValueObj):
            type(div_val) != np.float64:
             raise Exception('Wrong value. This value object should be divided by int or float')
         div_trace = self._data/div_val
-        return TraceData(div_trace, self.__interval, self._data_type)
+        return TraceData(div_trace, self._data_tag, self.__interval)
     
     def __mul__(self, mul_val) -> object:
         if type(mul_val) != float and \
@@ -191,7 +191,7 @@ class TraceData(ValueObj):
            type(mul_val) != np.float64:
             raise Exception('Wrong value. This value object should be divided by int or float')
         mul_trace = self._data * mul_val
-        return TraceData(mul_trace, self.__interval, self._data_type)
+        return TraceData(mul_trace, self._data_tag, self.__interval)
         
         
     def __create_time_data(self, trace, interval) -> np.ndarray:

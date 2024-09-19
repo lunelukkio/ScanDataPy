@@ -547,7 +547,7 @@ class Average(ModifierHandler):
 class Scale(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
-        self.scale_mode = 'Normal' # 'DFoF' or 'Normalize'
+        self.scale_mode = 'Original' # 'DFoF' or 'Normalize'
 
     def __del__(self):  # make a message when this object is deleted.
         print('.')
@@ -560,8 +560,9 @@ class Scale(ModifierHandler):
         print(f"set Scale: {mode}")
 
     def set_data(self, data) -> object:
-        if self.scale_mode == 'Normal':
-            print("Scale: Normal -> No modified")
+        if self.scale_mode == 'Original':
+            print("Scale: Original -> No modified")
+            return data
 
         elif self.scale_mode == 'DFoF':
             # make dF/F value object
@@ -572,7 +573,6 @@ class Scale(ModifierHandler):
             normalized_data = Tools.create_normalize(data)
             # return Normalized value object
             return normalized_data
-
         else:
             raise ValueError(f"No such a scale mode -> {self.scale_mode} "
                              f"check set_val in Scale" )
