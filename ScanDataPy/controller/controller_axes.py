@@ -178,13 +178,11 @@ class TraceAxesController(AxesController):
     def update(self):
         if self.update_flag is True:
             # clear axes variables
-            #self._ax_obj.clear()
+            self._ax_obj.clear()
             # delete old image objects. not delete box
-            print("88888888888888888888888888888888888888888888888888888888888888888888888888888888 should be not clear?")
-            self.ax_item_dict = {}
+            print("9999999999999999999999999999999999999999999999999999999999999999999999999999999 should be not clear?")
+            #self.ax_item_dict = {}
             # make white background
-            print("999999999999999999999999999999999999999999999999999999999999999999999999999999999 should it be here?")
-            self._ax_obj.setBackground('w')
             # See each subclass.
             value_obj = self.set_view_data()
             # for RoiBOX

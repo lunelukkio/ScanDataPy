@@ -18,7 +18,7 @@
       "modifier_default_val": {
           "TimeWindow0": [0, 5],
           "TimeWindow1": [0, 5],
-          "TimeWindow2": [0, 10],
+          "TimeWindow2": [0, -1],
           "TimeWindow3": [0, -1],
           "Roi0": [10, 10, 5, 5],
           "Roi1": [40, 40, 1, 1],

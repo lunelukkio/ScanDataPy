@@ -246,36 +246,19 @@ class MainController():
         print("Main controller: Update done!")
         print("")
 
-
-
-
-
-
     def onclick_axes(self, event, axes_name):
-        axes_name = axes_name.upper()
-
         if axes_name == "ImageAxes":
-            image_pos = self.__ax_dict[
-                "ImageAxes"]._ax_obj.getView().mapSceneToView(event.scenePos())
+            # get clicked position
+            image_pos = self.__ax_dict["ImageAxes"]._ax_obj.getView().mapSceneToView(event.scenePos())
             if event.button() == 1:  # left click
                 x = round(image_pos.x())
                 y = round(image_pos.y())
                 val = [x, y, None, None]
-
-                # get True dict from key_manager of main controller
-                whole_dict_list = self._key_manager.get_key_dicts(True)
-                roi_dict_list = [item for item in whole_dict_list if
-                                 'ROI' in item['ControllerName']]
-                for main_controller_dict in roi_dict_list:
-                    # make a dict for a controller
-                    controller_dict = Tools.extract_key(main_controller_dict,
-                                                        ['ControllerName'])
-                    # make a dict for data to distingish original files 
-                    data_dict = main_controller_dict.copy()
-                    data_dict['Origin'] = 'File'
-                    # get data
-                    self.__model.set_val(controller_dict, val)
-                    self.__model.set_data(data_dict)
+                # get Roi modifier name in FluoAxes key manager.
+                modifier_name_list = [name for name in self.__ax_dict["FluoAxes"]._key_manager.modifier_list if 'Roi' in name]
+                for modifier_name in modifier_name_list:
+                    # set modifier values
+                    self.set_modifier_val(modifier_name, val)
                 self.update_view("FluoAxes")
 
             elif event.button() == 2:
@@ -295,40 +278,14 @@ class MainController():
             raise NotImplementedError()
 
     def change_roi_size(self, val: list):
-        controller_name = []
-        new_roi_pos = []
-        whole_dict_list = self._key_manager.get_key_dicts(True)
-        roi_dict_list = [item for item in whole_dict_list if
-                         'ROI' in item['ControllerName']]
-        for main_controller_dict in roi_dict_list:
-            if main_controller_dict[
-                'ControllerName'] in controller_name:  # avoid overwriting of ch1 and ch2
-                controller_dict = Tools.extract_key(main_controller_dict,
-                                                    ['ControllerName'])
-                # make a dict for data to distingish original files 
-                data_dict = main_controller_dict.copy()
-                data_dict['Origin'] = 'File'
-            else:
-                # make a dict for a controller
-                controller_dict = Tools.extract_key(main_controller_dict,
-                                                    ['ControllerName'])
-                # make a dict for data to distingish original files 
-                data_dict = main_controller_dict.copy()
-                data_dict['Origin'] = 'File'
-
-                # get old roi position
-                old_roi_pos = self.__model.get_controller(controller_dict)[
-                    0].val_obj.data  # list shold have only one value
-                new_roi_pos = [
-                    old_roi_pos[0],
-                    old_roi_pos[1],
-                    old_roi_pos[2] + val[2],
-                    old_roi_pos[3] + val[3]
-                ]
-            self.__model.set_val(controller_dict, new_roi_pos)
-            self.__model.set_data(data_dict)
-            controller_name.append(controller_dict['ControllerName'])
+        modifier_name_list = [name for name in self.__ax_dict[
+            "FluoAxes"]._key_manager.modifier_list if 'Roi' in name]
+        for modifier_name in modifier_name_list:
+            # set modifier values
+            self.set_modifier_val(modifier_name, val)
         self.update_view("FluoAxes")
+
+
 
     """ Delegation to the Model """
 
@@ -369,13 +326,13 @@ class MainController():
 
     def set_trace_type(self, controller_axes, selected_text):
         if selected_text == 'Original':
-            self.__ax_dict[controller_axes].set_mod_key_list('Original')
+            self.__ax_dict[controller_axes].set_modifier_list('Original')
         elif selected_text == 'DFoF':
-            self.__ax_dict[controller_axes].set_mod_key_list('DFoF')
+            self.__ax_dict[controller_axes].set_modifier_list('DFoF')
         elif selected_text == 'Normalize':
-            self.__ax_dict[controller_axes].set_mod_key_list('Normalize')
+            self.__ax_dict[controller_axes].set_modifier_list('Normalize')
         elif selected_text == 'BlComp':
-            self.__ax_dict[controller_axes].set_mod_key_list('BlComp')
+            self.__ax_dict[controller_axes].set_modifier_list('BlComp')
         self.update_view("FluoAxes")
 
     """ Delegation to the AxesController """
@@ -406,7 +363,7 @@ class MainController():
 
     """ Delegation to the ModController """
 
-    def set_mod_key(self, controller_key, mod_key, mod_val=None):
+    def set_modifier_list(self, controller_key, mod_key):
         self.__model.set_mod_key(controller_key, mod_key, mod_val)
 
     def show_data(self, target_dict, except_dict):

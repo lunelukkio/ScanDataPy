@@ -432,10 +432,9 @@ class Roi(ModifierHandler):
                     roi_val[i] = val[i]
             for i in range(2, 4):
                 if val[i] is None:
-                    roi_val[i] = self._val_obj.data[
-                        i]  # for width and height
+                    roi_val[i] = self._val_obj.data[i]  # for width and height
                 else:
-                    roi_val[i] = self._val_obj.data[i] + roi_val[i]
+                    roi_val[i] = self._val_obj.data[i] + val[i]
         self._val_obj = RoiVal(*roi_val[:4])  # replace the roi
         self.observer.notify_observer()
         print(f"set Roi: {self._val_obj.data} and notified")
@@ -453,7 +452,6 @@ class Roi(ModifierHandler):
         # make raw trace data
         x, y, x_width, y_width = roi_obj.data[:4]
         data = origin_data.data[x:x + x_width, y:y + y_width, :]
-        print(np.shape(data))
         # make a trace value object
         print(f"Roi:A frames from {roi_obj.data}")
         # take Ch from DataType

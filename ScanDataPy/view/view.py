@@ -141,7 +141,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         # radio check buttons
         self.origin_trace = QtWidgets.QRadioButton("Original")
         self.dFoverF_trace = QtWidgets.QRadioButton("dF/F")
-        self.normalized_trace = QtWidgets.QRadioButton("NORMALIZE")
+        self.normalized_trace = QtWidgets.QRadioButton("Normalize")
         # make a group
         self.trace_type = QtWidgets.QButtonGroup()
         self.trace_type.addButton(self.origin_trace)
@@ -219,14 +219,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.__main_controller.print_infor()
         self.__main_controller.update_view()
 
-  
-
-        "This is temporal. shold be deleted later"
-        # self.dFoverF_trace.setChecked(True)
-        # self.dFoverF()
-
         # connect x axis of windows
-
     def sync_x_axes(self, view):
         # get the x axis setting of the fluo axes
         x_range1 = \
@@ -244,22 +237,14 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.__main_controller.ax_dict["FluoAxes"].ax_obj.setXRange(
             x_range2[0], x_range2[1], padding=0)
 
-    def live_view(self):
-        self.__live_camera_view.start_live_view()
-
-    def bl_comp(self):
-        self.__main_controller.set_trace_type(
-            "FluoAxes",
-            "BLCOMP"
-        )
-
-    def switch_bl_roi(self, state):
-        self.__main_controller.single_operation("ROI0", "All")
-        self.__main_controller.set_view_flag(
-            "FluoAxes",
-            "ROI0",
-            "CH1"
-        )  # (ax, controller_key, data_key, value)
+    def roi_size(self, command):
+        if command == "large":
+            val = [None, None, 1, 1]
+        elif command == "small":
+            val = [None, None, -1, -1]
+        else:
+            raise Exception('Should be Small or Large')
+        self.__main_controller.change_roi_size(val)
 
     def change_roi(self, state):
         self.__main_controller.operating_controller_set.next_controller_to_true(
@@ -273,20 +258,61 @@ class QtDataWindow(QtWidgets.QMainWindow):
             if button:
                 text = button.text()
                 self.label.setText(f"Selected: {text}")
+                # change to keys from labels
+                if button.text() == "Original":
+                    text = "Original"
                 if button.text() == "dF/F":
-                    text = "DFOF"
+                    text = "DFoF"
+                elif button.text() == "Normalize":
+                    text = "Normalize"
+                # send to main controller
                 self.__main_controller.set_trace_type(
                     "FluoAxes",
                     text)
         else:
             return
 
-    def roi_size(self, command):
-        if command == "large":
-            val = [None, None, 1, 1]
-        elif command == "small":
-            val = [None, None, -1, -1]
-        self.__main_controller.change_roi_size(val)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def bl_comp(self):
+        self.__main_controller.set_trace_type(
+            "FluoAxes",
+            "BlComp"
+        )
+
+    def switch_bl_roi(self, state):
+        self.__main_controller.single_operation("Roi0", "All")
+        self.__main_controller.set_view_flag(
+            "FluoAxes",
+            "Roi0",
+            "Ch1"
+        )  # (ax, controller_key, data_key, value)
+
+
+
+
+
+
+
+
+
+    def live_view(self):
+        self.__live_camera_view.start_live_view()
 
 
 class CustomImageView(pg.ImageView):
@@ -328,7 +354,6 @@ if __name__ == '__main__':
 
     print("＝＝＝to do list＝＝＝")
     print("second trace time shift ")
-    print("make dF/F mod")
     print("fix re-open method")
     print("make difference image functions")
     print("")
