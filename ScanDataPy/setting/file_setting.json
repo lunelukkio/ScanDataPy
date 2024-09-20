@@ -47,7 +47,7 @@
         "attribute_list": ["Data"],
         "data_type_list": ["FluoFramesCh1"],
         "origin_list" : ["File"],
-        "modifier_list": ["Roi1", "Average1", "Scale0"]
+        "modifier_list": ["Roi1", "Average1", "Scale0", "BlComp"]
       },
       "elec_ax_default_tag": {
         "attribute_list": ["Data"],

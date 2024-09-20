@@ -30,7 +30,7 @@ class ModifierServiceInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def set_modifier_val(self, val):
+    def set_modifier_val(self, modifier_name, *args, **kwargs):
         raise NotImplementedError()
 
 
@@ -261,7 +261,7 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
         return self._val_obj
 
     @abstractmethod
-    def set_val(self):
+    def set_val(self, *args, **kwargs):
         raise NotImplementedError()
 
     def get_val(self):  # e.g. roi value
@@ -583,11 +583,29 @@ class Scale(ModifierHandler):
 
 
 class BlComp(ModifierHandler):
-    def set_val(self, data):  # data = baseline trace obj
-        pass
+    def __init__(self, modifier_name):
+        super().__init__(modifier_name)
+        self.bl_mode = 'Normal' # 'DFoF' or 'Normalize'
+        self.bl_trace = None
 
-    def set_data(self, data):
-        pass
+    def __del__(self):  # make a message when this object is deleted.
+        print('.')
+        print(f"----- Deleted a BlComp object. + {format(id(self))}")
+        # pass
+
+    def set_val(self, val: str, baseline_obj = None):  # val = [start, width]
+        self.bl_mode = val
+        print(f"set BlComp: {self.bl_mode}  1.Normal, 2.RoiComp")
+        self.bl_trace = baseline_obj
+        print("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+        print(self.bl_trace)
+
+    def set_data(self, data) -> object:
+        if self.scale_mode == 'Normal':
+            print("BlComp: Normal -> No modified")
+            return data
+        elif self.scale_mode == 'RoiComp':
+            pass
 
 
 
@@ -597,6 +615,17 @@ class BlComp(ModifierHandler):
 
 
 
+
+
+
+
+
+
+
+
+        else:
+            raise ValueError(f"No such a BlCOmp mode -> {self.scale_mode} "
+                             f"check set_val in BlComp" )
 
 class EndModifier(ModifierHandler):
     def __init__(self, modifier_name):

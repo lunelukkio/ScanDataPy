@@ -161,7 +161,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.trace_type.buttonClicked.connect(self.scale)
 
         # file buttons
-        load_btn = QtWidgets.QPushButton("Load...")
+        load_btn = QtWidgets.QPushButton("Load")
         load_btn.setFixedSize(30, 30)
         bottom_btn_layout.addWidget(load_btn, alignment=QtCore.Qt.AlignLeft)
         load_btn.clicked.connect(lambda: self.open_file())
@@ -266,10 +266,28 @@ class QtDataWindow(QtWidgets.QMainWindow):
                 else:
                     selected_text = "Original"
                 # send to main controller
-                self.__main_controller.set_trace_type(selected_text)
+                self.__main_controller.set_trace_type(
+                    'Scale0',
+                    selected_text
+                )
         else:
             return
 
+    def bl_comp(self, state):
+        if self.bl_comp_checkbox.isChecked():
+            baseline_obj = self.__main_controller.get_data(
+                {'Filename':'20408B002.tsm','DataType': 'FluoFrameCh1', 'Origin':'File'},
+                ['Roi0', 'Average1']
+            )
+            self.__main_controller.set_trace_type(
+                'BlComp0',
+                'RoiComp', baseline_obj
+            )
+        else:
+            self.__main_controller.set_trace_type(
+                'BlComp0',
+                'Normal'
+            )
 
 
 
@@ -287,11 +305,6 @@ class QtDataWindow(QtWidgets.QMainWindow):
 
 
 
-    def bl_comp(self):
-        self.__main_controller.set_trace_type(
-            "FluoAxes",
-            "BlComp" 
-        )
 
     def switch_bl_roi(self, state):
         self.__main_controller.single_operation("Roi0", "All")

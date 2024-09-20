@@ -148,14 +148,18 @@ class MainController():
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
-    # set values into controllers
-    def get_data(self):
+    def get_data(self, data_tag, modifier_list):
         # get lists of the data tag list
-        lists_of_tag_list = self._key_manager.get_dicts_from_tag_list()
-        # get modifier list
-        modifier_list = self._key_manager.get_modifier_list()
-        for tag_list in lists_of_tag_list:
-            self.__model.get_data(tag_list, modifier_list)
+        return self.__model.get_data(data_tag, modifier_list)
+
+
+    #def get_data(self):
+    #    # get lists of the data tag list
+    #    lists_of_tag_list = self._key_manager.get_dicts_from_tag_list()
+    #    # get modifier list
+    #    modifier_list = self._key_manager.get_modifier_list()
+    #    for tag_list in lists_of_tag_list:
+    #        self.__model.get_data(tag_list, modifier_list)
 
     # set modifier values e.g. 'Roi1', [40, 40, 1, 1]. Be called by view and self.default_settings.
     def set_modifier_val(self, modifier, val):
@@ -285,8 +289,8 @@ class MainController():
             self.set_modifier_val(modifier_name, val)
         self.update_view('FluoAxes')
 
-    def set_trace_type(self, selected_text):
-        self.__model.set_modifier_val('Scale0', selected_text)
+    def set_trace_type(self,modifier_name, selected_text, *args, **kwargs):
+        self.__model.set_modifier_val(modifier_name, selected_text)
         self.__ax_dict['FluoAxes'].set_update_flag(True)
         self.update_view('FluoAxes')
 
@@ -296,6 +300,9 @@ class MainController():
         self._key_manager.reset()
         for ax in self.__ax_dict.values():
             ax.key_manager.reset()
+
+
+
 
 
 
