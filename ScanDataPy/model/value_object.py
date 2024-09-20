@@ -22,16 +22,11 @@ class ValueObj(metaclass=ABCMeta):
         else:
             self._shape = None
         self._data_tag = data_tag
-        self._data_type = None
         
     def __del__(self):
         #print('.')
         #print(f'Deleted {self.__class__.__name__}: myId= {format(id(self))}')
         pass
-        
-    @property
-    def data_type(self):
-        return self._data_tag['DataType']
         
     @property
     def data(self) -> np.ndarray:
@@ -50,7 +45,7 @@ class ValueObj(metaclass=ABCMeta):
         return self._data_tag
     
     @data_tag.setter
-    def data_tag(self, data_tag: list):
+    def data_tag(self, data_tag: dict):
         raise Exception('Value object should be Immutable.')
     
     @abstractmethod
@@ -151,7 +146,7 @@ class TraceData(ValueObj):
            type(sum_val) == np.int64 or \
            type(sum_val) == np.float64:
             sub_trace = self._data + sum_val
-        elif self._data_type == sum_val.data_type:
+        elif self._data_tag['DataType'] == sum_val.data_tag['DataType']:
             if len(self._data) != len(sum_val.data):
                 print('!!! Caution! The length of these data is not matched!')
             sub_trace = np.sum(self._data, sum_val.data)
@@ -165,12 +160,12 @@ class TraceData(ValueObj):
            type(sub_val) == np.int64 or \
            type(sub_val) == np.float64:
             sub_trace = self._data - sub_val
-        elif self._data_type == sub_val.data_type:
+        elif self._data_tag['DataType'] == sub_val.data_tag['DataType']:
             if len(self._data) != len(sub_val.data):
                 print('!!! Caution! The length of these data is not matched!')
             sub_trace = np.subtract(self._data, sub_val.data)
         else:
-            print(f"TraceData class: {self._data_type} - {sub_val.data_type}")
+            print(f"TraceData class: {self._data_tag['DataType']} - {sub_val.data_tag['DataType']}")
             raise Exception('Wrong value. This value object should be divided by int or float or other value object')
             
         return TraceData(sub_trace, self._data_tag, self.__interval)

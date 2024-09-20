@@ -266,28 +266,27 @@ class QtDataWindow(QtWidgets.QMainWindow):
                 else:
                     selected_text = "Original"
                 # send to main controller
-                self.__main_controller.set_trace_type(
+                self.__main_controller.set_modifier_val(
                     'Scale0',
                     selected_text
                 )
+            self.__main_controller.set_update_flag('FluoAxes', True)
+            self.__main_controller.update_view('FluoAxes')
         else:
             return
 
     def bl_comp(self, state):
         if self.bl_comp_checkbox.isChecked():
-            baseline_obj = self.__main_controller.get_data(
-                {'Filename':'20408B002.tsm','DataType': 'FluoFrameCh1', 'Origin':'File'},
-                ['Roi0', 'Average1']
-            )
-            self.__main_controller.set_trace_type(
-                'BlComp0',
-                'RoiComp', baseline_obj
-            )
+            self.__main_controller.get_base_line_data()
+            self.__main_controller.set_update_flag('FluoAxes', True)
+            self.__main_controller.update_view('FluoAxes')
         else:
-            self.__main_controller.set_trace_type(
+            self.__main_controller.set_modifier_val(
                 'BlComp0',
                 'Normal'
             )
+            self.__main_controller.set_update_flag('FluoAxes', True)
+            self.__main_controller.update_view('FluoAxes')
 
 
 

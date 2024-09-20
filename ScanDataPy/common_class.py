@@ -318,29 +318,41 @@ class Tools:
 
     @staticmethod
     def delta_f(trace_obj, bl_trace_obj) -> object:
-        # return value object
+        # return value object. See value_object.TraceData
         return trace_obj - bl_trace_obj
 
     @staticmethod
-    def create_bl_comp(trace_obj, bl_trace_obj, degreePoly=2):
-        # get f value
-        f_trace = Tools.f_value(trace_obj)
-        # get fitting curve from baseline trace
-        coefficients = np.polyfit(bl_trace_obj.time, bl_trace_obj.data,
-                                  degreePoly)
-        y_fit = np.polyval(coefficients, bl_trace_obj.time)
+    def poly_fit(trace_obj, degree_poly=2):
+        # Calculate mean and standard deviation of time data
+        mu = [np.mean(trace_obj.time), np.std(trace_obj.time)]
+        # time data centering and scaling
+        t_scaled = (trace_obj.time - mu[0]) / mu[1]
+        # Polynomial fitting with scaled data
+        fitcoef = np.polyfit(t_scaled, trace_obj.data, degree_poly)
+        # Evaluate fitted polynomial in data points
+        fitting_trace = np.polyval(fitcoef, t_scaled)
+        return fitting_trace, fitcoef, mu
 
-        bl_trace_fit_obj = TraceData(y_fit, trace_obj.key_dict,
-                                     trace_obj.interval)
+    @staticmethod
+    def polyval_with_mu(fitcoef, x, mu):
+        # Scaling x values
+        x_scaled = (x - mu[0]) / mu[1]
+        # Evaluate polynomial
+        y = np.polyval(fitcoef, x_scaled)
+        return y
 
-        # calculate baseline compensated trace
-        delta_f_trace = Tools.delta_f(trace_obj, bl_trace_fit_obj)
-        # trace_obj.show_data()
-        # bl_trace_fit_obj.show_data()
-        # trace_obj.show_data()
-        # delta_F_trace.show_data()
-        bl_comp_trace = delta_f_trace + f_trace
-        # bl_comp_trace = f_trace
+    @staticmethod
+    def create_bg_comp(trace_obj, bg_trace_obj):
+        f = Tools.f_value(trace_obj)
+        print("ggggggggggggggggggggggggggggggggggggggggggggggggggggggggg")
+        print(trace_obj.data)
+        print(trace_obj.data_tag)
+
+
+        delta_F_trace = Tools.delta_f(trace_obj, bg_trace_obj)
+        trace_obj.show_data()
+        delta_F_trace.show_data()
+        bl_comp_trace = delta_F_trace + f
         return bl_comp_trace
 
     """ misc """

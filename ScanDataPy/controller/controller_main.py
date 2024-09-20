@@ -65,6 +65,7 @@ class MainController():
         self.__file_service = FileService()
         self._key_manager = KeyManager()
         self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, FluoAxes: TraceAx class}\
+        # This is for temporary valiable for a baseline trace
 
     def __del__(self):
         print('.')
@@ -148,23 +149,27 @@ class MainController():
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
-    def get_data(self, data_tag, modifier_list):
-        # get lists of the data tag list
-        return self.__model.get_data(data_tag, modifier_list)
-
-
-    #def get_data(self):
-    #    # get lists of the data tag list
-    #    lists_of_tag_list = self._key_manager.get_dicts_from_tag_list()
-    #    # get modifier list
-    #    modifier_list = self._key_manager.get_modifier_list()
-    #    for tag_list in lists_of_tag_list:
-    #        self.__model.get_data(tag_list, modifier_list)
+    def get_base_line_data(self):
+        baseline_temp = {
+            'FileName':self._key_manager.filename_list[0],
+            'Attribute':'Data',
+            "DataType":'FluoFramesCh1',
+            'Origin': 'File'
+        }
+        baseline_obj = self.__model.get_data(
+            baseline_temp,
+            ['TimeWindow3', 'Roi0', 'Average1'])
+        self.set_modifier_val(
+            'BlComp0',
+            'RoiComp', baseline_obj
+        )
 
     # set modifier values e.g. 'Roi1', [40, 40, 1, 1]. Be called by view and self.default_settings.
-    def set_modifier_val(self, modifier, val):
-        self.__model.set_modifier_val(modifier, val)
+    def set_modifier_val(self, modifier, *args, **kwargs):
+        self.__model.set_modifier_val(modifier, *args, **kwargs)
 
+    def set_update_flag(self, ax_name, flag):
+        self.__ax_dict[ax_name].set_update_flag(flag)
 
     def default_settings(self, filename_key):
 
@@ -287,11 +292,6 @@ class MainController():
         for modifier_name in modifier_name_list:
             # set modifier values
             self.set_modifier_val(modifier_name, val)
-        self.update_view('FluoAxes')
-
-    def set_trace_type(self,modifier_name, selected_text, *args, **kwargs):
-        self.__model.set_modifier_val(modifier_name, selected_text)
-        self.__ax_dict['FluoAxes'].set_update_flag(True)
         self.update_view('FluoAxes')
 
     def __reset(self):

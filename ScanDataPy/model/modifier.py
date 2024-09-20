@@ -597,34 +597,27 @@ class BlComp(ModifierHandler):
         self.bl_mode = val
         print(f"set BlComp: {self.bl_mode}  1.Normal, 2.RoiComp")
         self.bl_trace = baseline_obj
-        print("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
-        print(self.bl_trace)
 
     def set_data(self, data) -> object:
-        if self.scale_mode == 'Normal':
+        if self.bl_mode == 'Normal':
             print("BlComp: Normal -> No modified")
             return data
-        elif self.scale_mode == 'RoiComp':
-            pass
+        elif self.bl_mode == 'RoiComp':
+            print("BlComp: RoiComp -> baseline compensation")
+            fitting_trace, fitcoef, mu = Tools.poly_fit(self.bl_trace)
+            fitting_new_trace_raw = Tools.polyval_with_mu(fitcoef,data.time, mu)
+            new_bl_trace_value_obj = TraceData(
+                fitting_new_trace_raw,
+                data.data_tag,
+                data.interval
+            )
+            bl_comp_trace = Tools.create_bg_comp(data, new_bl_trace_value_obj)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            return bl_comp_trace
         else:
-            raise ValueError(f"No such a BlCOmp mode -> {self.scale_mode} "
+            raise ValueError(f"No such a BlCOmp mode -> {self.bl_mode} "
                              f"check set_val in BlComp" )
 
 class EndModifier(ModifierHandler):
