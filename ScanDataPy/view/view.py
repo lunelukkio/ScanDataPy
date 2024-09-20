@@ -290,7 +290,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
     def bl_comp(self):
         self.__main_controller.set_trace_type(
             "FluoAxes",
-            "BlComp"
+            "BlComp" 
         )
 
     def switch_bl_roi(self, state):

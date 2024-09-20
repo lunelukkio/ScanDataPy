@@ -63,21 +63,21 @@ class FileService:
                 None,
                 "Open File",
                 os.getcwd(),
-                "All files (*.*);;"
                 "Tsm files (*.tsm);;"
                 "Da files (*.da);;"
                 "Axon files (*.abf);;"
                 "WinCP files (*.wcp)"
+                "All files (*.*);;"
             )
         except:
             # open file dialog
             fullname = tk.filedialog.askopenfilename(
                 initialdir=os.getcwd(),  # current dir
-                filetypes=(('All files', '*.*'),
-                           ('Tsm files', '*.tsm'),
+                filetypes=(('Tsm files', '*.tsm'),
                            ('Da files', '*.da'),
                            ('Axon files', '*.abf'),
-                           ('WinCP files', '*.wcp')
+                           ('WinCP files', '*.wcp'),
+                           ('All files', '*.*')
                            ))
         return fullname
 
