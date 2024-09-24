@@ -221,6 +221,10 @@ class TbnFileIo:
         self.num_elec_data = 0
 
         self.object_num = 0  # for counter
+        # gain of the patch amp
+        # The amp output is Vm*10, and V to mV
+        # Output of MaltiClamp700A is 0.5V/nA, and V to pA
+        self.elec_gain_table = [1, 20, 1, 1, 1, 1, 1, 1]
 
         # read data
         self.read_data()
@@ -244,17 +248,10 @@ class TbnFileIo:
                                                    self.num_elec_ch,
                                                    order='F')
 
+
+
             # scale set
-            # The amp output is Vm*10, and V to mV
-            self.elec_trace[:, 0] = (self.elec_trace[:, 0] / 10) * 1000
-            # Output of MaltiClamp700A is 0.5V/nA, and V to pA
-            self.elec_trace[:, 1] = (self.elec_trace[:, 1] * 2) * 1000
-            self.elec_trace[:, 2] = (self.elec_trace[:, 2] / 10) * 1000
-            self.elec_trace[:, 3] = (self.elec_trace[:, 3] / 10) * 1000
-            self.elec_trace[:, 4] = (self.elec_trace[:, 4] / 10) * 1000
-            self.elec_trace[:, 5] = (self.elec_trace[:, 5] / 10) * 1000
-            self.elec_trace[:, 6] = (self.elec_trace[:, 6] / 10) * 1000
-            self.elec_trace[:, 7] = (self.elec_trace[:, 7] / 10) * 1000
+            self.elec_trace = (self.elec_trace/10 * self.elec_gain_table) * 1000
 
         except OSError as e:
             print(e)

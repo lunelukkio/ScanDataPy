@@ -51,7 +51,7 @@
       },
       "elec_ax_default_tag": {
         "attribute_list": ["Data"],
-        "data_type_list": ["ElecTraceCh1"],
+        "data_type_list": ["ElecTraceCh2"],
         "origin_list" : ["File"],
         "modifier_list": ["TimeWindow2"]
       }

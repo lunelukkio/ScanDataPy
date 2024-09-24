@@ -21,6 +21,14 @@ class TsmBuilder:
     @staticmethod
     def create_data(filename_obj):
 
+        def tag_creator(filename, attribute, data_type, origin='File'):
+            return {
+                'Filename': filename,
+                'Attribute': attribute,
+                'DataType': data_type,
+                'Origin': origin
+            }
+
         # import a JSON setting file
         try:
             with open("./setting/file_setting.json", "r") as json_file:
@@ -30,30 +38,24 @@ class TsmBuilder:
                 setting = json.load(json_file)
         num_ch = setting["tsm"]["num_ch"]
         num_elec_ch = setting["tsm"]["num_elec_ch"]
-        default_settings = setting["tsm"]["default_settings"]
 
-        default_dict = {
-            'num_ch': num_ch,
-            'num_elec_ch': num_elec_ch,
-            'default_settings': default_settings,
-        }
+        default_dict = setting['tsm'].copy()
 
-        default = TextData(default_dict, {
-            'Filename': filename_obj.name,
-            'Attribute': 'Default',
-            'DataType': 'Text',  # need to think about category
-            'Origin': 'File'}
-                           )
+        default = TextData(default_dict, tag_creator(
+            filename_obj.name,
+            'Default',
+            'Text'
+            )
+        )
         file_io = TsmFileIo(filename_obj, num_ch)
 
         # header value object
         header = TextData(
-            file_io.get_header(), {
-                'Filename': filename_obj.name,
-                'Attribute': 'Header',
-                'DataType': 'Text',
-                'Origin': 'File'
-            }
+            file_io.get_header(), tag_creator(
+                filename_obj.name,
+                'Header',
+                'Text'
+            )
         )
 
         # get and set data from files
@@ -61,22 +63,20 @@ class TsmBuilder:
         frames_list = file_io.get_3d()  # frames list
         # make a full frames
         full_frames = [
-            FramesData(frames_list[0], {
-                'Filename': filename_obj.name,
-                'Attribute': 'Data',
-                'DataType': 'FluoFramesCh0',
-                'Origin': 'File'
-            }, data_interval[0])
+            FramesData(frames_list[0], tag_creator(
+                filename_obj.name,
+                'Data',
+                'FluoFramesCh0'
+            ), data_interval[0])
         ]
         # make a ch frames list
         ch_frames = [
             FramesData(
-                frames_list[i], {
-                    'Filename': filename_obj.name,
-                    'Attribute': 'Data',
-                    'DataType': 'FluoFramesCh' + str(i),
-                    'Origin': 'File'
-                }, data_interval[i]
+                frames_list[i], tag_creator(
+                    filename_obj.name,
+                    'Data',
+                    'FluoFramesCh' + str(i)
+                ), data_interval[i]
             ) for i in range(1, num_ch + 1)
         ]
         frames = full_frames + ch_frames
@@ -84,12 +84,11 @@ class TsmBuilder:
         trace_list = file_io.get_1d()
         elec_trace_list = [
             TraceData(
-                trace_list[:, ch], {
-                    'Filename': filename_obj.name,
-                    'Attribute': 'Data',
-                    'DataType': 'ElecTraceCh' + str(ch + 1),
-                    'Origin': 'File'
-                }, data_interval[1 + num_ch + ch]
+                trace_list[:, ch], tag_creator(
+                    filename_obj.name,
+                    'Data',
+                    'ElecTraceCh' + str(ch + 1)
+                ), data_interval[1 + num_ch + ch]
             ) for ch in range(num_elec_ch)
         ]
 
