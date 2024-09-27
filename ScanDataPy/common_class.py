@@ -344,14 +344,9 @@ class Tools:
     @staticmethod
     def create_bg_comp(trace_obj, bg_trace_obj):
         f = Tools.f_value(trace_obj)
-        print("ggggggggggggggggggggggggggggggggggggggggggggggggggggggggg")
-        print(trace_obj.data)
-        print(trace_obj.data_tag)
-
-
         delta_F_trace = Tools.delta_f(trace_obj, bg_trace_obj)
-        trace_obj.show_data()
-        delta_F_trace.show_data()
+        #trace_obj.show_data()
+        #delta_F_trace.show_data()
         bl_comp_trace = delta_F_trace + f
         return bl_comp_trace
 

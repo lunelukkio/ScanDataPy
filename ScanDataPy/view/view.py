@@ -52,8 +52,8 @@ class QtDataWindow(QtWidgets.QMainWindow):
         size = centralWidget.size()
 
         # image window
-        image_ax = pg.ImageView()
-        # image_ax = CustomImageView()
+        #image_ax = pg.ImageView()
+        image_ax = CustomImageView()
         image_ax.ui.histogram.hide()  # hide contrast bar
         image_ax.ui.menuBtn.hide()  # hide a menu button
         image_ax.ui.roiBtn.hide()  # hide a ROI button
@@ -329,14 +329,26 @@ class CustomImageView(pg.ImageView):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        # This is to ignore every mouse event.
+        #self.setAttribute(QtCore.Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.setMouseTracking(True)
+
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
             print("111111111111111111111111111111")
             event.ignore()
         else:
-            super().mousePressEvent(event)
+            #super().mousePressEvent(event)
+            print("llllllllllllllllllllllllllllllllllllllllll")
+            #help(pg.ImageView)
+            event.ignore()
 
     def mouseMoveEvent(self, event):
+        print("ddddddddddddddddddddddddddddddddddddddd")
+        event.ignore()
+
+    def mouseDragEvent(self, event):
+        print("ddddddddddddddddddddddddddddddddddddddd")
         event.ignore()
 
     def mouseReleaseEvent(self, event):

@@ -158,7 +158,7 @@ class MainController():
         }
         baseline_obj = self.__model.get_data(
             baseline_temp,
-            ['TimeWindow3', 'Roi0', 'Average1'])
+            ['TimeWindow3', 'Roi1', 'Average1'])
         self.set_modifier_val(
             'BlComp0',
             'RoiComp', baseline_obj

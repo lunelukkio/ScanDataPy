@@ -35,7 +35,12 @@ class Test(unittest.TestCase):
         interval = 1
         
         data = rawdata[data_channel][x,y,:]
-        test = TraceData(data, {'Attribute':"ROI1", 'ch':'Ch1'}, interval,)
+        test1 = TraceData(data, {'Attribute':"ROI1", 'ch':'Ch1','DataType':'A'}, interval,)
+        test2 = TraceData(data, {'Attribute':"ROI1", 'ch':'Ch1', 'DataType':'A'}, interval,)
+        print("rttttttttttttttttttttttttttttttttttttttttttttttttttttt")
+        print(test1._data_tag)
+        print(test2._data_tag)
+        test = test1*test2
 
         
         app = QApplication([])

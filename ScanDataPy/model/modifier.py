@@ -7,6 +7,7 @@ Created on Thu ug 29 15:16:57 2024
 
 from abc import ABCMeta, abstractmethod
 import numpy as np
+import itertools
 
 from ScanDataPy.model.value_object import FramesData
 from ScanDataPy.model.value_object import ImageData
@@ -113,14 +114,10 @@ class ModifierService(ModifierServiceInterface):
         modifier_name_list = [modifier.modifier_name for modifier in
                               self.__modifier_chain_list]
         # Count existing modifier name
-        i = 0
-        while True:
+        for i in itertools.count(): # This is for  i +=1
             current_name = f'{modifier_name}{i}'
             if not current_name in modifier_name_list:
-                break
-            i += 1
-        new_name = modifier_name + str(i)
-        return new_name
+                return current_name
 
     # modifier list always should be done by this list order.
     @staticmethod
@@ -241,11 +238,7 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
             return self.__next_modifier.apply_modifier(data, modifier_list)
 
     def apply_modifier(self, data, modifier_list):
-        if self.modifier_name in modifier_list:
-            new_data = self.set_data(data)
-            # set True of update on each AxesController
-        else:
-            new_data = data
+        new_data = self.set_data(data) if self.modifier_name in modifier_list else data
         return self.modifier_request(new_data, modifier_list)
 
     @property
@@ -307,8 +300,8 @@ class TimeWindow(ModifierHandler):
 
     def set_val(self, val: list):  # val = [start, width]
         window_value_list = val
-        start = window_value_list[0]
-        width = window_value_list[1]
+        # window_value_list[0] and [1]
+        start, width = window_value_list
         self._val_obj = TimeWindowVal(start,
                                       width)  # replace the roi
         self.observer.notify_observer()
@@ -322,8 +315,7 @@ class TimeWindow(ModifierHandler):
             # check value is correct
             TimeWindow.check_frames_val(origin_data, self._val_obj)
             # make raw trace data
-            start = self._val_obj.data[0]
-            width = self._val_obj.data[1]
+            start, width = self._val_obj.data
             if width == -1 or width == 0:
                 # if width = 0 or 1, trace include the end of the trace
                 data = origin_data.data[:, :, start:]
@@ -347,8 +339,7 @@ class TimeWindow(ModifierHandler):
             )
         elif any('ElecTrace' in str for str in list(origin_data.data_tag.values())):
             TimeWindow.check_trace_val(origin_data, self._val_obj)
-            start = self._val_obj.data[0]
-            width = self._val_obj.data[1]
+            start, width = self._val_obj.data
             if width == -1 or width == 0:
                 # if width = 0 or 1, trace include the end of the trace
                 data = origin_data.data[start:]
