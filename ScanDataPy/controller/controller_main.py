@@ -150,15 +150,27 @@ class MainController():
         self.__model.add_modifier(modifier_name)
 
     def get_base_line_data(self):
-        baseline_temp = {
+        baseline_base = {
             'FileName':self._key_manager.filename_list[0],
             'Attribute':'Data',
             "DataType":'FluoFramesCh1',
             'Origin': 'File'
         }
+        baseline_temp = {
+            'FileName':self._key_manager.filename_list[0],
+            'Attribute':'Data',
+            "DataType":'FluoFramesCh1',
+            'Origin': 'Roi1'
+        }
+        # make baseline data and save it to repository
+        self.__model.set_data(
+            baseline_base,
+            ['TimeWindow3', 'Roi1', 'Average1'])
+        # get baseline data
         baseline_obj = self.__model.get_data(
             baseline_temp,
-            ['TimeWindow3', 'Roi1', 'Average1'])
+            [])
+
         self.set_modifier_val(
             'BlComp0',
             'RoiComp', baseline_obj
