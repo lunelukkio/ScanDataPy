@@ -277,7 +277,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
 
     def bl_comp(self, state):
         if self.bl_comp_checkbox.isChecked():
-            self.__main_controller.get_base_line_data()
+            self.__main_controller.set_base_line_data()
             self.__main_controller.set_update_flag('FluoAxes', True)
             self.__main_controller.update_view('FluoAxes')
         else:

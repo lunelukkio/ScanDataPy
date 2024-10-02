@@ -149,21 +149,19 @@ class MainController():
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
-    def set_baseline_data(self):
-        pass 
+    def make_baseline_data(self, baseline_tag_dict):
+        # make baseline data and save it to repository
+        self.__model.set_data(
+            baseline_tag_dict,
+            ['TimeWindow3', 'Roi1', 'Average1'])
 
-    def get_base_line_data(self):
-
+    def set_base_line_data(self):
         baseline_temp = {
             'FileName':self._key_manager.filename_list[0],
             'Attribute':'Data',
-            "DataType":'FluoTraceCh1',
+            'DataType':'FluoTraceCh1',
             'Origin': 'Roi1'
         }
-        # make baseline data and save it to repository
-        self.__model.set_data(
-            baseline_base,
-            ['TimeWindow3', 'Roi1', 'Average1'])
         # get baseline data
         baseline_obj = self.__model.get_data(
             baseline_temp,
@@ -243,7 +241,10 @@ class MainController():
         default_values_list = default.data['default_settings']['modifier_default_val']
         for modifier, value in default_values_list.items():
             self.set_modifier_val(modifier, value)
-
+        # default baseline trace
+        default_baseline_trace = default.data['default_settings']['baseline_trace']
+        default_baseline_trace['Filename'] = self._key_manager.filename_list[0]
+        self.make_baseline_data(default_baseline_trace)
 
         print("========== End of default settings ==========")
         print("")

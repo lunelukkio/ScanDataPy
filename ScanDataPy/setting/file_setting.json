@@ -54,6 +54,12 @@
         "data_type_list": ["ElecTraceCh1"],
         "origin_list" : ["File"],
         "modifier_list": ["TimeWindow2"]
+      },
+      "baseline_trace": {
+        "Filename":"None",
+        "Attribute":"Data",
+        "DataType":"FluoFramesCh1",
+        "Origin": "File"
       }
     }
   },
