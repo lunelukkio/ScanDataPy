@@ -149,17 +149,15 @@ class MainController():
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
+    def set_baseline_data(self):
+        pass 
+
     def get_base_line_data(self):
-        baseline_base = {
-            'FileName':self._key_manager.filename_list[0],
-            'Attribute':'Data',
-            "DataType":'FluoFramesCh1',
-            'Origin': 'File'
-        }
+
         baseline_temp = {
             'FileName':self._key_manager.filename_list[0],
             'Attribute':'Data',
-            "DataType":'FluoFramesCh1',
+            "DataType":'FluoTraceCh1',
             'Origin': 'Roi1'
         }
         # make baseline data and save it to repository
