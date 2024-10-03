@@ -57,7 +57,7 @@
       },
       "baseline_trace": {
         "Filename":"None",
-        "Attribute":"Data",
+        "Attribute":"BaseLine",
         "DataType":"FluoFramesCh1",
         "Origin": "File"
       }
