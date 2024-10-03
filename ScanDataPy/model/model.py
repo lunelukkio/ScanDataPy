@@ -128,13 +128,14 @@ class DataService(ModelInterface):
         self.__modifier_service.set_modifier_val(modifier_name, *args, **kwargs)
 
         # This is for saving data to repository
-    def set_data(self, data_tag, modifier_list=None):
+    def set_data(self, data_tag, modifier_list=None) -> object:
         print(f"DataService: set_data ({list(data_tag.values())}) ---------->")
         # create data
         modified_value_obj = self.__create_data(data_tag, modifier_list)
         # save in the repository
         self.__data_repository.save(modified_value_obj)
         print("----------> Dataservice: set_data Done")
+        return modified_value_obj
 
         # This is for sending data to frontend.
     def get_data(self, data_tag, modifier_list=None):

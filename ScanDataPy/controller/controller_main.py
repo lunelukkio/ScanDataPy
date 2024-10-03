@@ -65,6 +65,7 @@ class MainController():
         self.__file_service = FileService()
         self._key_manager = KeyManager()
         self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, FluoAxes: TraceAx class}\
+        self.current_filename = 0
         # This is for temporary valiable for a baseline trace
 
     def __del__(self):
@@ -131,7 +132,7 @@ class MainController():
     def create_default_modifier(self, filename_number):
         print("MainController: create_default_modifiers() ----->")
 
-        filename = self._key_manager.filename_list[0]
+        filename = self._key_manager.filename_list[self.current_filename]
         # get default information from text data in the json file
         default = self.__model.get_data(
             {'Filename': filename, 'Attribute': 'Default', 'DataType': 'Text'})
@@ -149,22 +150,21 @@ class MainController():
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
-    def make_baseline_data(self, baseline_tag_dict):
+    def make_baseline_data(self, baseline_tag_dict, modifier_tag_list):
         # make baseline data and save it to repository
-        self.__model.set_data(
+        baseline_value_obj = self.__model.set_data(
             baseline_tag_dict,
-            ['TimeWindow3', 'Roi1', 'Average1'])
+            modifier_tag_list)
+        baseline_value_obj.data_tag['Data'] = 'Baseline'
 
     def set_base_line_data(self):
-        baseline_temp = {
-            'FileName':self._key_manager.filename_list[0],
-            'Attribute':'Data',
-            'DataType':'FluoTraceCh1',
-            'Origin': 'Roi1'
+        baseline_tag = {
+            'FileName':self._key_manager.filename_list[self.current_filename],
+            'Attribute':'Baseline',
         }
         # get baseline data
         baseline_obj = self.__model.get_data(
-            baseline_temp,
+            baseline_tag,
             [])
 
         self.set_modifier_val(
@@ -187,7 +187,7 @@ class MainController():
 
         # get default information from text data in the json file
         #get the first of the filename true list
-        filename = self._key_manager.filename_list[0]
+        filename = self._key_manager.filename_list[self.current_filename]
 
         # get default information from JSON
         default = self.__model.get_data(
@@ -241,10 +241,11 @@ class MainController():
         default_values_list = default.data['default_settings']['modifier_default_val']
         for modifier, value in default_values_list.items():
             self.set_modifier_val(modifier, value)
+
         # default baseline trace
         default_baseline_trace = default.data['default_settings']['baseline_trace']
-        default_baseline_trace['Filename'] = self._key_manager.filename_list[0]
-        self.make_baseline_data(default_baseline_trace)
+        default_baseline_trace['Filename'] = self._key_manager.filename_list[self.current_filename]
+        self.make_baseline_data(default_baseline_trace, ['TimeWindow3', 'Roi1', 'Average1'])
 
         print("========== End of default settings ==========")
         print("")

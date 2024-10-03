@@ -265,11 +265,19 @@ class QtDataWindow(QtWidgets.QMainWindow):
                     selected_text = "Normalize"
                 else:
                     selected_text = "Original"
-                # send to main controller
+                # send to model through main controller
                 self.__main_controller.set_modifier_val(
                     'Scale0',
                     selected_text
                 )
+                self.__main_controller.make_baseline_data(
+                    {
+                        noneはだめ
+                        'Filename':'None',
+                        'Attribute':'Data',
+                        'DataType':'FluoFramesCh1',
+                        'Origin': 'File'
+                    }, ['TimeWindow3', 'Roi1', 'Average1'])
             self.__main_controller.set_update_flag('FluoAxes', True)
             self.__main_controller.update_view('FluoAxes')
         else:
