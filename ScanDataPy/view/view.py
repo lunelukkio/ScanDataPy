@@ -270,14 +270,16 @@ class QtDataWindow(QtWidgets.QMainWindow):
                     'Scale0',
                     selected_text
                 )
+                current_filename = self.__main_controller.get_filename()
+
+                modifier_tag_list = ['TimeWindow3', 'Roi1', 'Average1', 'Scale0']
                 self.__main_controller.make_baseline_data(
                     {
-                        noneはだめ
-                        'Filename':'None',
+                        'Filename':current_filename,
                         'Attribute':'Data',
                         'DataType':'FluoFramesCh1',
                         'Origin': 'File'
-                    }, ['TimeWindow3', 'Roi1', 'Average1'])
+                    }, modifier_tag_list)
             self.__main_controller.set_update_flag('FluoAxes', True)
             self.__main_controller.update_view('FluoAxes')
         else:

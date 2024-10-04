@@ -127,8 +127,8 @@ class ModifierService(ModifierServiceInterface):
             'TimeWindow',
             'Roi',
             'Average',
-            'Scale',
             'BlComp',
+            'Scale',
             'EndModifier'
         ]
         # order to new list
@@ -323,7 +323,7 @@ class TimeWindow(ModifierHandler):
                 # slice end is end+1
                 data = origin_data.data[:, :, start:start + width]
             print(
-                f"TimeWindow: A frames from frame# {start} to {start+width-1} (- means whole)")
+                f"TimeWindow:   A frames from frame# {start} to {start+width-1} (- means whole)")
             # take Ch from DataType
             ch, data_type = Tools.take_ch_from_str(origin_data.data_tag['DataType'])
             return FramesData(
@@ -347,7 +347,7 @@ class TimeWindow(ModifierHandler):
                 # slice end is end+1
                 data = origin_data.data[start:start + width]
             print(
-                f"TimeWindow: A Trace from data point# {start} to {start+width-1} (- means whole)")
+                f"TimeWindow:   A Trace from data point# {start} to {start+width-1} (- means whole)")
             # take Ch from DataType
             ch, data_type = Tools.take_ch_from_str(origin_data.data_tag['DataType'])
             return TraceData(
@@ -448,7 +448,7 @@ class Roi(ModifierHandler):
         x, y, x_width, y_width = roi_obj.data[:4]
         data = origin_data.data[x:x + x_width, y:y + y_width, :]
         # make a trace value object
-        print(f"Roi:A frames from {roi_obj.data}")
+        print(f"Roi:        A frames from {roi_obj.data}")
         # take Ch from DataType
         ch, data_type = Tools.take_ch_from_str(origin_data.data_tag['DataType'])
         new_data = FramesData(
@@ -507,7 +507,7 @@ class Average(ModifierHandler):
         if self.average_mode == 'Image':
             # mean to image
             mean_data = np.mean(value_obj.data, axis=2)
-            print("Average: Averaged a FluoFrames to an image")
+            print("Average:     Averaged a FluoFrames to an image")
             # take Ch from DataType
             ch, data_type = Tools.take_ch_from_str(value_obj.data_tag['DataType'])
             return ImageData(
@@ -524,7 +524,7 @@ class Average(ModifierHandler):
             # mean to trace
             mean_data = np.mean(value_obj.data, axis=(0, 1))
             # make a trace value object
-            print(f"Average: Averaged a FluoFrames to a trace")
+            print(f"Average:    Averaged a FluoFrames to a trace")
             # take Ch from DataType
             ch, data_type = Tools.take_ch_from_str(value_obj.data_tag['DataType'])
             return TraceData(
@@ -556,16 +556,18 @@ class Scale(ModifierHandler):
 
     def set_data(self, data) -> object:
         if self.scale_mode == 'Original':
-            print("Scale: Original -> No modified")
+            print("Scale:      Original -> No modified")
             return data
 
         elif self.scale_mode == 'DFoF':
             # make dF/F value object
             df_over_f = Tools.create_df_over_f(data)
+            print("Scale:      Original -> dF/F")
             return df_over_f
 
         elif self.scale_mode == 'Normalize':
             normalized_data = Tools.create_normalize(data)
+            print("Scale:      Original -> Normalized")
             # return Normalized value object
             return normalized_data
         else:
@@ -591,10 +593,10 @@ class BlComp(ModifierHandler):
 
     def set_data(self, data) -> object:
         if self.bl_mode == 'Normal':
-            print("BlComp: Normal -> No modified")
+            print("BlComp:     Normal -> No modified")
             return data
         elif self.bl_mode == 'RoiComp':
-            print("BlComp: RoiComp -> baseline compensation")
+            print("BlComp:     RoiComp -> baseline compensation")
             fitting_trace, fitcoef, mu = Tools.poly_fit(self.bl_trace)
             fitting_new_trace_raw = Tools.polyval_with_mu(fitcoef,data.time, mu)
             new_bl_trace_value_obj = TraceData(

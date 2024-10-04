@@ -18,6 +18,10 @@ class ControllerInterface(metaclass=ABCMeta):
     """ MainController """
 
     @abstractmethod
+    def get_filename(self):
+        raise NotImplementedError()
+
+    @abstractmethod
     def add_axes(self, axes_name: str, axes: object) -> None:
         raise NotImplementedError()
 
@@ -82,6 +86,9 @@ class MainController():
         return self._key_manager
 
     """ MainController """
+
+    def get_filename(self):
+        return self._key_manager.filename_list[self.current_filename]
 
     def add_axes(self, ax_type, axes_name: str, canvas, ax: object) -> None:
         if ax_type == 'Image':
