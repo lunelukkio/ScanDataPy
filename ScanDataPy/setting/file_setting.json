@@ -13,7 +13,8 @@
         "Average0",
         "Average1",
         "Scale0",
-        "BlComp0"
+        "BlComp0",
+        "TagMaker0"
       ],
       "modifier_default_val": {
           "TimeWindow0": [0, 5],
@@ -25,7 +26,8 @@
           "Average0": "Image",
           "Average1": "Roi",
           "Scale0": "Original",
-          "BlComp0": "Normal"
+          "BlComp0": "Normal",
+          "TagMaker0": {"Attribute": "Baseline"}
       },
       "default_observer": {
         "FluoAxes": ["Roi0", "Roi1"],

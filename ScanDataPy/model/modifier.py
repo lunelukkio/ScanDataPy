@@ -76,6 +76,8 @@ class ModifierService(ModifierServiceInterface):
         # make a modifier chain from the chain list
         self.__modifier_chain = ModifierService.make_modifier_chain(
             self.__modifier_chain_list)
+        print("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
+        print(self.__modifier_chain_list)
 
     def remove_chain(self, modifier_name):
         # remove modifier_name object from the list
@@ -106,6 +108,8 @@ class ModifierService(ModifierServiceInterface):
             return ScaleFactory()
         elif 'BlComp' in modifier_name:
             return BlCompFactory()
+        elif 'TagMaker' in modifier_name:
+            return TagMakerFactory()
         else:
             raise ValueError(f"{modifier_name} Factory done not exist.")
 
@@ -129,6 +133,7 @@ class ModifierService(ModifierServiceInterface):
             'Average',
             'BlComp',
             'Scale',
+            'TagMaker',
             'EndModifier'
         ]
         # order to new list
@@ -212,6 +217,10 @@ class ScaleFactory(ModifierFactory):
 class BlCompFactory(ModifierFactory):
     def create_modifier(self, modifier_name):
         return BlComp(modifier_name)
+
+class TagMakerFactory(ModifierFactory):
+    def create_modifier(self, modifier_name):
+        return TagMaker(modifier_name)
 
 
 """ super class """
@@ -610,10 +619,29 @@ class BlComp(ModifierHandler):
             raise ValueError(f"No such a BlCOmp mode -> {self.bl_mode} "
                              f"check set_val in BlComp" )
 
+class TagMaker(ModifierHandler):
+    def __init__(self, modifier_name):
+        super().__init__(modifier_name)
+        self.tag_dict = {} # 'DFoF' or 'Normalize'
+
+    def __del__(self):  # make a message when this object is deleted.
+        print('.')
+        print(f"----- Deleted a TagMaker object. + {format(id(self))}")
+        # pass
+
+    def set_val(self, new_tag_dict: dict):  # val = [start, width]
+        self.tag_dict = new_tag_dict
+
+    def set_data(self, data) -> object:
+        print(f"TagMaker:     New tag -> {self.tag_dict}")
+        data.data_tag.update(self.tag_dict)
+        return data
+
 class EndModifier(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
 
+    # overwrite
     def apply_modifier(self, data, modifier_list):
         return data
 

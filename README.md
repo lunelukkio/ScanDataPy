@@ -34,6 +34,7 @@ file_setting.json
           "Average1": "Roi",    for trace
           "Scale0": "Original",  origin, DFoF, Normarize
           "BlComp0": "Normal"    Normal, 
+          "TagMaker": {"Attribute":"Baseline"}
       },
       "default_observer": {
         "FluoAxes": ["Roi0", "Roi1"],

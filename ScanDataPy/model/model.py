@@ -149,19 +149,8 @@ class DataService(ModelInterface):
         # get data from repository
         data_list = self.__data_repository.find_by_keys(data_tag)
 
-
         assert type(data_list) == list, f"DataService couldn't find {list(data_tag.values())} data"
         assert len(data_list) <=1, f"DataService found more than two data {list(data_tag.values())} data. It should be only a single data."
-
-        """
-        if data_list is None:
-            raise Exception(f"DataService couldn't find {list(data_tag.values())} data")
-            # return data without data
-        if len(data_list) >= 2:
-            raise Exception(
-                f"DataService found more than two data {list(data_tag.values())} data")
-        """
-
 
         # pass or modify
         if modifier_list is None:

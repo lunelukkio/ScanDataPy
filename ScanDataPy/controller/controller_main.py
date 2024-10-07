@@ -71,7 +71,7 @@ class MainController():
         self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, FluoAxes: TraceAx class}\
         self.current_filename = 0
         self.current_ch = 'Ch1'
-        self.baseline_roi = 'Roi0'
+        self.baseline_roi = 'Roi1'
         # This is for temporary valiable for a baseline trace
 
     def __del__(self):
@@ -158,10 +158,10 @@ class MainController():
 
     def make_baseline_data(self, baseline_tag_dict, modifier_tag_list):
         # make baseline data and save it to repository
-        baseline_value_obj = self.__model.set_data(
+        self.__model.set_data(
             baseline_tag_dict,
-            modifier_tag_list)
-        baseline_value_obj.data_tag['Attribute'] = 'Baseline'
+            modifier_tag_list
+        )
 
     def set_base_line_data(self):
         print('tttttttttttttttttttttttttttttttttt')
@@ -172,11 +172,11 @@ class MainController():
             'DataType':'FluoTrace' + self.current_ch,
             'Origin':self.baseline_roi
         }
-        # get baseline data
+        # get baseline data without any modify(baseline is already modified)
         baseline_obj = self.__model.get_data(
             baseline_tag,
             [])
-
+        # set baseline into the modifier
         self.set_modifier_val(
             'BlComp0',
             'RoiComp', baseline_obj
@@ -194,9 +194,10 @@ class MainController():
             'TimeWindow3',
             self.baseline_roi,
             'Average1',
-            'Scale0'
+            'Scale0',
+            'TagMaker0'
         ]
-
+        # This tag dict is to find original data.
         self.make_baseline_data(
             {
                 'Filename': current_filename,
@@ -278,7 +279,7 @@ class MainController():
         # default baseline trace
         default_baseline_trace = default.data['default_settings']['baseline_trace']
         default_baseline_trace['Filename'] = self._key_manager.filename_list[self.current_filename]
-        self.make_baseline_data(default_baseline_trace, ['TimeWindow3', 'Roi1', 'Average1'])
+        self.make_baseline_data(default_baseline_trace, ['TimeWindow3', 'Roi1', 'Average1','TagMaker0'])
 
         print("========== End of default settings ==========")
         print("")
