@@ -151,7 +151,7 @@ class DataService(ModelInterface):
 
 
         assert type(data_list) == list, f"DataService couldn't find {list(data_tag.values())} data"
-        assert len(data_list) <=1, f"DataService found more than two data {list(data_tag.values())} data"
+        assert len(data_list) <=1, f"DataService found more than two data {list(data_tag.values())} data. It should be only a single data."
 
         """
         if data_list is None:
@@ -180,18 +180,6 @@ class DataService(ModelInterface):
     def get_list_of_repository_tag_dict(self):
         return self.__data_repository.get_list_of_tag_dict()
 
-    def print_infor(self, tag_dict=None, except_dict=None):
-        print("Dataservice: print_infor ---------->")
-        if tag_dict is None:
-            self.__modifier_service.print_chain()
-            self.__data_repository.print_infor()
-        elif tag_dict == 'Modifier':
-            self.__modifier_service.print_chain()
-        else:
-            self.__data_repository.print_infor(tag_dict, except_dict)
-        print("----------> Dataservice: print_infor END")
-        print("")
-
     def reset(self):
         self.__data_repository = Repository()
         self.__modifier_service = ModifierService()
@@ -207,11 +195,24 @@ class DataService(ModelInterface):
         print("----------> Dataservice: set_observer Done")
         if found is not True:
             raise ValueError(f"These is no much tag {modifier_tag}")
+
     def update_observer(self):
         pass
 
     def get_modifier_val(self, modifier_name):
         return self.__modifier_service.get_modifier_val(modifier_name)
+
+    def print_infor(self, tag_dict=None, except_dict=None):
+        print("Dataservice: print_infor ---------->")
+        if tag_dict is None:
+            self.__modifier_service.print_chain()
+            self.__data_repository.print_infor()
+        elif tag_dict == 'Modifier':
+            self.__modifier_service.print_chain()
+        else:
+            self.__data_repository.print_infor(tag_dict, except_dict)
+        print("----------> Dataservice: print_infor END")
+        print("")
 """
 Repository
 """
@@ -231,6 +232,9 @@ class Repository:
         target_key_set = set(data.data_tag.values())
         extracted_data = [item for item in self._data if
                           target_key_set.issubset(set(item.data_tag.values()))]
+        print('gggggggggggggggggggggggggggggggg')
+        print(target_key_set)
+        print(extracted_data)
         if extracted_data == []:
             self._data.append(data)
             print(f"Repository: Saved object {list(data.data_tag.values())}")
@@ -239,7 +243,7 @@ class Repository:
                 self._data.remove(remove_data)
                 self._data.append(data)
                 print(
-                    f"Repository: Overwrited overlapping object ({list(data.data_tag.values())})!!!")
+                    f"Repository: Overwrite overlapping object ({list(data.data_tag.values())})!!!")
 
         # e.g.  find_by_keys({'Attribute':'Data'}, {'Origin':'File','DataType':'ElecTrace'})
 

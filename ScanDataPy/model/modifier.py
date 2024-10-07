@@ -588,7 +588,7 @@ class BlComp(ModifierHandler):
 
     def set_val(self, val: str, baseline_obj = None):  # val = [start, width]
         self.bl_mode = val
-        print(f"set BlComp: {self.bl_mode}  1.Normal, 2.RoiComp")
+        print(f"set BlComp: {self.bl_mode}")  # 1.Normal, 2.RoiComp
         self.bl_trace = baseline_obj
 
     def set_data(self, data) -> object:
@@ -605,9 +605,6 @@ class BlComp(ModifierHandler):
                 data.interval
             )
             bl_comp_trace = Tools.create_bg_comp(data, new_bl_trace_value_obj)
-
-
-
             return bl_comp_trace
         else:
             raise ValueError(f"No such a BlCOmp mode -> {self.bl_mode} "

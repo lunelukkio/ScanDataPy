@@ -6,12 +6,13 @@ baseline compensation is defined by controller_main.py, MainController class, de
 
 file_setting.json
 
+{
   "tsm": {
     "num_ch": 2,
     "num_elec_ch": 8,
     "default_settings": {
-      "default_modifiers": default modifiers
-        "TimeWindow0",  
+      "default_modifiers": [
+        "TimeWindow0",
         "TimeWindow1",
         "TimeWindow2",
         "TimeWindow3",
@@ -22,6 +23,7 @@ file_setting.json
         "Scale0",
         "BlComp0"
       ],
+      "modifier_default_val": {
           "TimeWindow0": [0, 5],   for difference image 
           "TimeWindow1": [0, 5],   for difference image
           "TimeWindow2": [0, -1],  elec trace (whole trace)
@@ -57,9 +59,25 @@ file_setting.json
       },
       "elec_ax_default_tag": {
         "attribute_list": ["Data"],
-        "data_type_list": ["ElecTraceCh2"],
+        "data_type_list": ["ElecTraceCh1"],
         "origin_list" : ["File"],
         "modifier_list": ["TimeWindow2"]
+      },
+      "baseline_trace": {
+        "Filename":"None",
+        "Attribute":"Data",
+        "DataType":"FluoFramesCh1",
+        "Origin": "File"
       }
     }
   },
+  "da": {
+    "num_ch": 2,
+    "num_elec_ch": 8,
+    "default_controller": {
+      "ROI": 2,
+      "ImageController": 2,
+      "ElecTraceController": 2
+    }
+  }
+}

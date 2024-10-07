@@ -70,6 +70,8 @@ class MainController():
         self._key_manager = KeyManager()
         self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, FluoAxes: TraceAx class}\
         self.current_filename = 0
+        self.current_ch = 'Ch1'
+        self.baseline_roi = 'Roi0'
         # This is for temporary valiable for a baseline trace
 
     def __del__(self):
@@ -86,9 +88,6 @@ class MainController():
         return self._key_manager
 
     """ MainController """
-
-    def get_filename(self):
-        return self._key_manager.filename_list[self.current_filename]
 
     def add_axes(self, ax_type, axes_name: str, canvas, ax: object) -> None:
         if ax_type == 'Image':
@@ -162,12 +161,16 @@ class MainController():
         baseline_value_obj = self.__model.set_data(
             baseline_tag_dict,
             modifier_tag_list)
-        baseline_value_obj.data_tag['Data'] = 'Baseline'
+        baseline_value_obj.data_tag['Attribute'] = 'Baseline'
 
     def set_base_line_data(self):
+        print('tttttttttttttttttttttttttttttttttt')
+        self.__model.print_infor()
         baseline_tag = {
             'FileName':self._key_manager.filename_list[self.current_filename],
             'Attribute':'Baseline',
+            'DataType':'FluoTrace' + self.current_ch,
+            'Origin':self.baseline_roi
         }
         # get baseline data
         baseline_obj = self.__model.get_data(
@@ -182,6 +185,29 @@ class MainController():
     # set modifier values e.g. 'Roi1', [40, 40, 1, 1]. Be called by view and self.default_settings.
     def set_modifier_val(self, modifier, *args, **kwargs):
         self.__model.set_modifier_val(modifier, *args, **kwargs)
+
+    def change_scale(self):
+        current_filename = self._key_manager.filename_list[
+            self.current_filename]
+        current_ch = self.current_ch
+        modifier_tag_list = [
+            'TimeWindow3',
+            self.baseline_roi,
+            'Average1',
+            'Scale0'
+        ]
+
+        self.make_baseline_data(
+            {
+                'Filename': current_filename,
+                'Attribute': 'Data',
+                'DataType': 'FluoFrames' + current_ch,
+                'Origin': 'File'
+            }, modifier_tag_list
+        )
+
+        self.set_update_flag('FluoAxes', True)
+        self.update_view('FluoAxes')
 
     def set_update_flag(self, ax_name, flag):
         self.__ax_dict[ax_name].set_update_flag(flag)

@@ -270,18 +270,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
                     'Scale0',
                     selected_text
                 )
-                current_filename = self.__main_controller.get_filename()
-
-                modifier_tag_list = ['TimeWindow3', 'Roi1', 'Average1', 'Scale0']
-                self.__main_controller.make_baseline_data(
-                    {
-                        'Filename':current_filename,
-                        'Attribute':'Data',
-                        'DataType':'FluoFramesCh1',
-                        'Origin': 'File'
-                    }, modifier_tag_list)
-            self.__main_controller.set_update_flag('FluoAxes', True)
-            self.__main_controller.update_view('FluoAxes')
+                self.__main_controller.change_scale()
         else:
             return
 
@@ -301,35 +290,8 @@ class QtDataWindow(QtWidgets.QMainWindow):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def switch_bl_roi(self, state):
-        self.__main_controller.single_operation("Roi0", "All")
-        self.__main_controller.set_view_flag(
-            "FluoAxes",
-            "Roi0",
-            "Ch1"
-        )  # (ax, controller_key, data_key, value)
-
-
-
-
-
-
-
-
+        raise NotImplementedError()
 
     def live_view(self):
         self.__live_camera_view.start_live_view()
@@ -345,27 +307,27 @@ class CustomImageView(pg.ImageView):
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
-            print("111111111111111111111111111111")
+            print("zzzzzzzzzzzzzzzzzzCustomImageViewzmousePressEvent event ignorezzzzzzzzzzzz")
             event.ignore()
         else:
             #super().mousePressEvent(event)
-            print("llllllllllllllllllllllllllllllllllllllllll")
+            print("wwwwwwwwwwwCustomImageViewwmousePressEvent event ignorewwwwwwwww")
             #help(pg.ImageView)
             event.ignore()
 
     def mouseMoveEvent(self, event):
-        print("ddddddddddddddddddddddddddddddddddddddd")
+        print("yyyyyyyyyyyyyyCustomImageViewylmousePressEvent event ignoreyyyyyyyyyyyyyyyyy")
         event.ignore()
 
     def mouseDragEvent(self, event):
-        print("ddddddddddddddddddddddddddddddddddddddd")
+        print("xxxxxxxxxxxxxxxxxxxxCustomImageViewxPressEvent event ignoredxxxxxxxxxxxxxxxxxxxxx")
         event.ignore()
 
     def mouseReleaseEvent(self, event):
-        print("222222222222222222222222222222222222222222222")
+        print("vvvvvvvvvvvvvvvvvCustomImageViewvlmousePressEvent event ignorevvvvvvvvvvvvvvvv")
         print(event.button())
         if event.button() == QtCore.Qt.RightButton:
-            print("3333333333333333333333333333333333333333333333333")
+            print("uuuuuuuuuuuuuuuuuuuCustomImageViewuumousePressEvent eventuuuuuuuuuuuuuuuuuu")
             print(event.button())
             event.ignore()
         else:

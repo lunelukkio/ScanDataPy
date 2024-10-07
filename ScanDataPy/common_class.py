@@ -161,7 +161,7 @@ class KeyManager:
     def __init__(self):
         self.filename_list = []
         self.attribute_list = []  # ['Data', 'Text']
-        self.data_type_list = []  # ['FluoFrames1', 'FluoTrace1', 'ElecTrace1', 'Header', 'Default']
+        self.data_type_list = []  # ['FluoFramesCh1', 'FluoTraceCh1', 'ElecTraceCh1', 'Header', 'Default']
         self.origin_list = []  # ['File', 'Roi1']
 
         self.modifier_list = []  #
