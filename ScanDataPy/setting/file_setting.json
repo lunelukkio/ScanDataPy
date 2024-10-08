@@ -37,7 +37,9 @@
       "main_default_tag": {
         "attribute_list": ["Data"],
         "data_type_list": ["FluoFramesCh1", "FluoFramesCh2"],
-        "origin_list": ["File"]
+        "origin_list": ["File"],
+        "ch_list": ["Ch0", "Ch1", "Ch2"],
+        "baseline_roi_list": ["Roi0", "Roi1"]
       },
       "image_ax_default_tag": {
         "attribute_list": ["Data"],

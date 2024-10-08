@@ -164,7 +164,10 @@ class KeyManager:
         self.data_type_list = []  # ['FluoFramesCh1', 'FluoTraceCh1', 'ElecTraceCh1', 'Header', 'Default']
         self.origin_list = []  # ['File', 'Roi1']
 
-        self.modifier_list = []  #
+        self.modifier_list = []  # ['TimeWindow3','Roi1','Average1','TagMaker0']
+
+        self.ch_list = []
+        self.baseline_roi_list = []
 
     @property
     def filename_dict(self) -> dict:
@@ -247,6 +250,8 @@ class KeyManager:
         print(f"origin_list          = {self.origin_list}")
         print("")
         print(f"modifier_list        = {self.modifier_list}")
+        print(f"ch_list              = {self.ch_list}")
+        print(f"baseline_roi_list    = {self.baseline_roi_list}")
         print("===========================================================")
 
     def reset(self):
@@ -256,6 +261,9 @@ class KeyManager:
         self.origin_list = []
 
         self.modifier_list = []
+
+        self.ch_list = []
+        self.baseline_roi_list = []
 
 
 class Tools:

@@ -290,6 +290,12 @@ class QtDataWindow(QtWidgets.QMainWindow):
 
 
 
+
+
+
+
+
+
     def switch_bl_roi(self, state):
         raise NotImplementedError()
 

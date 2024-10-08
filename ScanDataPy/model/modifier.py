@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu ug 29 15:16:57 2024
+This is to modify value object data. It uses Chain of responsibility.
+Data through every chain part and find their name in modifier_list.
+It don't have for modifier in modifier_list, because the order of modifier_list
+is not stable.
 
 @author: lunelukkio
 """
@@ -51,9 +55,11 @@ class ModifierService(ModifierServiceInterface):
     def modifier_chain_list(self):
         return self.__modifier_chain_list
 
-    # This is actual method run by DataService and return modified data
-    def apply_modifier(self, data, modifier_list=None):
-        # start the chain of responsibility and get modded data
+    # This is actual method run by DataService and return a modified value object data
+    def apply_modifier(self, data, original_modifier_list=None):
+        # copy modifier list for error checking in EndModifier class
+        modifier_list = original_modifier_list.copy()
+        # start the chain of responsibility and get modified data
         modified_data = self.__start_modifier.apply_modifier(data,
                                                              modifier_list)
         return modified_data
@@ -76,8 +82,6 @@ class ModifierService(ModifierServiceInterface):
         # make a modifier chain from the chain list
         self.__modifier_chain = ModifierService.make_modifier_chain(
             self.__modifier_chain_list)
-        print("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
-        print(self.__modifier_chain_list)
 
     def remove_chain(self, modifier_name):
         # remove modifier_name object from the list
@@ -193,7 +197,6 @@ class ModifierFactory(metaclass=ABCMeta):
 
 """concrete factory"""
 
-
 class TimeWindowFactory(ModifierFactory):
     def create_modifier(self, modifier_name):
         return TimeWindow(modifier_name)
@@ -218,13 +221,13 @@ class BlCompFactory(ModifierFactory):
     def create_modifier(self, modifier_name):
         return BlComp(modifier_name)
 
+
 class TagMakerFactory(ModifierFactory):
     def create_modifier(self, modifier_name):
         return TagMaker(modifier_name)
 
 
 """ super class """
-
 
 class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
     def __init__(self, modifier_name):
@@ -247,7 +250,12 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
             return self.__next_modifier.apply_modifier(data, modifier_list)
 
     def apply_modifier(self, data, modifier_list):
-        new_data = self.set_data(data) if self.modifier_name in modifier_list else data
+        # if current modifier name is in modifier_list, go to self.set_data
+        if self.modifier_name in modifier_list:
+            new_data = self.set_data(data)
+            modifier_list.remove(self.modifier_name)
+        else:
+            new_data = data
         return self.modifier_request(new_data, modifier_list)
 
     @property
@@ -643,6 +651,7 @@ class EndModifier(ModifierHandler):
 
     # overwrite
     def apply_modifier(self, data, modifier_list):
+        assert modifier_list == [], f"EndModifier: Modifier Error. {modifier_list} didn't use."
         return data
 
     def set_val(self):

@@ -13,7 +13,6 @@ from ScanDataPy.controller.controller_axes import ImageAxesController
 from ScanDataPy.common_class import FileService, KeyManager, Tools
 
 
-
 class ControllerInterface(metaclass=ABCMeta):
     """ MainController """
 
@@ -69,10 +68,10 @@ class MainController():
         self.__file_service = FileService()
         self._key_manager = KeyManager()
         self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, FluoAxes: TraceAx class}\
-        self.current_filename = 0
-        self.current_ch = 'Ch1'
-        self.baseline_roi = 'Roi1'
-        # This is for temporary valiable for a baseline trace
+        self.current_filename = [0]
+        self.current_ch = [1]  # 0=Ch0, 1=Ch1, 2=Ch2
+        self.current_baseline_roi = [1]  # 0=Roi0, 1=Roi1
+        # This is for temporary variable for a baseline trace
 
     def __del__(self):
         print('.')
@@ -100,6 +99,9 @@ class MainController():
             new_axes_controller = None
             raise Exception(f"There is no {ax_type} axes controller")
         self.__ax_dict[axes_name] = new_axes_controller
+
+    def get_canvas_axes(self, view_controller) -> object:
+        return self.__ax_dict[view_controller].get_canvas_axes()
 
     def open_file(self, filename_obj=None) -> dict:
         self.__reset()
@@ -138,7 +140,7 @@ class MainController():
     def create_default_modifier(self, filename_number):
         print("MainController: create_default_modifiers() ----->")
 
-        filename = self._key_manager.filename_list[self.current_filename]
+        filename = self._key_manager.filename_list[self.current_filename[0]]
         # get default information from text data in the json file
         default = self.__model.get_data(
             {'Filename': filename, 'Attribute': 'Default', 'DataType': 'Text'})
@@ -156,43 +158,60 @@ class MainController():
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
-    def make_baseline_data(self, baseline_tag_dict, modifier_tag_list):
-        # make baseline data and save it to repository
-        self.__model.set_data(
-            baseline_tag_dict,
-            modifier_tag_list
-        )
-
-    def set_base_line_data(self):
-        print('tttttttttttttttttttttttttttttttttt')
-        self.__model.print_infor()
-        baseline_tag = {
-            'FileName':self._key_manager.filename_list[self.current_filename],
-            'Attribute':'Baseline',
-            'DataType':'FluoTrace' + self.current_ch,
-            'Origin':self.baseline_roi
-        }
-        # get baseline data without any modify(baseline is already modified)
-        baseline_obj = self.__model.get_data(
-            baseline_tag,
-            [])
-        # set baseline into the modifier
-        self.set_modifier_val(
-            'BlComp0',
-            'RoiComp', baseline_obj
-        )
+    def set_observer(self, ax_name: str, modifier_tag: str) -> None:
+        self.__ax_dict[ax_name].set_observer(modifier_tag)
 
     # set modifier values e.g. 'Roi1', [40, 40, 1, 1]. Be called by view and self.default_settings.
     def set_modifier_val(self, modifier, *args, **kwargs):
         self.__model.set_modifier_val(modifier, *args, **kwargs)
 
+    def onclick_axes(self, event, axes_name):
+        if axes_name == 'ImageAxes':
+            # get clicked position
+            image_pos = self.__ax_dict['ImageAxes']._ax_obj.getView().mapSceneToView(event.scenePos())
+            if event.button() == 1:  # left click
+                x = round(image_pos.x())
+                y = round(image_pos.y())
+                val = [x, y, None, None]
+                # get Roi modifier name in FluoAxes key manager.
+                modifier_name_list = [name for name in self.__ax_dict['FluoAxes']._key_manager.modifier_list if 'Roi' in name]
+                for modifier_name in modifier_name_list:
+                    # set modifier values
+                    self.set_modifier_val(modifier_name, val)
+                self.update_view('FluoAxes')
+
+            elif event.button() == 2:
+                pass
+            # move to next controller
+            elif event.button() == 3:
+                # move and copy ch boolen value
+                self.__operating_controller_set.next_controller_to_true("ROI")
+                self.__ax_dict["FluoAxes"].next_controller_to_true("ROI")
+                self.update_view("FluoAxes")
+        elif axes_name == "FluoAxes":
+            if event.inaxes == self.__ax_dict["FluoAxes"]:
+                raise NotImplementedError()
+            elif event.inaxes == self.__ax_dict["ElecAxes"]:
+                raise NotImplementedError()
+        elif axes_name == "ElecAxes":
+            raise NotImplementedError()
+
+    def change_roi_size(self, val: list):
+        modifier_name_list = [name for name in self.__ax_dict[
+            'FluoAxes']._key_manager.modifier_list if 'Roi' in name]
+        for modifier_name in modifier_name_list:
+            # set modifier values
+            self.set_modifier_val(modifier_name, val)
+        self.update_view('FluoAxes')
+
     def change_scale(self):
         current_filename = self._key_manager.filename_list[
-            self.current_filename]
-        current_ch = self.current_ch
+            self.current_filename[0]]
+        current_ch = self._key_manager.ch_list[self.current_ch[0]]
+        current_baseline_roi = self._key_manager.baseline_roi_list[self.current_baseline_roi[0]]
         modifier_tag_list = [
             'TimeWindow3',
-            self.baseline_roi,
+            current_baseline_roi,
             'Average1',
             'Scale0',
             'TagMaker0'
@@ -213,6 +232,33 @@ class MainController():
     def set_update_flag(self, ax_name, flag):
         self.__ax_dict[ax_name].set_update_flag(flag)
 
+    def make_baseline_data(self, baseline_tag_dict, modifier_tag_list):
+        # make baseline data and save it to repository
+        self.__model.set_data(
+            baseline_tag_dict,
+            modifier_tag_list
+        )
+
+    def set_base_line_data(self):
+        self.__model.print_infor()
+        current_ch = self._key_manager.ch_list[self.current_ch[0]]
+        current_baseline_roi = self._key_manager.baseline_roi_list[self.current_baseline_roi[0]]
+        baseline_tag = {
+            'FileName':self._key_manager.filename_list[self.current_filename[0]],
+            'Attribute':'Baseline',
+            'DataType':'FluoTrace' + current_ch,
+            'Origin':current_baseline_roi
+        }
+        # get baseline data without any modify(baseline is already modified)
+        baseline_obj = self.__model.get_data(
+            baseline_tag,
+            [])
+        # set baseline into the modifier
+        self.set_modifier_val(
+            'BlComp0',
+            'RoiComp', baseline_obj
+        )
+
     def default_settings(self, filename_key):
 
         print("=============================================")
@@ -221,7 +267,7 @@ class MainController():
 
         # get default information from text data in the json file
         #get the first of the filename true list
-        filename = self._key_manager.filename_list[self.current_filename]
+        filename = self._key_manager.filename_list[self.current_filename[0]]
 
         # get default information from JSON
         default = self.__model.get_data(
@@ -278,17 +324,20 @@ class MainController():
 
         # default baseline trace
         default_baseline_trace = default.data['default_settings']['baseline_trace']
-        default_baseline_trace['Filename'] = self._key_manager.filename_list[self.current_filename]
-        self.make_baseline_data(default_baseline_trace, ['TimeWindow3', 'Roi1', 'Average1','TagMaker0'])
+        default_baseline_trace['Filename'] = self._key_manager.filename_list[self.current_filename[0]]
+        current_baseline_roi = self._key_manager.baseline_roi_list[self.current_baseline_roi[0]]
+        self.make_baseline_data(default_baseline_trace, [
+            'TimeWindow3',
+            current_baseline_roi,
+            'Average1',
+            'TagMaker0'
+        ])
 
         print("========== End of default settings ==========")
         print("")
 
         # this is for test
         #self.__model.set_modifier_val('Roi1',[40,40,5,5])
-
-    def set_observer(self, ax_name: str, modifier_tag: str) -> None:
-        self.__ax_dict[ax_name].set_observer(modifier_tag)
 
     def update_view(self, axes=None) -> None:
         if axes is None:
@@ -301,67 +350,12 @@ class MainController():
         print("Main controller: Update done!")
         print("")
 
-    def onclick_axes(self, event, axes_name):
-        if axes_name == 'ImageAxes':
-            # get clicked position
-            image_pos = self.__ax_dict['ImageAxes']._ax_obj.getView().mapSceneToView(event.scenePos())
-            if event.button() == 1:  # left click
-                x = round(image_pos.x())
-                y = round(image_pos.y())
-                val = [x, y, None, None]
-                # get Roi modifier name in FluoAxes key manager.
-                modifier_name_list = [name for name in self.__ax_dict['FluoAxes']._key_manager.modifier_list if 'Roi' in name]
-                for modifier_name in modifier_name_list:
-                    # set modifier values
-                    self.set_modifier_val(modifier_name, val)
-                self.update_view('FluoAxes')
-
-            elif event.button() == 2:
-                pass
-            # move to next controller
-            elif event.button() == 3:
-                # move and copy ch boolen value
-                self.__operating_controller_set.next_controller_to_true("ROI")
-                self.__ax_dict["FluoAxes"].next_controller_to_true("ROI")
-                self.update_view("FluoAxes")
-        elif axes_name == "FluoAxes":
-            if event.inaxes == self.__ax_dict["FluoAxes"]:
-                raise NotImplementedError()
-            elif event.inaxes == self.__ax_dict["ElecAxes"]:
-                raise NotImplementedError()
-        elif axes_name == "ElecAxes":
-            raise NotImplementedError()
-
-    def change_roi_size(self, val: list):
-        modifier_name_list = [name for name in self.__ax_dict[
-            'FluoAxes']._key_manager.modifier_list if 'Roi' in name]
-        for modifier_name in modifier_name_list:
-            # set modifier values
-            self.set_modifier_val(modifier_name, val)
-        self.update_view('FluoAxes')
-
     def __reset(self):
         self.__model.reset()
         self.__file_service.reset()
         self._key_manager.reset()
         for ax in self.__ax_dict.values():
             ax.key_manager.reset()
-
-
-
-
-
-
-
-
-
-
-
-
-    def set_key(self, dict_name, key, val=None):
-        self._key_manager.set_key(dict_name, key, val)
-
-
 
     def print_infor(self):
         print("======================================")
@@ -378,41 +372,23 @@ class MainController():
 
 
 
-    def get_canvas_axes(self, view_controller) -> object:
-        return self.__ax_dict[view_controller].get_canvas_axes()
 
 
 
-    """ Delegation to the AxesController """
 
-    def set_view_flag(self, ax_key, controller_key, ch_key,
-                      bool_val=None) -> None:
-        if ax_key == "All":
-            for ax in self.__ax_dict.values():
-                ax.set_flag(controller_key, ch_key, bool_val)
-        else:
-            if ax_key not in self.__ax_dict:
-                print(f"There is no Axes: {ax_key}")
-            else:
-                self.__ax_dict[ax_key].set_flag(controller_key, ch_key,
-                                                bool_val)
 
+    # no use
     def update_flag_lock_sw(self, ax_key, val):
         self.__ax_dict[ax_key].update_flag_lock_sw(
             val)  # see AxesController class in conrtoller_axes.py
 
+    # no use
     def ax_print_infor(self, ax_key):
         self.__ax_dict[ax_key].print_infor()
 
-
-
-
-    """ Delegation to the ModController """
-
-
-
+    # no use
     def show_data(self, target_dict, except_dict):
-        # show datain data_repository
+        # show data in data_repository
         self.__model.print_infor(target_dict, except_dict)
 
 

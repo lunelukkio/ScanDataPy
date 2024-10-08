@@ -221,9 +221,6 @@ class Repository:
         target_key_set = set(data.data_tag.values())
         extracted_data = [item for item in self._data if
                           target_key_set.issubset(set(item.data_tag.values()))]
-        print('gggggggggggggggggggggggggggggggg')
-        print(target_key_set)
-        print(extracted_data)
         if extracted_data == []:
             self._data.append(data)
             print(f"Repository: Saved object {list(data.data_tag.values())}")
