@@ -72,7 +72,7 @@ class AxesController(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def set_view_data(self):
+    def get_view_data(self):
         raise NotImplementedError()
 
     def get_canvas_axes(self):
@@ -125,7 +125,7 @@ class ImageAxesController(AxesController):
         raise NotImplementedError()
 
     # from the flag, get data from the model and show data.
-    def set_view_data(self):
+    def get_view_data(self):
         # get lists of the data tag list
         lists_of_tag_dict = self._key_manager.get_dicts_from_tag_list()
         # get modifier list
@@ -145,7 +145,7 @@ class ImageAxesController(AxesController):
         if self.update_flag is True:
             # delete old image objects. not delete box
             self.ax_item_dict = {}
-            self.set_view_data()  # This belong to Image Controller
+            self.get_view_data()  # This belong to Image Controller
             print(f"AxesController: {self.__class__.__name__} updated")
         else:
             pass
@@ -162,7 +162,7 @@ class TraceAxesController(AxesController):
             # clear axes variables
             self._ax_obj.clear()
             # See each subclass.
-            value_obj = self.set_view_data()
+            value_obj = self.get_view_data()
             # for RoiBOX
             if 'FluoTrace' in value_obj.data_tag['DataType']:
                 self.set_marker(value_obj)
@@ -173,7 +173,7 @@ class TraceAxesController(AxesController):
             pass
 
     # from the flag, get data from the model and show data. 
-    def set_view_data(self):
+    def get_view_data(self):
         # get lists of the data tag list
         lists_of_tag_dict = self._key_manager.get_dicts_from_tag_list()
         # get modifier list
@@ -241,9 +241,29 @@ class TraceAxesController(AxesController):
             image_axes.addItem(
                 self._marker_obj[modifier_name].rectangle_obj)
 
+    def change_scale(self):
+        current_filename = self._key_manager.filename_list[0]
+        current_ch = self._key_manager.ch_list[0]
+        current_baseline_roi = self._key_manager.baseline_roi_list[0]
+        modifier_tag_list = [
+            'TimeWindow3',
+            current_baseline_roi,
+            'Average1',
+            'Scale0',
+            'TagMaker0'
+        ]
+        # This tag dict is to find original data.
+        self._model.set_data(
+            {
+                'Filename': current_filename,
+                'Attribute': 'Data',
+                'DataType': 'FluoFrames' + current_ch,
+                'Origin': 'File'
+            }, modifier_tag_list
+        )
 
-
-
+        self.set_update_flag('FluoAxes', True)
+        self.update_view('FluoAxes')
 
 
 class RoiBox:
