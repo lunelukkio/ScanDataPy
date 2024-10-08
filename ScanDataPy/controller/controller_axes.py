@@ -17,7 +17,6 @@ import json
 
 class AxesController(metaclass=ABCMeta):
     def __init__(self, main_controller, model, canvas, ax):
-        self._tools = AxesTools(ax)
         self._canvas = canvas
         self._ax_obj = ax
         self._main_controller = main_controller
@@ -75,6 +74,9 @@ class AxesController(metaclass=ABCMeta):
     def get_view_data(self):
         raise NotImplementedError()
 
+    def set_scale(self):
+        raise NotImplementedError()
+
     def get_canvas_axes(self):
         return self._canvas, self._ax_obj
 
@@ -84,6 +86,12 @@ class AxesController(metaclass=ABCMeta):
             pass
         else:
             self.update_flag = update_flag
+
+    def set_data(self, data_tag, modifier_list=None):
+        self._model.set_data(self, data_tag, modifier_list)
+
+    def get_data(self, data_tag, modifier_list=None):
+        self._model.get_data(self, data_tag, modifier_list)
 
     def print_infor(self):
         print(f"{self.__class__.__name__} current data list = ")
@@ -149,6 +157,9 @@ class ImageAxesController(AxesController):
             print(f"AxesController: {self.__class__.__name__} updated")
         else:
             pass
+
+    def set_scale(self):
+        pass
 
 
 class TraceAxesController(AxesController):
@@ -241,7 +252,8 @@ class TraceAxesController(AxesController):
             image_axes.addItem(
                 self._marker_obj[modifier_name].rectangle_obj)
 
-    def change_scale(self):
+    def set_scale(self):
+        baselineを作るのはblcompがtureの時だけにする。現状ではいつも作っている。
         current_filename = self._key_manager.filename_list[0]
         current_ch = self._key_manager.ch_list[0]
         current_baseline_roi = self._key_manager.baseline_roi_list[0]
@@ -262,9 +274,28 @@ class TraceAxesController(AxesController):
             }, modifier_tag_list
         )
 
-        self.set_update_flag('FluoAxes', True)
-        self.update_view('FluoAxes')
-
+    # This is for put baseline value object into a blcomp modifier
+    def set_base_line_data(self):
+        print("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
+        self._model.print_infor()
+        current_ch = self._key_manager.ch_list[0]
+        current_baseline_roi = self._key_manager.baseline_roi_list[0]
+        # search tag for baseline
+        baseline_tag = {
+            'FileName':self._key_manager.filename_list[0],
+            'Attribute':'Baseline',
+            'DataType':'FluoTrace' + current_ch,
+            'Origin':current_baseline_roi
+        }
+        # get baseline data without any modify(baseline is already modified)
+        baseline_obj = self._model.get_data(
+            baseline_tag,
+            [])
+        # set baseline into a modifier
+        self._model.set_modifier_val(
+            'BlComp0',
+            'RoiComp', baseline_obj
+        )
 
 class RoiBox:
     # """ class variable """
@@ -286,15 +317,3 @@ class RoiBox:
     @property
     def rectangle_obj(self):
         return self.__rectangle_obj
-
-
-class AxesTools:
-    def __init__(self, axes):
-        self.axes = axes
-
-    def axes_patches_check(self, target_class):
-        target_list = []
-        for target in self.axes.patches:
-            if isinstance(target, target_class):
-                target_list.append(target)
-        return target_list

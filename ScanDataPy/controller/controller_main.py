@@ -67,17 +67,8 @@ class MainController():
         self.__model = DataService()
         self.__file_service = FileService()
         self._key_manager = KeyManager()
-        self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, FluoAxes: TraceAx class}\
+        self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, ElecAxes: TraceAx class}\
         self.current_filename = [0]
-
-
-
-
-
-        # This should be moved to controller_axes
-        self.current_ch = [1]  # 0=Ch0, 1=Ch1, 2=Ch2
-        self.current_baseline_roi = [1]  # 0=Roi0, 1=Roi1
-        # This is for temporary variable for a baseline trace
 
     def __del__(self):
         print('.')
@@ -210,60 +201,14 @@ class MainController():
             self.set_modifier_val(modifier_name, val)
         self.update_view('FluoAxes')
 
-    def change_scale(self):
-        current_filename = self._key_manager.filename_list[
-            self.current_filename[0]]
-        current_ch = self._key_manager.ch_list[self.current_ch[0]]
-        current_baseline_roi = self._key_manager.baseline_roi_list[self.current_baseline_roi[0]]
-        modifier_tag_list = [
-            'TimeWindow3',
-            current_baseline_roi,
-            'Average1',
-            'Scale0',
-            'TagMaker0'
-        ]
-        # This tag dict is to find original data.
-        self.make_baseline_data(
-            {
-                'Filename': current_filename,
-                'Attribute': 'Data',
-                'DataType': 'FluoFrames' + current_ch,
-                'Origin': 'File'
-            }, modifier_tag_list
-        )
-
+    def set_scale(self,ax_key):
+        self.__ax_dict[ax_key].set_scale()
         self.set_update_flag('FluoAxes', True)
         self.update_view('FluoAxes')
 
-    def set_update_flag(self, ax_name, flag):
-        self.__ax_dict[ax_name].set_update_flag(flag)
-
-    def make_baseline_data(self, baseline_tag_dict, modifier_tag_list):
-        # make baseline data and save it to repository
-        self.__model.set_data(
-            baseline_tag_dict,
-            modifier_tag_list
-        )
-
-    def set_base_line_data(self):
-        self.__model.print_infor()
-        current_ch = self._key_manager.ch_list[self.current_ch[0]]
-        current_baseline_roi = self._key_manager.baseline_roi_list[self.current_baseline_roi[0]]
-        baseline_tag = {
-            'FileName':self._key_manager.filename_list[self.current_filename[0]],
-            'Attribute':'Baseline',
-            'DataType':'FluoTrace' + current_ch,
-            'Origin':current_baseline_roi
-        }
-        # get baseline data without any modify(baseline is already modified)
-        baseline_obj = self.__model.get_data(
-            baseline_tag,
-            [])
-        # set baseline into the modifier
-        self.set_modifier_val(
-            'BlComp0',
-            'RoiComp', baseline_obj
-        )
+    # set baseline into BlComp modifier
+    def set_base_line_data(self, ax_key):
+        self.__ax_dict[ax_key].set_base_line_data()
 
     def default_settings(self, filename_key):
 
@@ -328,22 +273,14 @@ class MainController():
         for modifier, value in default_values_list.items():
             self.set_modifier_val(modifier, value)
 
-        # default baseline trace
-        default_baseline_trace = default.data['default_settings']['baseline_trace']
-        default_baseline_trace['Filename'] = self._key_manager.filename_list[self.current_filename[0]]
-        current_baseline_roi = self._key_manager.baseline_roi_list[self.current_baseline_roi[0]]
-        self.make_baseline_data(default_baseline_trace, [
-            'TimeWindow3',
-            current_baseline_roi,
-            'Average1',
-            'TagMaker0'
-        ])
-
         print("========== End of default settings ==========")
         print("")
 
         # this is for test
         #self.__model.set_modifier_val('Roi1',[40,40,5,5])
+
+    def set_update_flag(self, ax_name, flag):
+        self.__ax_dict[ax_name].set_update_flag(flag)
 
     def update_view(self, axes=None) -> None:
         if axes is None:

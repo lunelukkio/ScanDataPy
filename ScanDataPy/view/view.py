@@ -270,13 +270,14 @@ class QtDataWindow(QtWidgets.QMainWindow):
                     'Scale0',
                     selected_text
                 )
-                self.__main_controller.change_scale()
+                self.__main_controller.set_scale("FluoAxes")
         else:
             return
 
     def bl_comp(self, state):
         if self.bl_comp_checkbox.isChecked():
-            self.__main_controller.set_base_line_data()
+            blcompスイッチを作ったときbaselineをmodifierに送る前に作る必要がある。axesに作らせる。see set_scale in controller_axes. 現状ではbaselineをscale以外で作るものがない。
+            self.__main_controller.set_base_line_data('FluoAxes')
             self.__main_controller.set_update_flag('FluoAxes', True)
             self.__main_controller.update_view('FluoAxes')
         else:
