@@ -69,6 +69,12 @@ class MainController():
         self._key_manager = KeyManager()
         self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, FluoAxes: TraceAx class}\
         self.current_filename = [0]
+
+
+
+
+
+        # This should be moved to controller_axes
         self.current_ch = [1]  # 0=Ch0, 1=Ch1, 2=Ch2
         self.current_baseline_roi = [1]  # 0=Roi0, 1=Roi1
         # This is for temporary variable for a baseline trace

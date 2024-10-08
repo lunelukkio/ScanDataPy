@@ -45,19 +45,23 @@
         "attribute_list": ["Data"],
         "data_type_list": ["FluoFramesCh1"],
         "origin_list": ["File"],
-        "modifier_list": ["TimeWindow1", "Average0"]
+        "modifier_list": ["TimeWindow1", "Average0"],
+        "ch_list": ["Ch1"]
       },
       "trace_ax_default_tag": {
         "attribute_list": ["Data"],
         "data_type_list": ["FluoFramesCh1"],
         "origin_list" : ["File"],
-        "modifier_list": ["Roi1", "Average1", "Scale0", "BlComp0"]
+        "modifier_list": ["Roi1", "Average1", "Scale0", "BlComp0"],
+        "ch_list": ["Ch1"],
+        "baseline_roi_list": ["Roi1"]
       },
       "elec_ax_default_tag": {
         "attribute_list": ["Data"],
         "data_type_list": ["ElecTraceCh1"],
         "origin_list" : ["File"],
-        "modifier_list": ["TimeWindow2"]
+        "modifier_list": ["TimeWindow2"],
+        "ch_list": ["Ch1"]
       },
       "baseline_trace": {
         "Filename":"None",

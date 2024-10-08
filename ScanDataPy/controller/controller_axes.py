@@ -75,27 +75,19 @@ class AxesController(metaclass=ABCMeta):
     def set_view_data(self):
         raise NotImplementedError()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    def next_controller_to_true(self, controller):
-        self._view_flag_set.next_controller_to_true(controller)
-
     def get_canvas_axes(self):
         return self._canvas, self._ax_obj
 
+    # update flag from the UserController classes in the model
+    def set_update_flag(self, update_flag):
+        if self.update_flag_lock == True:
+            pass
+        else:
+            self.update_flag = update_flag
 
-
+    def print_infor(self):
+        print(f"{self.__class__.__name__} current data list = ")
+        self._key_manager.print_infor()
 
 
 
@@ -110,16 +102,17 @@ class AxesController(metaclass=ABCMeta):
         else:
             self.update_flag_lock = not self.update_flag_lock
 
-    # update flag from the UserController classes in the model
-    def set_update_flag(self, update_flag):
-        if self.update_flag_lock == True:
-            pass
-        else:
-            self.update_flag = update_flag
 
-    def print_infor(self):
-        print(f"{self.__class__.__name__} current data list = ")
-        self._key_manager.print_infor()
+
+
+    def next_controller_to_true(self, controller):
+        self._view_flag_set.next_controller_to_true(controller)
+
+
+
+
+
+
 
 
 
@@ -247,6 +240,8 @@ class TraceAxesController(AxesController):
             self._marker_obj[modifier_name].rectangle_obj.setZValue(1)
             image_axes.addItem(
                 self._marker_obj[modifier_name].rectangle_obj)
+
+
 
 
 
