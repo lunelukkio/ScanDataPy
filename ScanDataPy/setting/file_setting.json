@@ -30,7 +30,7 @@
           "TagMaker0": {"Attribute": "Baseline"}
       },
       "default_observer": {
-        "FluoAxes": ["Roi0", "Roi1"],
+        "FluoAxes": ["Roi0", "Roi1", "BlComp0"],
         "ImageAxes": ["TimeWindow0", "TimeWindow1"],
         "ElecAxes": ["TimeWindow2", "TimeWindow3"]
       },
