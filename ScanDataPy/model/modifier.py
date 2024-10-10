@@ -577,7 +577,6 @@ class Scale(ModifierHandler):
             return data
 
         elif self.scale_mode == 'DFoF':
-            # make dF/F value object
             df_over_f = Tools.create_df_over_f(data)
             print("Scale:      Original -> dF/F")
             return df_over_f
@@ -585,7 +584,6 @@ class Scale(ModifierHandler):
         elif self.scale_mode == 'Normalize':
             normalized_data = Tools.create_normalize(data)
             print("Scale:      Original -> Normalized")
-            # return Normalized value object
             return normalized_data
         else:
             raise ValueError(f"No such a scale mode -> {self.scale_mode} "

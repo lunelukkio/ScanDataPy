@@ -167,6 +167,7 @@ class TraceAxesController(AxesController):
                  ax):  # controller is for getting ROI information from FLU-AXES.
         super().__init__(main_controller, model, canvas, ax)
         self.mode = 'ChMode'
+        self.baseline_comp = False
 
     def update(self):
         if self.update_flag is True:
@@ -253,28 +254,34 @@ class TraceAxesController(AxesController):
                 self._marker_obj[modifier_name].rectangle_obj)
 
     def set_scale(self):
-        baselineを作るのはblcompがtureの時だけにする。現状ではいつも作っている。
+        if self.baseline_comp:
+            print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+            self.make_baseline()
+
+    def switch_baseline_comp(self, val):
+        self.baseline_comp = val
+
+    def make_baseline(self):
         current_filename = self._key_manager.filename_list[0]
         current_ch = self._key_manager.ch_list[0]
         current_baseline_roi = self._key_manager.baseline_roi_list[0]
-        modifier_tag_list = [
+        baseline_data_tag = {
+            'Filename': current_filename,
+            'Attribute': 'Data',
+            'DataType': 'FluoFrames' + current_ch,
+            'Origin': 'File'
+        }
+        baseline_modifier_tag_list = [
             'TimeWindow3',
             current_baseline_roi,
             'Average1',
             'Scale0',
             'TagMaker0'
         ]
-        # This tag dict is to find original data.
-        self._model.set_data(
-            {
-                'Filename': current_filename,
-                'Attribute': 'Data',
-                'DataType': 'FluoFrames' + current_ch,
-                'Origin': 'File'
-            }, modifier_tag_list
-        )
+        # save a baseline to the repository
+        self._model.set_data(baseline_data_tag, baseline_modifier_tag_list)
 
-    # This is for put baseline value object into a blcomp modifier
+    # This is for put baseline value object into a BlComp modifier
     def set_base_line_data(self):
         print("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
         self._model.print_infor()

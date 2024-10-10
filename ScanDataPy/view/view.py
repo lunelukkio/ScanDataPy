@@ -265,7 +265,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
                     selected_text = "Normalize"
                 else:
                     selected_text = "Original"
-                # send to model through main controller
+                # send value to modifier through main controller
                 self.__main_controller.set_modifier_val(
                     'Scale0',
                     selected_text
@@ -276,11 +276,15 @@ class QtDataWindow(QtWidgets.QMainWindow):
 
     def bl_comp(self, state):
         if self.bl_comp_checkbox.isChecked():
-            blcompスイッチを作ったときbaselineをmodifierに送る前に作る必要がある。axesに作らせる。see set_scale in controller_axes. 現状ではbaselineをscale以外で作るものがない。
+            # activate baseline comp
+            self.__main_controller.switch_baseline_comp('FluoAxes', True)
+            self.__main_controller.make_baseline('FluoAxes')
             self.__main_controller.set_base_line_data('FluoAxes')
             self.__main_controller.set_update_flag('FluoAxes', True)
             self.__main_controller.update_view('FluoAxes')
         else:
+            #disable baseline comp
+            self.__main_controller.switch_baseline_comp('FluoAxes', False)
             self.__main_controller.set_modifier_val(
                 'BlComp0',
                 'Normal'
@@ -312,6 +316,7 @@ class CustomImageView(pg.ImageView):
         #self.setAttribute(QtCore.Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.setMouseTracking(True)
 
+    """
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
             print("zzzzzzzzzzzzzzzzzzCustomImageViewzmousePressEvent event ignorezzzzzzzzzzzz")
@@ -339,7 +344,7 @@ class CustomImageView(pg.ImageView):
             event.ignore()
         else:
             super().mouseReleaseEvent(event)
-
+   """
 
 if __name__ == '__main__':
     fullname = '..\\..\\220408\\20408B002.tsm'
