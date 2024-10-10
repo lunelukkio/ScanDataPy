@@ -33,7 +33,7 @@ file_setting.json
           "Average0": "Image",  for image
           "Average1": "Roi",    for trace
           "Scale0": "Original",  origin, DFoF, Normarize
-          "BlComp0": "Normal"    Normal, 
+          "BlComp0": "Enable"    Disable, 
           "TagMaker": {"Attribute":"Baseline"}
       },
       "default_observer": {

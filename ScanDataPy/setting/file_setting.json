@@ -26,7 +26,7 @@
           "Average0": "Image",
           "Average1": "Roi",
           "Scale0": "Original",
-          "BlComp0": "Normal",
+          "BlComp0": "Disable",
           "TagMaker0": {"Attribute": "Baseline"}
       },
       "default_observer": {

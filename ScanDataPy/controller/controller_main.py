@@ -202,19 +202,8 @@ class MainController():
         self.update_view('FluoAxes')
 
     def set_scale(self,ax_key):
-        self.__ax_dict[ax_key].set_scale()
         self.set_update_flag('FluoAxes', True)
         self.update_view('FluoAxes')
-
-    def switch_baseline_comp(self, ax_key, val):
-        self.__ax_dict[ax_key].switch_baseline_comp(val)
-
-    def make_baseline(self, ax_key):
-        self.__ax_dict[ax_key].make_baseline()
-
-    # set baseline into BlComp modifier
-    def set_base_line_data(self, ax_key):
-        self.__ax_dict[ax_key].set_base_line_data()
 
     def default_settings(self, filename_key):
 

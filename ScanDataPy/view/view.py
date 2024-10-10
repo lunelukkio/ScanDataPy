@@ -277,17 +277,17 @@ class QtDataWindow(QtWidgets.QMainWindow):
     def bl_comp(self, state):
         if self.bl_comp_checkbox.isChecked():
             # activate baseline comp
-            self.__main_controller.switch_baseline_comp('FluoAxes', True)
-            self.__main_controller.make_baseline('FluoAxes')
-            self.__main_controller.set_base_line_data('FluoAxes')
+            self.__main_controller.set_modifier_val(
+                'BlComp0',
+                'Enable'
+            )
             self.__main_controller.set_update_flag('FluoAxes', True)
             self.__main_controller.update_view('FluoAxes')
         else:
             #disable baseline comp
-            self.__main_controller.switch_baseline_comp('FluoAxes', False)
             self.__main_controller.set_modifier_val(
                 'BlComp0',
-                'Normal'
+                'Disable'
             )
             self.__main_controller.set_update_flag('FluoAxes', True)
             self.__main_controller.update_view('FluoAxes')

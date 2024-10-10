@@ -593,7 +593,7 @@ class Scale(ModifierHandler):
 class BlComp(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
-        self.bl_mode = 'Normal' # 'DFoF' or 'Normalize'
+        self.bl_mode = 'Disable' # 'DFoF' or 'Normalize'
         self.bl_trace = None
 
     def __del__(self):  # make a message when this object is deleted.
@@ -603,15 +603,16 @@ class BlComp(ModifierHandler):
 
     def set_val(self, val: str, baseline_obj = None):  # val = [start, width]
         self.bl_mode = val
-        print(f"set BlComp: {self.bl_mode}")  # 1.Normal, 2.RoiComp
+        print(f"set BlComp: {self.bl_mode}")  # 1.Disable, 2.Enable
         self.bl_trace = baseline_obj
 
     def set_data(self, data) -> object:
-        if self.bl_mode == 'Normal':
-            print("BlComp:     Normal -> No modified")
+        if self.bl_mode == 'Disable':
+            print("BlComp:      No modified")
             return data
-        elif self.bl_mode == 'RoiComp':
-            print("BlComp:     RoiComp -> baseline compensation")
+        elif self.bl_mode == 'Enable':
+            self.bl_trace = self.observer.notify_observer_baseline()
+            print("BlComp:     Enable -> baseline compensation")
             fitting_trace, fitcoef, mu = Tools.poly_fit(self.bl_trace)
             fitting_new_trace_raw = Tools.polyval_with_mu(fitcoef,data.time, mu)
             new_bl_trace_value_obj = TraceData(
@@ -680,6 +681,10 @@ class Observer:
             # This is for direct view axes update
             # observer_name.update()
         # print("Update Notification from ROI")
+
+    def notify_observer_baseline(self) -> object:
+        for observer_name in self._observers:
+            return observer_name.make_baseline()
 
     @property
     def observers(self) -> list:

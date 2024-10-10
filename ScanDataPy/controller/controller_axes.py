@@ -167,7 +167,6 @@ class TraceAxesController(AxesController):
                  ax):  # controller is for getting ROI information from FLU-AXES.
         super().__init__(main_controller, model, canvas, ax)
         self.mode = 'ChMode'
-        self.baseline_comp = False
 
     def update(self):
         if self.update_flag is True:
@@ -253,14 +252,7 @@ class TraceAxesController(AxesController):
             image_axes.addItem(
                 self._marker_obj[modifier_name].rectangle_obj)
 
-    def set_scale(self):
-        if self.baseline_comp:
-            print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
-            self.make_baseline()
-
-    def switch_baseline_comp(self, val):
-        self.baseline_comp = val
-
+    # Be called by modifier.BlComp.observer.notify_observer_baseline()
     def make_baseline(self):
         current_filename = self._key_manager.filename_list[0]
         current_ch = self._key_manager.ch_list[0]
@@ -275,34 +267,10 @@ class TraceAxesController(AxesController):
             'TimeWindow3',
             current_baseline_roi,
             'Average1',
-            'Scale0',
             'TagMaker0'
         ]
-        # save a baseline to the repository
-        self._model.set_data(baseline_data_tag, baseline_modifier_tag_list)
-
-    # This is for put baseline value object into a BlComp modifier
-    def set_base_line_data(self):
-        print("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
-        self._model.print_infor()
-        current_ch = self._key_manager.ch_list[0]
-        current_baseline_roi = self._key_manager.baseline_roi_list[0]
-        # search tag for baseline
-        baseline_tag = {
-            'FileName':self._key_manager.filename_list[0],
-            'Attribute':'Baseline',
-            'DataType':'FluoTrace' + current_ch,
-            'Origin':current_baseline_roi
-        }
-        # get baseline data without any modify(baseline is already modified)
-        baseline_obj = self._model.get_data(
-            baseline_tag,
-            [])
-        # set baseline into a modifier
-        self._model.set_modifier_val(
-            'BlComp0',
-            'RoiComp', baseline_obj
-        )
+        # get a baseline to the repository
+        return self._model.get_data(baseline_data_tag, baseline_modifier_tag_list)
 
 class RoiBox:
     # """ class variable """

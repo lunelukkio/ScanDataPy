@@ -180,7 +180,7 @@ class TraceData(ValueObj):
 
 class TextData(ValueObj):
     def __init__(self, 
-                 val, 
+                 val,
                  data_tag=None):
         super().__init__(val, data_tag)
 
