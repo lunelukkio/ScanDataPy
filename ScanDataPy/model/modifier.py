@@ -488,12 +488,20 @@ class Roi(ModifierHandler):
         frames_size = frames_obj.shape
         if roi[0] + roi[2] - 1 > frames_size[0] or roi[1] + roi[3] - 1 > \
                 frames_size[1]:  # width is always 1 or more.
-            raise Exception(
+            print(
                 "The roi size should be the same as the image size or less")
         if roi[0] < 0 or roi[1] < 0:
-            raise Exception("The roi should be the same as 0 or more")
+            roi[0] += 1
+            print("The roi x should be the same as 0 or more")
+        if roi[1] < 0:
+            roi[1] += 1
+            print("The roi y should be the same as 0 or more")
         if roi[2] < 1 or roi[3] < 1:
-            raise Exception("The roi width should be the same as 1 or more")
+            roi[2] += 1
+            print("The roi width x should be the same as 1 or more")
+        if roi[3] < 1:
+            roi[3] += 1
+            print("The roi width y should be the same as 1 or more")
         else:
             return True
 
@@ -608,7 +616,7 @@ class BlComp(ModifierHandler):
 
     def set_data(self, data) -> object:
         if self.bl_mode == 'Disable':
-            print("BlComp:      No modified")
+            print("BlComp:     No modified")
             return data
         elif self.bl_mode == 'Enable':
             self.bl_trace = self.observer.notify_observer_baseline()

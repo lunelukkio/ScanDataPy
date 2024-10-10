@@ -192,9 +192,11 @@ class TextData(ValueObj):
 Value object for controller
 """
 class RoiVal:  # Should be called by the same class for __add__ and __sub__
-    def __init__(self, x: int, y: int, x_width: int, y_width: int, data_type=None):         
-        assert x >= 0 and y >= 0, 'ROI x and y values should be 0 or more'
-        assert x_width >= 1 and y_width >= 1, 'ROI width values should be 1 or more'
+    def __init__(self, x: int, y: int, x_width: int, y_width: int, data_type=None):
+        if x < 0 or y < 0:  # np.mean slice doesn't include end value. so width should be 1 or more than 1
+            print('ROI x and y values should be 0 or more')
+        if x_width < 1 or y_width < 1:
+            print('ROI width values should be 1 or more')
         self.__data = np.array([x, y, x_width, y_width])  # self.__data should be np.array data.
         called_class = inspect.stack()[1].frame.f_locals['self']
         if data_type is None:
@@ -243,8 +245,10 @@ class RoiVal:  # Should be called by the same class for __add__ and __sub__
 class TimeWindowVal:  # Should be called by the same class for __add__ and __sub__
     # be careful about end_width. np.mean slice a value not include end.
     def __init__(self, start: int, width=1, data_type=None):
-        assert start >= 0, "TimeWindow start values should be 0 or more"
-        assert width >= -1, "FrameWindow width values should be 1 or more'"
+        if start < 0:
+            print('TimeWindow start values should be 0 or more')
+        if width < 1:
+            print('FrameWindow width values should be 1 or more')
         self.__data = np.array([start, width])
         called_class = inspect.stack()[1].frame.f_locals['self']
         if data_type is None:
