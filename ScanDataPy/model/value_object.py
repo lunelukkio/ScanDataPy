@@ -152,17 +152,17 @@ class TraceData(ValueObj):
 
         return TraceData(trace, self._data_tag, self.__interval)
 
-    def __add__(self, sum_val) -> object:
-        return self.operator(sum_val, np.add, "addition")
+    def __add__(self, val_obj) -> object:
+        return self.operator(val_obj, np.add, "addition")
         
-    def __sub__(self, sub_val) -> object:
-        return self.operator(sub_val, np.subtract, "subtracted")
+    def __sub__(self, val_obj) -> object:
+        return self.operator(val_obj, np.subtract, "subtracted")
 
-    def __truediv__(self, div_val) -> object:
-        return self.operator(div_val, np.true_divide, "division")
+    def __truediv__(self, val_obj) -> object:
+        return self.operator(val_obj, np.true_divide, "division")
     
-    def __mul__(self, mul_val) -> object:
-        return self.operator(mul_val, np.multiply, "multiplication")
+    def __mul__(self, val_obj) -> object:
+        return self.operator(val_obj, np.multiply, "multiplication")
 
     def __create_time_data(self, trace, interval) -> np.ndarray:
         num_data_point = interval * np.shape(trace)[0]
@@ -241,15 +241,15 @@ class RoiVal:  # Should be called by the same class for __add__ and __sub__
         self.__data_type = data_type
     
     
-
-class TimeWindowVal:  # Should be called by the same class for __add__ and __sub__
+# self.__data = frame number.  width = -1 means start from the end of the trace
+class TimeWindowVal:
     # be careful about end_width. np.mean slice a value not include end.
     def __init__(self, start: int, width=1, data_type=None):
         if start < 0:
             print('TimeWindow start values should be 0 or more')
         if width < 1:
             print('FrameWindow width values should be 1 or more')
-        self.__data = np.array([start, width])
+        self.__data = np.array([start, width])  # frame number
         called_class = inspect.stack()[1].frame.f_locals['self']
         if data_type is None:
             self.__data_type = called_class.__class__.__name__
@@ -276,7 +276,6 @@ class TimeWindowVal:  # Should be called by the same class for __add__ and __sub
     def __sub__(self, val: object)  -> object:
         self.operate(val, np.subtract, "subtracted")
 
-        
     @property
     def data(self) -> list:
         return self.__data

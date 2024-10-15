@@ -395,7 +395,7 @@ class TimeWindow(ModifierHandler):
         # compare the val to frame length
         if time_window[0] + time_window[1] > frame_length:
             raise Exception(
-                f"The total frame should be less than {frame_length - 1}.")
+                f"The total frame should be less than {frame_length}.")
         else:
             return True
 
@@ -601,7 +601,7 @@ class Scale(ModifierHandler):
 class BlComp(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
-        self.bl_mode = 'Disable' # 'DFoF' or 'Normalize'
+        self.bl_mode = 'Disable' # or 'PolyVal'
         self.bl_trace = None
 
     def __del__(self):  # make a message when this object is deleted.
@@ -618,21 +618,38 @@ class BlComp(ModifierHandler):
         if self.bl_mode == 'Disable':
             print("BlComp:     No modified")
             return data
-        elif self.bl_mode == 'Enable':
+        elif self.bl_mode == 'PolyVal':
             self.bl_trace = self.observer.notify_observer_baseline()
-            print("BlComp:     Enable -> baseline compensation")
+            print("BlComp:     Enable -> <PolyVal> baseline compensation")
             fitting_trace, fitcoef, mu = Tools.poly_fit(self.bl_trace)
             fitting_new_trace_raw = Tools.polyval_with_mu(fitcoef,data.time, mu)
-            new_bl_trace_value_obj = TraceData(
-                fitting_new_trace_raw,
-                data.data_tag,
-                data.interval
-            )
-            bl_comp_trace = Tools.create_bg_comp(data, new_bl_trace_value_obj)
-            return bl_comp_trace
+        elif self.bl_mode == 'Exponential':
+            self.bl_trace = self.observer.notify_observer_baseline()
+            print("BlComp:     Enable -> <Exponential> baseline compensation")
+
+
+
+
+
+            fitting_trace, fitcoef, mu = Tools.exponential_fit(self.bl_trace.time, self.bl_trace.data)
+            fitting_new_trace_raw = Tools.polyval_with_mu(fitcoef,data.time, mu)
+
+
+
+
+
+
         else:
             raise ValueError(f"No such a BlCOmp mode -> {self.bl_mode} "
                              f"check set_val in BlComp" )
+
+        new_bl_trace_value_obj = TraceData(
+            fitting_new_trace_raw,
+            data.data_tag,
+            data.interval
+        )
+        bl_comp_trace = Tools.create_bg_comp(data, new_bl_trace_value_obj)
+        return bl_comp_trace
 
 class TagMaker(ModifierHandler):
     def __init__(self, modifier_name):

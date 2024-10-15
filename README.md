@@ -26,7 +26,7 @@ file_setting.json
       "modifier_default_val": {
           "TimeWindow0": [0, 5],   for difference image 
           "TimeWindow1": [0, 5],   for difference image
-          "TimeWindow2": [0, -1],  elec trace (whole trace)
+          "TimeWindow2": [0, -1],  elec trace (whole trace)  -1 means width is whole trace
           "TimeWindow3": [0, -1],  baseline compensation(whole trace)
           "Roi0": [40, 40, 1, 1],  for baseline comp
           "Roi1": [40, 40, 1, 1],   fluotrace but also for baseline comp

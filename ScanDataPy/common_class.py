@@ -12,7 +12,9 @@ import glob
 import copy
 import re
 import numpy as np
+from scipy.optimize import curve_fit
 import psutil  # for memory check
+
 #import itertools
 
 #from conda.base.context import mockable_context_envs_dirs
@@ -357,6 +359,23 @@ class Tools:
         #delta_F_trace.show_data()
         bl_comp_trace = delta_F_trace + f
         return bl_comp_trace
+
+    @staticmethod
+    def exponential_func(x, a, b):
+        return a * np.exp(b * x)
+
+    @staticmethod
+    def exponential_fit(trace_obj):
+        f_avarage = Tools.f_value(trace_obj)
+        trace_obj-f_avarage
+        popt, pcov = curve_fit(Tools.exponential_func, trace_obj.time, trace_obj.data)
+        a_fit, b_fit = popt
+        y_fit = Tools.exponential_func(trace_obj.time, a_fit, b_fit)
+
+
+
+
+        return baseline_trace_obj
 
     """ misc """
 
