@@ -291,6 +291,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
             )
             self.__main_controller.set_update_flag('FluoAxes', True)
             self.__main_controller.update_view('FluoAxes')
+            self.__main_controller.set_modifier_val('BlComp0', 'WindowClose')
 
 
 

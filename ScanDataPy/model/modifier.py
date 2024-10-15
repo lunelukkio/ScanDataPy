@@ -12,6 +12,9 @@ is not stable.
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import itertools
+from scipy.optimize import curve_fit
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui
 
 from ScanDataPy.model.value_object import FramesData
 from ScanDataPy.model.value_object import ImageData
@@ -56,11 +59,11 @@ class ModifierService(ModifierServiceInterface):
         return self.__modifier_chain_list
 
     # This is actual method run by DataService and return a modified value object data
-    def apply_modifier(self, data, original_modifier_list=None):
+    def apply_modifier(self, data_obj, original_modifier_list=None):
         # copy modifier list for error checking in EndModifier class
         modifier_list = original_modifier_list.copy()
         # start the chain of responsibility and get modified data
-        modified_data = self.__start_modifier.apply_modifier(data,
+        modified_data = self.__start_modifier.apply_modifier(data_obj,
                                                              modifier_list)
         return modified_data
 
@@ -245,17 +248,17 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
         self.__next_modifier = next_modifier
         return next_modifier
 
-    def modifier_request(self, data, modifier_list):
+    def modifier_request(self, data_obj, modifier_list):
         if self.__next_modifier:
-            return self.__next_modifier.apply_modifier(data, modifier_list)
+            return self.__next_modifier.apply_modifier(data_obj, modifier_list)
 
-    def apply_modifier(self, data, modifier_list):
+    def apply_modifier(self, data_obj, modifier_list):
         # if current modifier name is in modifier_list, go to self.set_data
         if self.modifier_name in modifier_list:
-            new_data = self.set_data(data)
+            new_data = self.set_data(data_obj)
             modifier_list.remove(self.modifier_name)
         else:
-            new_data = data
+            new_data = data_obj
         return self.modifier_request(new_data, modifier_list)
 
     @property
@@ -278,7 +281,7 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
         return self._val_obj
 
     @abstractmethod
-    def set_data(self, data):
+    def set_data(self, data_obj):
         raise NotImplementedError()
 
     def set_observer(self, observer):
@@ -295,13 +298,13 @@ class StartModifier(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
 
-    def apply_modifier(self, data, modifier_list):
-        return super().modifier_request(data, modifier_list)
+    def apply_modifier(self, data_obj, modifier_list):
+        return super().modifier_request(data_obj, modifier_list)
 
     def set_val(self):
         pass
 
-    def set_data(self, data):
+    def set_data(self, data_obj):
         pass
 
 class TimeWindow(ModifierHandler):
@@ -579,18 +582,22 @@ class Scale(ModifierHandler):
         self.scale_mode = mode
         print(f"set Scale: {mode}")
 
-    def set_data(self, data) -> object:
+    def set_data(self, data_obj) -> object:
         if self.scale_mode == 'Original':
             print("Scale:      Original -> No modified")
-            return data
+            return data_obj
 
         elif self.scale_mode == 'DFoF':
-            df_over_f = Tools.create_df_over_f(data)
+            f = Tools.f_value(data_obj.data)
+            df_over_f = (data_obj / f - 1) * 100
             print("Scale:      Original -> dF/F")
             return df_over_f
 
         elif self.scale_mode == 'Normalize':
-            normalized_data = Tools.create_normalize(data)
+            min_val = np.min(data_obj.data)
+            pre_data_obj = data_obj - min_val
+            max_val = np.max(pre_data_obj.data)
+            normalized_data = pre_data_obj / max_val
             print("Scale:      Original -> Normalized")
             return normalized_data
         else:
@@ -602,53 +609,79 @@ class BlComp(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
         self.bl_mode = 'Disable' # or 'PolyVal'
-        self.bl_trace = None
+        self.baseline_window = None
 
     def __del__(self):  # make a message when this object is deleted.
         print('.')
         print(f"----- Deleted a BlComp object. + {format(id(self))}")
         # pass
 
+    # currently no use
     def set_val(self, val: str, baseline_obj = None):  # val = [start, width]
-        self.bl_mode = val
-        print(f"set BlComp: {self.bl_mode}")  # 1.Disable, 2.Enable
-        self.bl_trace = baseline_obj
+        if val == 'WindowClose':
+            self.baseline_window = None
+        else:
+            self.bl_mode = val
+            print(f"set BlComp: {self.bl_mode}")  # 1.Disable, 2.Enable
 
-    def set_data(self, data) -> object:
+    def set_data(self, data_obj) -> object:
         if self.bl_mode == 'Disable':
             print("BlComp:     No modified")
-            return data
+            return data_obj
+        # make Polyval fitting curve
         elif self.bl_mode == 'PolyVal':
-            self.bl_trace = self.observer.notify_observer_baseline()
             print("BlComp:     Enable -> <PolyVal> baseline compensation")
-            fitting_trace, fitcoef, mu = Tools.poly_fit(self.bl_trace)
-            fitting_new_trace_raw = Tools.polyval_with_mu(fitcoef,data.time, mu)
+            degree_poly = 2
+            bl_trace = self.observer.notify_observer_baseline()
+
+            mu = [np.mean(bl_trace.time), np.std(bl_trace.time)]
+            # time data centering and scaling
+            t_scaled = (bl_trace.time - mu[0]) / mu[1]
+            # Polynomial fitting with scaled data
+            fitcoef = np.polyfit(t_scaled, bl_trace.data, degree_poly)
+            # Evaluate fitted polynomial in data points
+            #fitting_trace = np.polyval(fitcoef, t_scaled)
+            # Scaling x values
+            x_scaled = (data_obj.time - mu[0]) / mu[1]
+            # Evaluate polynomial
+            fitting_trace_raw = np.polyval(fitcoef, x_scaled)
+        # make exponential fitting curve: currently doen't work well
         elif self.bl_mode == 'Exponential':
-            self.bl_trace = self.observer.notify_observer_baseline()
             print("BlComp:     Enable -> <Exponential> baseline compensation")
-
-
-
-
-
-            fitting_trace, fitcoef, mu = Tools.exponential_fit(self.bl_trace.time, self.bl_trace.data)
-            fitting_new_trace_raw = Tools.polyval_with_mu(fitcoef,data.time, mu)
-
-
-
-
-
-
+            bl_trace = self.observer.notify_observer_baseline()
+            popt, pcov = curve_fit(Tools.exponential_func, bl_trace.time,
+                                   bl_trace.data, p0=(1, -1, 1))
+            a_fit, b_fit, c_fit= popt
+            fitting_trace_raw = Tools.exponential_func(data_obj.time, a_fit, b_fit, c_fit)
         else:
             raise ValueError(f"No such a BlCOmp mode -> {self.bl_mode} "
                              f"check set_val in BlComp" )
 
-        new_bl_trace_value_obj = TraceData(
-            fitting_new_trace_raw,
-            data.data_tag,
-            data.interval
+        # make baseline value object
+        fit_baseline_obj = TraceData(
+            fitting_trace_raw,
+            bl_trace.data_tag,
+            bl_trace.interval
         )
-        bl_comp_trace = Tools.create_bg_comp(data, new_bl_trace_value_obj)
+        # get ratio of f (data/baseline)
+        f_val = Tools.f_value(data_obj.data)
+        baseline_f_val = Tools.f_value(fit_baseline_obj.data)
+        f_val_ratio = f_val / baseline_f_val
+        # set size of baseline to data
+        norm_bl_trace = fit_baseline_obj * f_val_ratio
+        # get comp delta F
+        delta_F_trace = data_obj - norm_bl_trace
+        bl_comp_trace = delta_F_trace + f_val
+
+        # show a baseline fitting trace
+        if self.baseline_window is None:
+            self.baseline_window = pg.plot()
+            self.baseline_window.setWindowTitle('Baseline fitting')
+        else:
+            self.baseline_window.clear()
+        bl_trace.show_data(self.baseline_window)
+        fit_baseline_obj.show_data(self.baseline_window)
+
         return bl_comp_trace
 
 class TagMaker(ModifierHandler):
@@ -664,24 +697,24 @@ class TagMaker(ModifierHandler):
     def set_val(self, new_tag_dict: dict):  # val = [start, width]
         self.tag_dict = new_tag_dict
 
-    def set_data(self, data) -> object:
+    def set_data(self, data_obj) -> object:
         print(f"TagMaker:     New tag -> {self.tag_dict}")
-        data.data_tag.update(self.tag_dict)
-        return data
+        data_obj.data_tag.update(self.tag_dict)
+        return data_obj
 
 class EndModifier(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
 
     # overwrite
-    def apply_modifier(self, data, modifier_list):
+    def apply_modifier(self, data_obj, modifier_list):
         assert modifier_list == [], f"EndModifier: Modifier Error. {modifier_list} didn't use."
-        return data
+        return data_obj
 
     def set_val(self):
         pass
 
-    def set_data(self, data):
+    def set_data(self, data_obj):
         pass
 
 

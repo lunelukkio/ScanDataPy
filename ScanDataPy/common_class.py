@@ -12,7 +12,6 @@ import glob
 import copy
 import re
 import numpy as np
-from scipy.optimize import curve_fit
 import psutil  # for memory check
 
 #import itertools
@@ -302,80 +301,24 @@ class Tools:
     """ calculation """
 
     @staticmethod
-    def create_df_over_f(trace_obj) -> object:
-        f = Tools.f_value(trace_obj)
-        df_over_f = (trace_obj / f - 1) * 100
-        # return value object
-        return df_over_f
+    def f_value(data) -> float:  # trace is value object.
+        start = 0  # this is for a F value
+        length = 4  # This is for a F value
+        part_trace = data[start: start + length]
+        average = np.average(part_trace)
+        return average
 
+    # take the smallest average value in the end of the trace
     @staticmethod
-    def f_value(trace_obj) -> float:  # trace is value object.
-        average_start = 1  # this is for a F value
-        average_length = 4  # This is for a F value
-        part_trace = trace_obj.data[
-                     average_start: average_start + average_length]
+    def trace_min(data):  # trace is value object.
+        start = -5
+        part_trace = data[start:]
         average = np.average(part_trace)
         return average
 
     @staticmethod
-    def create_normalize(trace_obj) -> object:
-        min_val = np.min(trace_obj.data)
-        pre_trace_obj = trace_obj - min_val
-        max_val = np.max(pre_trace_obj.data)
-        norm_obj = pre_trace_obj / max_val
-        # return value object
-        return norm_obj
-
-    @staticmethod
-    def delta_f(trace_obj, bl_trace_obj) -> object:
-        # return value object. See value_object.TraceData
-        return trace_obj - bl_trace_obj
-
-    @staticmethod
-    def poly_fit(trace_obj, degree_poly=2):
-        # Calculate mean and standard deviation of time data
-        mu = [np.mean(trace_obj.time), np.std(trace_obj.time)]
-        # time data centering and scaling
-        t_scaled = (trace_obj.time - mu[0]) / mu[1]
-        # Polynomial fitting with scaled data
-        fitcoef = np.polyfit(t_scaled, trace_obj.data, degree_poly)
-        # Evaluate fitted polynomial in data points
-        fitting_trace = np.polyval(fitcoef, t_scaled)
-        return fitting_trace, fitcoef, mu
-
-    @staticmethod
-    def polyval_with_mu(fitcoef, x, mu):
-        # Scaling x values
-        x_scaled = (x - mu[0]) / mu[1]
-        # Evaluate polynomial
-        y = np.polyval(fitcoef, x_scaled)
-        return y
-
-    @staticmethod
-    def create_bg_comp(trace_obj, bg_trace_obj):
-        f = Tools.f_value(trace_obj)
-        delta_F_trace = Tools.delta_f(trace_obj, bg_trace_obj)
-        #trace_obj.show_data()
-        #delta_F_trace.show_data()
-        bl_comp_trace = delta_F_trace + f
-        return bl_comp_trace
-
-    @staticmethod
-    def exponential_func(x, a, b):
-        return a * np.exp(b * x)
-
-    @staticmethod
-    def exponential_fit(trace_obj):
-        f_avarage = Tools.f_value(trace_obj)
-        trace_obj-f_avarage
-        popt, pcov = curve_fit(Tools.exponential_func, trace_obj.time, trace_obj.data)
-        a_fit, b_fit = popt
-        y_fit = Tools.exponential_func(trace_obj.time, a_fit, b_fit)
-
-
-
-
-        return baseline_trace_obj
+    def exponential_func(x, a, b, c):
+        return a * np.exp(b * x) + c
 
     """ misc """
 

@@ -263,13 +263,14 @@ class TraceAxesController(AxesController):
             'DataType': 'FluoFrames' + current_ch,
             'Origin': 'File'
         }
+        # TimeWindow = [5,-1], -1 means whole trace. see modifier.TimeWindow()
         baseline_modifier_tag_list = [
             'TimeWindow3',
             current_baseline_roi,
             'Average1',
             'TagMaker0'
         ]
-        # get a baseline to the repository
+        # return to modifier BlComp class
         return self._model.get_data(baseline_data_tag, baseline_modifier_tag_list)
 
 class RoiBox:
