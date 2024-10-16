@@ -250,6 +250,13 @@ class TraceAxesController(AxesController):
             self._model.set_modifier_val(modifier_name, val)
             return modifier_name
 
+    def change_roi_size(self, val: list):
+        modifier_name_list = [name for name in self._key_manager.modifier_list if 'Roi' in name]
+        for modifier_name in modifier_name_list:
+            # set modifier values
+            self._model.set_modifier_val(modifier_name, val)
+            return modifier_name
+
     # Be called by modifier.BlComp.observer.notify_observer_baseline()
     def make_baseline(self):
         current_filename = self._key_manager.filename_list[0]

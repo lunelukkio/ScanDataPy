@@ -193,12 +193,10 @@ class MainController():
             raise NotImplementedError()
 
     def change_roi_size(self, val: list):
-        modifier_name_list = [name for name in self.__ax_dict[
-            'FluoAxes']._key_manager.modifier_list if 'Roi' in name]
-        for modifier_name in modifier_name_list:
-            # set modifier values
-            self.set_modifier_val(modifier_name, val)
+        roi_tag = self.__ax_dict['FluoAxes'].change_roi_size(val)
         self.update_view('FluoAxes')
+        # for RoiBOX
+        self.__ax_dict['ImageAxes'].set_marker(roi_tag)
 
     def set_scale(self,ax_key):
         self.set_update_flag('FluoAxes', True)
@@ -263,8 +261,8 @@ class MainController():
         self.ax_dict['ElecAxes']._key_manager.print_infor()
 
         # default modifiers values.
-        default_values_list = default.data['default_settings']['modifier_default_val']
-        for modifier, value in default_values_list.items():
+        default_values_dict = default.data['default_settings']['modifier_default_val']
+        for modifier, value in default_values_dict.items():
             self.set_modifier_val(modifier, value)
 
         print("========== End of default settings ==========")
