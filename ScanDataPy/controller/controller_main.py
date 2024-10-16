@@ -69,6 +69,7 @@ class MainController():
         self._key_manager = KeyManager()
         self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, ElecAxes: TraceAx class}\
         self.current_filename = [0]
+        self.current_roi = [1]
 
     def __del__(self):
         print('.')
@@ -170,15 +171,16 @@ class MainController():
                 x = round(image_pos.x())
                 y = round(image_pos.y())
                 val = [x, y, None, None]
-                # get Roi modifier name in FluoAxes key manager.
-                modifier_name_list = [name for name in self.__ax_dict['FluoAxes']._key_manager.modifier_list if 'Roi' in name]
+                modifier_name_list = ['Roi' + str(roi_num) for roi_num in
+                                      self.current_roi]
+                print(modifier_name_list)
                 for modifier_name in modifier_name_list:
                     # set modifier values
                     self.set_modifier_val(modifier_name, val)
                 self.update_view('FluoAxes')
 
             elif event.button() == 2:
-                pass
+                self.current_roi[0] = (self.current_roi[0] + 1) % len(self._key_manager.baseline_roi_list)
             # move to next controller
             elif event.button() == 3:
                 # move and copy ch boolen value

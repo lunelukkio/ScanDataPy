@@ -651,7 +651,7 @@ class BlComp(ModifierHandler):
             bl_trace = self.observer.notify_observer_baseline()
             popt, pcov = curve_fit(Tools.exponential_func, bl_trace.time,
                                    bl_trace.data, p0=(1, -1, 1))
-            a_fit, b_fit, c_fit= popt
+            a_fit, b_fit, c_fit = popt
             fitting_trace_raw = Tools.exponential_func(data_obj.time, a_fit, b_fit, c_fit)
         else:
             raise ValueError(f"No such a BlCOmp mode -> {self.bl_mode} "
