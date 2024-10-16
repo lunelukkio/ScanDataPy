@@ -207,6 +207,7 @@ class MainController():
         print("=============================================")
         print("========== Start default settings. ==========")
         print("=============================================")
+        print("")
 
         # get default information from text data in the json file
         #get the first of the filename true list
@@ -215,13 +216,17 @@ class MainController():
         # get default information from JSON
         default = self.__model.get_data(
             {'Filename': filename, 'Attribute': 'Default', 'DataType': 'Text'})
+        print("")
+        print("========== observer setting ==========")
+        print("")
         default_observer = default.data['default_settings']['default_observer']
-
         # set_observer. see KeyManager and  file_setting.json
         for key, item_list in default_observer.items():
             for value in item_list:
                 self.set_observer(key, value)
-
+        print("")
+        print("========== controller setting ==========")
+        print("")
         # MainController default settings from file_setting.json
         main_default_tag_list = default.data['default_settings']['main_default_tag']
         # set_keys.   see KeyManager and file_setting.json in class common_class set_key_list_to_dict, set_dict_to_dict
@@ -259,17 +264,17 @@ class MainController():
         # show the final default infor of the main controller
         print("========== Elec AxesController key manager infor ==========")
         self.ax_dict['ElecAxes']._key_manager.print_infor()
-
+        print("")
+        print("========== modifier setting ==========")
+        print("")
         # default modifiers values.
-        default_values_dict = default.data['default_settings']['modifier_default_val']
-        for modifier, value in default_values_dict.items():
+        default_values_list = default.data['default_settings']['modifier_default_val']
+        for modifier, value in default_values_list.items():
             self.set_modifier_val(modifier, value)
 
+        print("")
         print("========== End of default settings ==========")
         print("")
-
-        # this is for test
-        #self.__model.set_modifier_val('Roi1',[40,40,5,5])
 
     def set_update_flag(self, ax_name, flag):
         self.__ax_dict[ax_name].set_update_flag(flag)
