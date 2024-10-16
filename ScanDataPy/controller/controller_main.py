@@ -171,11 +171,7 @@ class MainController():
                 x = round(image_pos.x())
                 y = round(image_pos.y())
                 val = [x, y, None, None]
-                modifier_name_list = ['Roi' + str(roi_num) for roi_num in
-                                      self.current_roi]
-                for modifier_name in modifier_name_list:
-                    # set modifier values
-                    self.set_modifier_val(modifier_name, val)
+                self.__ax_dict['FluoAxes'].onclick_axes(val)
                 self.update_view('FluoAxes')
 
             elif event.button() == 2:

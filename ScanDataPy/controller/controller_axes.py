@@ -181,7 +181,7 @@ class TraceAxesController(AxesController):
             self._ax_obj.autoRange()
             print(f"AxesController: {self.__class__.__name__} updated")
         else:
-            pass
+            print("TraceAxesController: update flag is False")
 
     # from the flag, get data from the model and show data. 
     def get_view_data(self):
@@ -224,6 +224,12 @@ class TraceAxesController(AxesController):
                         pg.mkPen(color=self._ch_colors["black"]))
 
         return value_obj
+
+    def onclick_axes(self, val):
+        modifier_name_list = [name for name in self._key_manager.modifier_list if 'Roi' in name]
+        for modifier_name in modifier_name_list:
+            # set modifier values
+            self._model.set_modifier_val(modifier_name, val)
 
     def set_marker(self, value_obj):
         roi_tag_list = []
