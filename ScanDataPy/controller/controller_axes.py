@@ -175,7 +175,7 @@ class TraceAxesController(AxesController):
             # See each subclass.
             value_obj = self.get_view_data()
             # for RoiBOX
-            if 'FluoTrace' in value_obj.data_tag['DataType']:
+            if 'FluoTrace' in value_obj.data_tag['DataType']:  # not ElecTrace
                 self.set_marker(value_obj)
             # axes method
             self._ax_obj.autoRange()

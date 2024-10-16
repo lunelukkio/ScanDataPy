@@ -173,7 +173,6 @@ class MainController():
                 val = [x, y, None, None]
                 modifier_name_list = ['Roi' + str(roi_num) for roi_num in
                                       self.current_roi]
-                print(modifier_name_list)
                 for modifier_name in modifier_name_list:
                     # set modifier values
                     self.set_modifier_val(modifier_name, val)
