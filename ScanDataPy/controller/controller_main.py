@@ -171,10 +171,10 @@ class MainController():
                 x = round(image_pos.x())
                 y = round(image_pos.y())
                 val = [x, y, None, None]
-                value_obj = self.__ax_dict['FluoAxes'].onclick_axes(val)
+                roi_tag = self.__ax_dict['FluoAxes'].onclick_axes(val)
                 self.update_view('FluoAxes')
                 # for RoiBOX
-                self.__ax_dict['ImageAxes'].set_marker(value_obj)
+                self.__ax_dict['ImageAxes'].set_marker(roi_tag)
 
             elif event.button() == 2:
                 self.current_roi[0] = (self.current_roi[0] + 1) % len(self._key_manager.roi_list)

@@ -25,7 +25,7 @@ class AxesController(metaclass=ABCMeta):
         self._key_manager = KeyManager()  # see common class
 
         self.ax_item_dict = {}
-        self._marker_obj = {}  # This is for makers in axes windows.
+        self._marker_obj_dict = {}  # This is for makers in axes windows.
 
         self.update_flag = False  # Ture or False or empty: flip flag.
         self.update_flag_lock = False  # to skip ImageAxe update
@@ -158,11 +158,9 @@ class ImageAxesController(AxesController):
         else:
             pass
 
-    def set_marker(self, value_obj):
-        # get flag data from ImageAxes
-        modifier_name = value_obj.data_tag['Origin']
-        modifier_val_obj = self._model.get_modifier_val(modifier_name)
+    def set_marker(self, roi_tag):
 
+        modifier_val_obj = self._model.get_modifier_val(roi_tag)
         roi_val = modifier_val_obj.data
         # if need, box_pos is for adjusting box position as pixels 0.5
         box_pos = [
@@ -171,16 +169,17 @@ class ImageAxesController(AxesController):
             roi_val[2],
             roi_val[3]
         ]
-        if modifier_name in self._marker_obj:
-            self._marker_obj[modifier_name].set_roi(box_pos)
-        else:
-            self._marker_obj[modifier_name] = RoiBox(
-                self._controller_colors[modifier_name])
-            self._marker_obj[modifier_name].set_roi(box_pos)
+        if roi_tag in self._marker_obj_dict:  # if roi_tag is already in the dict
+            # set box_pos into roi box obj
+            self._marker_obj_dict[roi_tag].set_roi(box_pos)
+        else:  # if not, make new RoiBox instance
+            self._marker_obj_dict[roi_tag] = RoiBox(
+                self._controller_colors[roi_tag])
+            self._marker_obj_dict[roi_tag].set_roi(box_pos)
             # put the ROI BOX on the top of images.
-            self._marker_obj[modifier_name].rectangle_obj.setZValue(1)
+            self._marker_obj_dict[roi_tag].rectangle_obj.setZValue(1)
             self._ax_obj.addItem(
-                self._marker_obj[modifier_name].rectangle_obj)
+                self._marker_obj_dict[roi_tag].rectangle_obj)
 
     def set_scale(self):
         pass
@@ -201,7 +200,6 @@ class TraceAxesController(AxesController):
             # axes method
             self._ax_obj.autoRange()
             print(f"AxesController: {self.__class__.__name__} updated")
-            return self.
         else:
             print("TraceAxesController: update flag is False")
 
@@ -250,6 +248,7 @@ class TraceAxesController(AxesController):
         for modifier_name in modifier_name_list:
             # set modifier values
             self._model.set_modifier_val(modifier_name, val)
+            return modifier_name
 
     # Be called by modifier.BlComp.observer.notify_observer_baseline()
     def make_baseline(self):
