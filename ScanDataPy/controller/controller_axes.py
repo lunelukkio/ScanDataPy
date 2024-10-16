@@ -158,6 +158,30 @@ class ImageAxesController(AxesController):
         else:
             pass
 
+    def set_marker(self, value_obj):
+        # get flag data from ImageAxes
+        modifier_name = value_obj.data_tag['Origin']
+        modifier_val_obj = self._model.get_modifier_val(modifier_name)
+
+        roi_val = modifier_val_obj.data
+        # if need, box_pos is for adjusting box position as pixels 0.5
+        box_pos = [
+            roi_val[0],
+            roi_val[1],
+            roi_val[2],
+            roi_val[3]
+        ]
+        if modifier_name in self._marker_obj:
+            self._marker_obj[modifier_name].set_roi(box_pos)
+        else:
+            self._marker_obj[modifier_name] = RoiBox(
+                self._controller_colors[modifier_name])
+            self._marker_obj[modifier_name].set_roi(box_pos)
+            # put the ROI BOX on the top of images.
+            self._marker_obj[modifier_name].rectangle_obj.setZValue(1)
+            self._ax_obj.addItem(
+                self._marker_obj[modifier_name].rectangle_obj)
+
     def set_scale(self):
         pass
 
@@ -173,13 +197,11 @@ class TraceAxesController(AxesController):
             # clear axes variables
             self._ax_obj.clear()
             # See each subclass.
-            value_obj = self.get_view_data()
-            # for RoiBOX
-            if 'FluoTrace' in value_obj.data_tag['DataType']:  # not ElecTrace
-                self.set_marker(value_obj)
+            self.get_view_data()
             # axes method
             self._ax_obj.autoRange()
             print(f"AxesController: {self.__class__.__name__} updated")
+            return self.
         else:
             print("TraceAxesController: update flag is False")
 
@@ -223,40 +245,11 @@ class TraceAxesController(AxesController):
                     plot_data.setPen(
                         pg.mkPen(color=self._ch_colors["black"]))
 
-        return value_obj
-
     def onclick_axes(self, val):
         modifier_name_list = [name for name in self._key_manager.modifier_list if 'Roi' in name]
         for modifier_name in modifier_name_list:
             # set modifier values
             self._model.set_modifier_val(modifier_name, val)
-
-    def set_marker(self, value_obj):
-        roi_tag_list = []
-        # get flag data from ImageAxes
-        image_canvas, image_axes = self._main_controller.get_canvas_axes(
-            "ImageAxes")
-        modifier_name = value_obj.data_tag['Origin']
-        modifier_val_obj = self._model.get_modifier_val(modifier_name)
-
-        roi_val = modifier_val_obj.data
-        # if need, box_pos is for adjusting box position as pixels 0.5
-        box_pos = [
-            roi_val[0],
-            roi_val[1],
-            roi_val[2],
-            roi_val[3]
-        ]
-        if modifier_name in self._marker_obj:
-            self._marker_obj[modifier_name].set_roi(box_pos)
-        else:
-            self._marker_obj[modifier_name] = RoiBox(
-                self._controller_colors[modifier_name])
-            self._marker_obj[modifier_name].set_roi(box_pos)
-            # put the ROI BOX on the top of images.
-            self._marker_obj[modifier_name].rectangle_obj.setZValue(1)
-            image_axes.addItem(
-                self._marker_obj[modifier_name].rectangle_obj)
 
     # Be called by modifier.BlComp.observer.notify_observer_baseline()
     def make_baseline(self):
