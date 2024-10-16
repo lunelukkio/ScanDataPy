@@ -256,7 +256,7 @@ class TraceAxesController(AxesController):
     def make_baseline(self):
         current_filename = self._key_manager.filename_list[0]
         current_ch = self._key_manager.ch_list[0]
-        current_baseline_roi = self._key_manager.baseline_roi_list[0]
+        current_baseline_roi = self._key_manager.roi_list[0]
         baseline_data_tag = {
             'Filename': current_filename,
             'Attribute': 'Data',

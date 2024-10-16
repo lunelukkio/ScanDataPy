@@ -180,7 +180,7 @@ class MainController():
                 self.update_view('FluoAxes')
 
             elif event.button() == 2:
-                self.current_roi[0] = (self.current_roi[0] + 1) % len(self._key_manager.baseline_roi_list)
+                self.current_roi[0] = (self.current_roi[0] + 1) % len(self._key_manager.roi_list)
             # move to next controller
             elif event.button() == 3:
                 # move and copy ch boolen value

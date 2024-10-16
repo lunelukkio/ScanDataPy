@@ -168,7 +168,7 @@ class KeyManager:
         self.modifier_list = []  # ['TimeWindow3','Roi1','Average1','TagMaker0']
 
         self.ch_list = []
-        self.baseline_roi_list = []
+        self.roi_list = []
 
     @property
     def filename_dict(self) -> dict:
@@ -252,7 +252,7 @@ class KeyManager:
         print("")
         print(f"modifier_list        = {self.modifier_list}")
         print(f"ch_list              = {self.ch_list}")
-        print(f"baseline_roi_list    = {self.baseline_roi_list}")
+        print(f"roi_list    = {self.roi_list}")
         print("===========================================================")
 
     def reset(self):
@@ -264,7 +264,7 @@ class KeyManager:
         self.modifier_list = []
 
         self.ch_list = []
-        self.baseline_roi_list = []
+        self.roi_list = []
 
 
 class Tools:

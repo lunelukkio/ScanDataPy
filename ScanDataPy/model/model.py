@@ -169,10 +169,6 @@ class DataService(ModelInterface):
     def get_list_of_repository_tag_dict(self):
         return self.__data_repository.get_list_of_tag_dict()
 
-    def reset(self):
-        self.__data_repository = Repository()
-        self.__modifier_service = ModifierService()
-
     def set_observer(self, modifier_tag, observer):
         print(f"DataService: set_observer ({observer.__class__.__name__} to {modifier_tag}) ---------->")
         found = False
@@ -190,6 +186,10 @@ class DataService(ModelInterface):
 
     def get_modifier_val(self, modifier_name):
         return self.__modifier_service.get_modifier_val(modifier_name)
+
+    def reset(self):
+        self.__data_repository = Repository()
+        self.__modifier_service = ModifierService()
 
     def print_infor(self, tag_dict=None, except_dict=None):
         print("Dataservice: print_infor ---------->")
