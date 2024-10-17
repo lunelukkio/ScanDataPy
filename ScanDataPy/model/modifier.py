@@ -696,11 +696,13 @@ class TagMaker(ModifierHandler):
 
     def set_val(self, new_tag_dict: dict):  # val = [start, width]
         self.tag_dict = new_tag_dict
+        print(f"set TagMaker: {new_tag_dict}")
 
     def set_data(self, data_obj) -> object:
         print(f"TagMaker:     New tag -> {self.tag_dict}")
         data_obj.data_tag.update(self.tag_dict)
         return data_obj
+
 
 class EndModifier(ModifierHandler):
     def __init__(self, modifier_name):

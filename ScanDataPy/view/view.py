@@ -213,7 +213,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         # make a model and get filename obj
         filename_obj = self.__main_controller.open_file(filename_obj)
         # make user controllers
-        self.__main_controller.create_default_modifier(0)
+        self.__main_controller.create_default_modifier(0)  # filename number
         self.__main_controller.default_settings(filename_obj.name)
 
         self.__main_controller.print_infor()

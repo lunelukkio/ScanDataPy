@@ -247,7 +247,7 @@ class TimeWindowVal:
     def __init__(self, start: int, width=1, data_type=None):
         if start < 0:
             print('TimeWindow start values should be 0 or more')
-        if width < 1:
+        if width < 1 and width != -1:
             print('FrameWindow width values should be 1 or more')
         self.__data = np.array([start, width])  # frame number
         called_class = inspect.stack()[1].frame.f_locals['self']
