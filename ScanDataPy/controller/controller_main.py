@@ -14,7 +14,6 @@ from ScanDataPy.common_class import FileService, KeyManager, Tools
 
 
 class ControllerInterface(metaclass=ABCMeta):
-    """ MainController """
 
     @abstractmethod
     def get_filename(self):
@@ -41,21 +40,9 @@ class ControllerInterface(metaclass=ABCMeta):
     def update_view(self, axes):
         raise NotImplementedError()
 
-    """ Delegation to the Model """
-
     @abstractmethod
     def create_modifier(self, modifier_name):
         raise NotImplementedError()
-
-        # set a new user controller values such as ROIVal.
-
-
-    """ Delegation to the AxesController """
-
-    @abstractmethod
-    def ax_print_infor(self, ax_key: str) -> None:
-        raise NotImplementedError()
-
 
     @abstractmethod
     def set_observer(self, controller_key: str, ax_num: int) -> None:
@@ -83,8 +70,6 @@ class MainController():
     @property
     def key_manager(self):
         return self._key_manager
-
-    """ MainController """
 
     def add_axes(self, ax_type, axes_name: str, canvas, ax: object) -> None:
         if ax_type == 'Image':
@@ -163,6 +148,11 @@ class MainController():
     def set_modifier_val(self, modifier, *args, **kwargs):
         self.__model.set_modifier_val(modifier, *args, **kwargs)
 
+    def set_maker(self):
+        roi_tag = self.__ax_dict['FluoAxes'].get_modifier_key_list('Roi')
+        for roi in roi_tag:
+            self.__ax_dict['ImageAxes'].set_marker(roi)
+
     def onclick_axes(self, event, axes_name):
         if axes_name == 'ImageAxes':
             # get clicked position
@@ -171,10 +161,10 @@ class MainController():
                 x = round(image_pos.x())
                 y = round(image_pos.y())
                 val = [x, y, None, None]
-                roi_tag = self.__ax_dict['FluoAxes'].onclick_axes(val)
+                self.__ax_dict['FluoAxes'].onclick_axes(val)
                 self.update_view('FluoAxes')
                 # for RoiBOX
-                self.__ax_dict['ImageAxes'].set_marker(roi_tag)
+                self.set_maker()
 
             elif event.button() == 2:
                 self.current_roi[0] = (self.current_roi[0] + 1) % len(self._key_manager.roi_list)
@@ -309,27 +299,6 @@ class MainController():
             ax.print_infor()
         print("========== Data Information End ==========")
         print("")
-
-
-
-
-
-
-
-
-    # no use
-    def update_flag_lock_sw(self, ax_key, val):
-        self.__ax_dict[ax_key].update_flag_lock_sw(
-            val)  # see AxesController class in conrtoller_axes.py
-
-    # no use
-    def ax_print_infor(self, ax_key):
-        self.__ax_dict[ax_key].print_infor()
-
-    # no use
-    def show_data(self, target_dict, except_dict):
-        # show data in data_repository
-        self.__model.print_infor(target_dict, except_dict)
 
 
 class AiController:

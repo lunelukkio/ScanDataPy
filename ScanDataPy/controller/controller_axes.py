@@ -93,6 +93,10 @@ class AxesController(metaclass=ABCMeta):
     def get_data(self, data_tag, modifier_list=None):
         self._model.get_data(self, data_tag, modifier_list)
 
+    def get_modifier_key_list(self, modifier_name):
+        return [name for name in self._key_manager.modifier_list
+                              if modifier_name in name]
+
     def print_infor(self):
         print(f"{self.__class__.__name__} current data list = ")
         self._key_manager.print_infor()
@@ -244,11 +248,10 @@ class TraceAxesController(AxesController):
                         pg.mkPen(color=self._ch_colors["black"]))
 
     def onclick_axes(self, val):
-        modifier_name_list = [name for name in self._key_manager.modifier_list if 'Roi' in name]
+        modifier_name_list = self.get_modifier_key_list('Roi')
         for modifier_name in modifier_name_list:
             # set modifier values
             self._model.set_modifier_val(modifier_name, val)
-            return modifier_name
 
     def change_roi_size(self, val: list):
         modifier_name_list = [name for name in self._key_manager.modifier_list if 'Roi' in name]

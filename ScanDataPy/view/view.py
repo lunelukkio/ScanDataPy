@@ -209,16 +209,6 @@ class QtDataWindow(QtWidgets.QMainWindow):
             )
         )
 
-    def open_file(self, filename_obj=None):
-        # make a model and get filename obj
-        filename_obj = self.__main_controller.open_file(filename_obj)
-        # make user controllers
-        self.__main_controller.create_default_modifier(0)  # filename number
-        self.__main_controller.default_settings(filename_obj.name)
-
-        self.__main_controller.print_infor()
-        self.__main_controller.update_view()
-
         # connect x axis of windows
     def sync_x_axes(self, view):
         # get the x axis setting of the fluo axes
@@ -236,6 +226,17 @@ class QtDataWindow(QtWidgets.QMainWindow):
         # set the x axis of the fluo axes
         self.__main_controller.ax_dict["FluoAxes"].ax_obj.setXRange(
             x_range2[0], x_range2[1], padding=0)
+
+    def open_file(self, filename_obj=None):
+        # make a model and get filename obj
+        filename_obj = self.__main_controller.open_file(filename_obj)
+        # make user controllers
+        self.__main_controller.create_default_modifier(0)  # filename number
+        self.__main_controller.default_settings(filename_obj.name)
+
+        self.__main_controller.print_infor()
+        self.__main_controller.update_view()
+        self.__main_controller.set_maker()
 
     def roi_size(self, command):
         if command == "large":
@@ -293,20 +294,8 @@ class QtDataWindow(QtWidgets.QMainWindow):
             self.__main_controller.update_view('FluoAxes')
             self.__main_controller.set_modifier_val('BlComp0', 'WindowClose')
 
-
-
-
-
-
-
-
-
-
     def switch_bl_roi(self, state):
         raise NotImplementedError()
-
-    def live_view(self):
-        self.__live_camera_view.start_live_view()
 
 
 class CustomImageView(pg.ImageView):
