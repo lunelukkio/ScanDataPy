@@ -169,46 +169,34 @@ class KeyManager:
 
         self.ch_list = []
         self.roi_list = []
+        self.bl_roi_list = []
 
-    @property
-    def filename_dict(self) -> dict:
-        return self._filename_dict
-
-    @property
-    def attribute_dict(self) -> dict:
-        return self._attribute_dict
-
-    @property
-    def data_type_dict(self) -> dict:
-        return self._data_type_dict
-
-    @property
-    def origin_dict(self) -> dict:
-        return self._origin_dict
-
-    @filename_dict.setter
-    def filename_dict(self, filename_dict) -> None:
-        self._filename_dict = filename_dict
-
-    @attribute_dict.setter
-    def attribute_dict(self, attribute_dict) -> None:
-        self._attribute_dict = attribute_dict
-
-    @data_type_dict.setter
-    def data_type_dict(self, data_type_dict) -> None:
-        self._data_type_dict = data_type_dict
-
-    @origin_dict.setter
-    def origin_dict(self, origin_dict) -> None:
-        self._origin_dict = origin_dict
-
-    # set list values
-    def set_key(self, tag_list_name, tag):  # e.g. (filename_dict, '30503A001.tsm')
-        list_name = getattr(self, f'{tag_list_name}')  # get dict
+    # set if tag is in the list the tag will be removed, if not tag will be added.
+    def set_tag(self, tag_list_name, tag):  # e.g. (filename_dict, '30503A001.tsm')
+        list_name = getattr(self, f'{tag_list_name}')  # get list
         if tag in list_name:
             list_name.remove(tag)
         else:
             list_name.append(tag)
+        # need this line because list_name is just like a copy.
+        setattr(self, f'{tag_list_name}', list_name)
+
+    # remove old tag and add new tag
+    def replace_tag(self, list_name, old_tag, new_tag):  # e.g. old_tag='Roi' new_tag='Roi1'
+        # get list
+        if hasattr(self, list_name):
+            current_list = getattr(self, list_name)
+            # delete old_tag from the list
+            current_list = [item for item in current_list if old_tag not in item]
+            current_list.append(new_tag)
+            setattr(self, list_name, current_list)
+            print(f"KeyManager: new_list of {list_name} = {current_list}")
+        else:
+            print(f"There is no {list_name} in the class")
+
+    def get_list(self, list_name):
+        if hasattr(self, list_name):
+            return getattr(self, list_name)
 
     # get key dict combinations from whole dict.  convert variable names to 'dictionary keys'.
     # val = True: True combination, False: False combination, None: whole combination
@@ -240,9 +228,6 @@ class KeyManager:
 
         return result
 
-    def get_modifier_list(self) -> list:
-        return self.modifier_list
-
     def print_infor(self):
         print("===================== Key Manager =========================")
         print(f"filename_list        = {self.filename_list}")
@@ -253,18 +238,15 @@ class KeyManager:
         print(f"modifier_list        = {self.modifier_list}")
         print(f"ch_list              = {self.ch_list}")
         print(f"roi_list    = {self.roi_list}")
+        print(f"bl_roi_list    = {self.bl_roi_list}")
+
         print("===========================================================")
 
     def reset(self):
-        self.filename_list = []
-        self.attribute_list = []
-        self.data_type_list = []
-        self.origin_list = []
-
-        self.modifier_list = []
-
-        self.ch_list = []
-        self.roi_list = []
+        for attr_name, attr_value in self.__dict__.items():
+            if isinstance(attr_value, list):
+                setattr(self, attr_name, [])
+                print(f"{attr_name} has been reset to an empty list")
 
 
 class Tools:

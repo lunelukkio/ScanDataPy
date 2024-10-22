@@ -56,7 +56,7 @@ class MainController():
         self._key_manager = KeyManager()
         self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, ElecAxes: TraceAx class}\
         self.current_filename = [0]
-        self.current_roi = [1]
+        self.current_mode = 'Normal'    # Normal, Baseline,
 
     def __del__(self):
         print('.')
@@ -97,7 +97,7 @@ class MainController():
         # make experiments data
         open_experiments = self.create_experiments(filename_obj)
         if open_experiments is True:
-            self._key_manager.set_key('filename_list', filename_obj.name)
+            self._key_manager.set_tag('filename_list', filename_obj.name)
             print("============================================================================")
             print(f"========== MainController: Open {filename_obj.name}: suceeded!!! ==========          :)")
             print("============================================================================")
@@ -141,6 +141,9 @@ class MainController():
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
+    def replace_key_manager_tag(self, ax_key, list_name, old_tag, new_tag):
+        self.__ax_dict[ax_key].replace_key_manager_tag(list_name, old_tag, new_tag)
+
     def set_observer(self, ax_name: str, modifier_tag: str) -> None:
         self.__ax_dict[ax_name].set_observer(modifier_tag)
 
@@ -149,38 +152,52 @@ class MainController():
         self.__model.set_modifier_val(modifier, *args, **kwargs)
 
     def set_maker(self):
-        roi_tag = self.__ax_dict['FluoAxes'].get_modifier_key_list('Roi')
+        roi_tag = self.__ax_dict['FluoAxes'].get_key_list('modifier_list', 'Roi')
         for roi in roi_tag:
             self.__ax_dict['ImageAxes'].set_marker(roi)
 
     def onclick_axes(self, event, axes_name):
-        if axes_name == 'ImageAxes':
-            # get clicked position
-            image_pos = self.__ax_dict['ImageAxes']._ax_obj.getView().mapSceneToView(event.scenePos())
-            if event.button() == 1:  # left click
-                x = round(image_pos.x())
-                y = round(image_pos.y())
-                val = [x, y, None, None]
-                self.__ax_dict['FluoAxes'].onclick_axes(val)
-                self.update_view('FluoAxes')
-                # for RoiBOX
-                self.set_maker()
+        if self.current_mode == 'Normal':
+            if axes_name == 'ImageAxes':
+                # get clicked position
+                image_pos = self.__ax_dict['ImageAxes']._ax_obj.getView().mapSceneToView(event.scenePos())
+                if event.button() == 1:  # left click
+                    x = round(image_pos.x())
+                    y = round(image_pos.y())
+                    val = [x, y, None, None]
+                    self.__ax_dict['FluoAxes'].onclick_axes(val)
+                    self.update_view('FluoAxes')
+                    # for RoiBOX
+                    self.set_maker()
 
-            elif event.button() == 2:
-                self.current_roi[0] = (self.current_roi[0] + 1) % len(self._key_manager.roi_list)
-            # move to next controller
-            elif event.button() == 3:
-                # move and copy ch boolen value
-                self.__operating_controller_set.next_controller_to_true("ROI")
-                self.__ax_dict["FluoAxes"].next_controller_to_true("ROI")
-                self.update_view("FluoAxes")
-        elif axes_name == "FluoAxes":
-            if event.inaxes == self.__ax_dict["FluoAxes"]:
+                elif event.button() == 2:
+                    pass
+                # move to next controller
+                elif event.button() == 3:
+                    # move and copy ch boolen value
+                    self.__operating_controller_set.next_controller_to_true("ROI")
+                    self.__ax_dict["FluoAxes"].next_controller_to_true("ROI")
+                    self.update_view("FluoAxes")
+            elif axes_name == "FluoAxes":
+                if event.inaxes == self.__ax_dict["FluoAxes"]:
+                    raise NotImplementedError()
+                elif event.inaxes == self.__ax_dict["ElecAxes"]:
+                    raise NotImplementedError()
+            elif axes_name == "ElecAxes":
                 raise NotImplementedError()
-            elif event.inaxes == self.__ax_dict["ElecAxes"]:
-                raise NotImplementedError()
-        elif axes_name == "ElecAxes":
-            raise NotImplementedError()
+        if self.current_mode == 'Baseline':
+            if axes_name == 'ImageAxes':
+                image_pos = self.__ax_dict[
+                    'ImageAxes']._ax_obj.getView().mapSceneToView(
+                    event.scenePos())
+                if event.button() == 1:  # left click
+                    x = round(image_pos.x())
+                    y = round(image_pos.y())
+                    val = [x, y, None, None]
+                    self.__ax_dict['FluoAxes'].baseline_onclick_axes(val)
+                    self.update_view('FluoAxes')
+                    # for RoiBOX
+                    self.set_maker()
 
     def change_roi_size(self, val: list):
         roi_tag = self.__ax_dict['FluoAxes'].change_roi_size(val)
@@ -190,6 +207,10 @@ class MainController():
 
     def set_scale(self,ax_key):
         self.set_update_flag('FluoAxes', True)
+        self.update_view('FluoAxes')
+
+    def change_current_mode(self, mode):
+        self.current_mode = mode
         self.update_view('FluoAxes')
 
     def default_settings(self, filename_key):
@@ -219,38 +240,38 @@ class MainController():
         print("")
         # MainController default settings from file_setting.json
         main_default_tag_list = default.data['default_settings']['main_default_tag']
-        # set_keys.   see KeyManager and file_setting.json in class common_class set_key_list_to_dict, set_dict_to_dict
+        # set_tags.   see KeyManager and file_setting.json in class common_class set_tag_list_to_dict, set_dict_to_dict
         for tag_list_name, tag_list in main_default_tag_list.items():
             for tag in tag_list:
-                self._key_manager.set_key(tag_list_name, tag)
+                self._key_manager.set_tag(tag_list_name, tag)
         # show the final default infor of the main controller
         print("============ MainController key manager infor =============")
         self._key_manager.print_infor()
 
         # set ax view flags
-        self.ax_dict['FluoAxes'].key_manager.set_key('filename_list', filename)
+        self.ax_dict['FluoAxes'].key_manager.set_tag('filename_list', filename)
         fluo_default_tag_list = default.data['default_settings']['trace_ax_default_tag']
         for tag_list_name, tag_list in fluo_default_tag_list.items():
             for tag in tag_list:
-                self.ax_dict['FluoAxes'].key_manager.set_key(tag_list_name, tag)
+                self.ax_dict['FluoAxes'].key_manager.set_tag(tag_list_name, tag)
         # show the final default infor of the main controller
         print("========== Trace AxesController key manager infor =========")
         self.ax_dict['FluoAxes']._key_manager.print_infor()
 
-        self.ax_dict['ImageAxes'].key_manager.set_key('filename_list', filename)
+        self.ax_dict['ImageAxes'].key_manager.set_tag('filename_list', filename)
         image_default_tag_list = default.data['default_settings']['image_ax_default_tag']
         for tag_list_name, tag_list in image_default_tag_list.items():
             for tag in tag_list:
-                self.ax_dict['ImageAxes'].key_manager.set_key(tag_list_name, tag)
+                self.ax_dict['ImageAxes'].key_manager.set_tag(tag_list_name, tag)
         # show the final default infor of the main controller
         print("========== Image AxesController key manager infor =========")
         self.ax_dict['ImageAxes']._key_manager.print_infor()
 
-        self.ax_dict['ElecAxes'].key_manager.set_key('filename_list', filename)
+        self.ax_dict['ElecAxes'].key_manager.set_tag('filename_list', filename)
         elec_default_tag_list = default.data['default_settings']['elec_ax_default_tag']
         for tag_list_name, tag_list in elec_default_tag_list.items():
             for tag in tag_list:
-                self.ax_dict['ElecAxes'].key_manager.set_key(tag_list_name, tag)
+                self.ax_dict['ElecAxes'].key_manager.set_tag(tag_list_name, tag)
         # show the final default infor of the main controller
         print("========== Elec AxesController key manager infor ==========")
         self.ax_dict['ElecAxes']._key_manager.print_infor()

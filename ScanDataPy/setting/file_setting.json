@@ -39,7 +39,7 @@
         "data_type_list": ["FluoFramesCh1", "FluoFramesCh2"],
         "origin_list": ["File"],
         "ch_list": ["Ch0", "Ch1", "Ch2"],
-        "roi_list": ["Roi0", "Roi1", "Roi2"]
+        "roi_list": ["Roi0", "Roi1"]
       },
       "image_ax_default_tag": {
         "attribute_list": ["Data"],
@@ -54,7 +54,8 @@
         "origin_list" : ["File"],
         "modifier_list": ["Roi1", "Average1", "Scale0", "BlComp0"],
         "ch_list": ["Ch1"],
-        "roi_list": ["Roi0"]
+        "roi_list": ["Roi1"],
+        "bl_roi_list": ["Roi0"]
       },
       "elec_ax_default_tag": {
         "attribute_list": ["Data"],

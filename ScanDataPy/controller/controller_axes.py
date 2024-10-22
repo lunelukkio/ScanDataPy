@@ -60,8 +60,8 @@ class AxesController(metaclass=ABCMeta):
     def key_manager(self, key_dict):
         self._key_manager = key_dict
 
-    def set_key(self, dict_name, key, val=None):
-        self._key_manager.set_key(dict_name, key, val)
+    def set_tag(self, dict_name, key, val=None):
+        self._key_manager.set_tag(dict_name, key, val)
 
     def set_observer(self, modifier_tag) -> None:
         self._model.set_observer(modifier_tag, self)
@@ -93,9 +93,16 @@ class AxesController(metaclass=ABCMeta):
     def get_data(self, data_tag, modifier_list=None):
         self._model.get_data(self, data_tag, modifier_list)
 
-    def get_modifier_key_list(self, modifier_name):
-        return [name for name in self._key_manager.modifier_list
-                              if modifier_name in name]
+    # return only items with modifier_name in list_name.
+    def get_key_list(self, list_name, modifier_name='All'):
+        if modifier_name == 'All':
+            return self._key_manager.get_list(list_name)
+        else:
+            return [name for name in self._key_manager.get_list(list_name)
+                                  if modifier_name in name]
+
+    def replace_key_manager_tag(self, list_name, old_tag, new_tag):
+        self._key_manager.replace_tag(list_name, old_tag, new_tag)
 
     def print_infor(self):
         print(f"{self.__class__.__name__} current data list = ")
@@ -115,10 +122,6 @@ class AxesController(metaclass=ABCMeta):
             self.update_flag_lock = not self.update_flag_lock
 
 
-
-
-    def next_controller_to_true(self, controller):
-        self._view_flag_set.next_controller_to_true(controller)
 
 
 
@@ -141,7 +144,7 @@ class ImageAxesController(AxesController):
         # get lists of the data tag list
         lists_of_tag_dict = self._key_manager.get_dicts_from_tag_list()
         # get modifier list
-        modifier_list = self._key_manager.get_modifier_list()
+        modifier_list = self._key_manager.get_list('modifier_list')
 
         for tag_dict in lists_of_tag_dict:
             value_obj = self._model.get_data(tag_dict, modifier_list)
@@ -212,7 +215,7 @@ class TraceAxesController(AxesController):
         # get lists of the data tag list
         lists_of_tag_dict = self._key_manager.get_dicts_from_tag_list()
         # get modifier list
-        modifier_list = self._key_manager.get_modifier_list()
+        modifier_list = self._key_manager.get_list('modifier_list')
         for tag_dict in lists_of_tag_dict:
             value_obj = self._model.get_data(tag_dict, modifier_list)
 
@@ -248,9 +251,18 @@ class TraceAxesController(AxesController):
                         pg.mkPen(color=self._ch_colors["black"]))
 
     def onclick_axes(self, val):
-        modifier_name_list = self.get_modifier_key_list('Roi')
+        modifier_name_list = self.get_key_list('modifier_list', 'Roi')
         for modifier_name in modifier_name_list:
             # set modifier values
+            self._model.set_modifier_val(modifier_name, val)
+
+    def baseline_onclick_axes(self, val):
+        baseline_roi = self.get_key_list('bl_roi_list', 'Roi')
+        for modifier_name in baseline_roi:
+            # set modifier values
+            print("ttttttttttttttttttttttttt")
+            print(modifier_name)
+            print(val)
             self._model.set_modifier_val(modifier_name, val)
 
     def change_roi_size(self, val: list):
@@ -264,7 +276,7 @@ class TraceAxesController(AxesController):
     def make_baseline(self):
         current_filename = self._key_manager.filename_list[0]
         current_ch = self._key_manager.ch_list[0]
-        current_baseline_roi = self._key_manager.roi_list[0]
+        current_baseline_roi = self._key_manager.bl_roi_list[0]
         baseline_data_tag = {
             'Filename': current_filename,
             'Attribute': 'Data',

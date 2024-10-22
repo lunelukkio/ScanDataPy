@@ -176,11 +176,13 @@ class QtDataWindow(QtWidgets.QMainWindow):
         bottom_btn_layout.addWidget(small_btn, alignment=QtCore.Qt.AlignLeft)
         small_btn.clicked.connect(lambda: self.roi_size("small"))
 
-        roi_change_btn = QtWidgets.QPushButton("BL")
-        roi_change_btn.setFixedSize(30, 30)
-        bottom_btn_layout.addWidget(roi_change_btn,
+        self.roi_change_btn = QtWidgets.QCheckBox("BL")
+        self.roi_change_btn.setChecked(False)  # default
+        self.roi_change_btn.stateChanged.connect(self.bl_comp)
+        self.roi_change_btn.setFixedSize(30, 30)
+        bottom_btn_layout.addWidget(self.roi_change_btn,
                                     alignment=QtCore.Qt.AlignLeft)
-        roi_change_btn.clicked.connect(self.switch_bl_roi)
+        self.roi_change_btn.clicked.connect(self.bl_roi)
         bottom_btn_layout.addSpacerItem(spacer)
 
         mainLayout.addLayout(bottom_btn_layout)
@@ -247,11 +249,28 @@ class QtDataWindow(QtWidgets.QMainWindow):
             raise Exception('Should be Small or Large')
         self.__main_controller.change_roi_size(val)
 
+    def bl_roi(self):
+        if self.roi_change_btn.isChecked():
+            self.__main_controller.change_current_mode('Baseline')
+        else:
+            self.__main_controller.change_current_mode('Normal')
+
+    # under construction
+    """
     def change_roi(self, state):
-        self.__main_controller.operating_controller_set.next_controller_to_true(
-            "ROI")
-        # need modify
-        # self.__main_controller.set_view_flag("FluoAxes", "ROI0", "CH1")  # (ax, controller_key, data_key, value)
+        if self..isChecked():
+            remove_tag = 'Roi'
+            add_tag = 'Roi0'
+        else:
+            remove_tag = 'Roi'
+            add_tag = 'Roi1'
+        self.__main_controller.replace_key_manager_tag(
+            'FluoAxes',
+            'modifier_list',
+            remove_tag,
+            add_tag
+        )
+    """
 
     def scale(self, button):
         if self.current_checked_button != button:
