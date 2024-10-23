@@ -652,9 +652,11 @@ class BlComp(ModifierHandler):
         # make exponential fitting curve: currently doen't work well
         elif self.bl_mode == 'Exponential':
             print("BlComp:     Enable -> <Exponential> baseline compensation")
-            bl_trace = self.observer.notify_observer_second_obj()
+            data_type = data_obj.data_tag['DataType'].replace('Trace', 'Frames')
+            bl_trace = self.observer.notify_observer_second_obj(data_type)
             popt, pcov = curve_fit(Tools.exponential_func, bl_trace.time,
-                                   bl_trace.data, p0=(1, -1, 1))
+                                   bl_trace.data, p0=(1, -1, 1), maxfev=2000)
+
             a_fit, b_fit, c_fit = popt
             fitting_trace_raw = Tools.exponential_func(data_obj.time, a_fit, b_fit, c_fit)
         else:
@@ -706,7 +708,7 @@ class DifImage(ModifierHandler):
         dif_image = bl_trace - data_obj
         return dif_image
 
-
+# currently noting meaning. but in future this is working with saving in the repository
 class TagMaker(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)

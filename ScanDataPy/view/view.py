@@ -393,7 +393,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
             # activate baseline comp
             self.__main_controller.set_modifier_val(
                 'BlComp0',
-                'PolyVal'
+                'Exponential'
             )
             self.__main_controller.set_update_flag('FluoAxes', True)
             self.__main_controller.update_view('FluoAxes')
