@@ -202,10 +202,16 @@ class KeyManager:
     # val = True: True combination, False: False combination, None: whole combination
     def get_dicts_from_tag_list(self) -> list:
         result = []
+        #add ch to data_type_list
+        datatype_list_with_ch = []
+        for item in self.data_type_list:
+            for ch in self.ch_list:
+                datatype_list_with_ch.append(item + ch)
+
         all_dicts = [
             [self.filename_list, 'Filename'],  # the second name because a key of dictionary
             [self.attribute_list, 'Attribute'],
-            [self.data_type_list, 'DataType'],
+            [datatype_list_with_ch, 'DataType'],
             [self.origin_list, 'Origin']
         ]
         # internal function

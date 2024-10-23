@@ -43,14 +43,14 @@
       },
       "image_ax_default_tag": {
         "attribute_list": ["Data"],
-        "data_type_list": ["FluoFramesCh1"],
+        "data_type_list": ["FluoFrames"],
         "origin_list": ["File"],
         "modifier_list": ["TimeWindow1", "Average0"],
         "ch_list": ["Ch1"]
       },
       "trace_ax_default_tag": {
         "attribute_list": ["Data"],
-        "data_type_list": ["FluoFramesCh1"],
+        "data_type_list": ["FluoFrames"],
         "origin_list" : ["File"],
         "modifier_list": ["Roi1", "Average1", "Scale0", "BlComp0"],
         "ch_list": ["Ch1"],
@@ -59,7 +59,7 @@
       },
       "elec_ax_default_tag": {
         "attribute_list": ["Data"],
-        "data_type_list": ["ElecTraceCh1"],
+        "data_type_list": ["ElecTrace"],
         "origin_list" : ["File"],
         "modifier_list": ["TimeWindow2"],
         "ch_list": ["Ch1"]
