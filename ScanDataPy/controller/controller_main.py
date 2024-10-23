@@ -140,15 +140,15 @@ class MainController():
     def create_modifier(self, modifier_name):
         self.__model.add_modifier(modifier_name)
 
-    def replace_key_manager_tag(self, ax_key, list_name, old_tag, new_tag):
-        self.__ax_dict[ax_key].replace_key_manager_tag(list_name, old_tag, new_tag)
-
     def set_observer(self, ax_name: str, modifier_tag: str) -> None:
         self.__ax_dict[ax_name].set_observer(modifier_tag)
 
     # set modifier values e.g. 'Roi1', [40, 40, 1, 1]. Be called by view and self.default_settings.
     def set_modifier_val(self, modifier, *args, **kwargs):
         self.__model.set_modifier_val(modifier, *args, **kwargs)
+
+    def replace_key_manager_tag(self, ax_key, list_name, old_tag, new_tag):
+        self.__ax_dict[ax_key].replace_key_manager_tag(list_name, old_tag, new_tag)
 
     def set_marker(self, ax_key, roi_tag=None):
         self.__ax_dict[ax_key].set_marker(roi_tag)
@@ -197,6 +197,12 @@ class MainController():
             self._key_manager.set_tag(list_name, new_tag)
         else:
             self.__ax_dict[ax_key].set_tag(list_name, new_tag)
+
+    def change_color(self, color, ax_key=None):
+        if ax_key is None:
+            raise NotImplementedError()
+        else:
+            self.__ax_dict[ax_key].change_color(color)
 
     def default_settings(self, filename_key):
 

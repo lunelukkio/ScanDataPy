@@ -96,13 +96,27 @@ class ImageData(ValueObj):
     def pixel_size(self):
         return self.__pixel_size
 
+    def operator(self, val_obj, func):
+        # if val_obj is value object
+        if type(val_obj) == ImageData:
+            assert self._data_tag['DataType'] == val_obj.data_tag['DataType'], \
+            f"ImageData class: data_tag['DataType'] is not the same DataType. {self._data_tag['DataType']} - {val_obj.data_tag['DataType']}"
+            assert self._data.shape == val_obj.data.shape, "!!! Caution! The size of these data is not matched!"
+            image = func(self._data, val_obj.data)
+        # if val_obj is numerics
+        elif type(val_obj) in [float, int, np.int64, np.float64]:
+            image = func(self._data, val_obj)
+        else:
+            raise TypeError(f"val_obj must be a numeric type or TraceData, but got {type(val_obj).__name__}")
+
+        return ImageData(image, self._data_tag, self.__pixel_size)
+
     # This is for difference image
-    def __sub__(self):
-        raise NotImplementedError()
+    def __sub__(self, val_obj) -> object:
+        return self.operator(val_obj, np.subtract)
     
     def show_data(self, plt=pg) -> object:    # plt should be an axes in a view class object = AxesImage
         return plt.setImage(self._data)
-
     
 class TraceData(ValueObj):
     def __init__(self, 
@@ -138,31 +152,32 @@ class TraceData(ValueObj):
     def interval(self) -> float:
         return self.__interval
 
-    def operator(self, val_obj, func, operation):
-        if type(val_obj) in [float, int, np.int64, np.float64]:
+    def operator(self, val_obj, func):
+        # if val_obj is value object
+        if type(val_obj) == TraceData:
+            assert self._data_tag['DataType'] == val_obj.data_tag['DataType'], \
+            f"TraceData class: data_tag['DataType'] is not the same DataType. {self._data_tag['DataType']} - {val_obj.data_tag['DataType']}"
+            assert len(self._data) == len(val_obj.data), "!!! Caution! The length of these data is not matched!"
+            trace = func(self._data, val_obj.data)
+        # if val_obj is numerics
+        elif type(val_obj) in [float, int, np.int64, np.float64]:
             trace = func(self._data, val_obj)
         else:
-            assert type(val_obj) == TraceData, "TraceData: Wrong type"
-            assert self._data_tag['DataType'] == val_obj.data_tag['DataType'], \
-            f"TraceData class: data_tag['DataType'] is not the same. {self._data_tag['DataType']} - {val_obj.data_tag['DataType']} \n" \
-            f"Or Wrong value. This value object should be {operation} by int or float or other value object"
-            if len(self._data) != len(val_obj.data):
-                print('!!! Caution! The length of these data is not matched!', file=sys.stderr)
-            trace = func(self._data, val_obj.data)
+            raise TypeError(f"val_obj must be a numeric type or TraceData, but got {type(val_obj).__name__}")
 
         return TraceData(trace, self._data_tag, self.__interval)
 
     def __add__(self, val_obj) -> object:
-        return self.operator(val_obj, np.add, "addition")
+        return self.operator(val_obj, np.add)
         
     def __sub__(self, val_obj) -> object:
-        return self.operator(val_obj, np.subtract, "subtracted")
+        return self.operator(val_obj, np.subtract)
 
     def __truediv__(self, val_obj) -> object:
-        return self.operator(val_obj, np.true_divide, "division")
+        return self.operator(val_obj, np.true_divide)
     
     def __mul__(self, val_obj) -> object:
-        return self.operator(val_obj, np.multiply, "multiplication")
+        return self.operator(val_obj, np.multiply)
 
     def __create_time_data(self, trace, interval) -> np.ndarray:
         num_data_point = interval * np.shape(trace)[0]

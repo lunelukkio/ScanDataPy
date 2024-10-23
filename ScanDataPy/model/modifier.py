@@ -115,6 +115,8 @@ class ModifierService(ModifierServiceInterface):
             return ScaleFactory()
         elif 'BlComp' in modifier_name:
             return BlCompFactory()
+        elif 'DifImage' in modifier_name:
+            return DifImageFactory()
         elif 'TagMaker' in modifier_name:
             return TagMakerFactory()
         else:
@@ -140,6 +142,7 @@ class ModifierService(ModifierServiceInterface):
             'Average',
             'BlComp',
             'Scale',
+            'DifImage',
             'TagMaker',
             'EndModifier'
         ]
@@ -223,6 +226,10 @@ class ScaleFactory(ModifierFactory):
 class BlCompFactory(ModifierFactory):
     def create_modifier(self, modifier_name):
         return BlComp(modifier_name)
+
+class DifImageFactory(ModifierFactory):
+    def create_modifier(self, modifier_name):
+        return DifImage(modifier_name)
 
 
 class TagMakerFactory(ModifierFactory):
@@ -310,7 +317,6 @@ class StartModifier(ModifierHandler):
 class TimeWindow(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
-        self._val_obj = TimeWindowVal(0, 1)
         self.average_mode = 'Frames'  # 'Frames' or 'Trace'
 
     def __del__(self):  #make a message when this object is deleted.
@@ -319,9 +325,7 @@ class TimeWindow(ModifierHandler):
         #pass
 
     def set_val(self, val: list):  # val = [start, width]
-        window_value_list = val
-        # window_value_list[0] and [1]
-        start, width = window_value_list
+        start, width = val
         self._val_obj = TimeWindowVal(start,
                                       width)  # replace the roi
         self.observer.notify_observer()
@@ -427,7 +431,6 @@ class TimeWindow(ModifierHandler):
 class Roi(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
-        self._val_obj = RoiVal(40, 40, 1, 1)
 
     def __del__(self):  # make a message when this object is deleted.
         print('.')
@@ -633,7 +636,7 @@ class BlComp(ModifierHandler):
             print("BlComp:     Enable -> <PolyVal> baseline compensation")
             degree_poly = 2
             data_type = data_obj.data_tag['DataType'].replace('Trace', 'Frames')
-            bl_trace = self.observer.notify_observer_baseline(data_type)
+            bl_trace = self.observer.notify_observer_second_obj(data_type)
 
             mu = [np.mean(bl_trace.time), np.std(bl_trace.time)]
             # time data centering and scaling
@@ -649,7 +652,7 @@ class BlComp(ModifierHandler):
         # make exponential fitting curve: currently doen't work well
         elif self.bl_mode == 'Exponential':
             print("BlComp:     Enable -> <Exponential> baseline compensation")
-            bl_trace = self.observer.notify_observer_baseline()
+            bl_trace = self.observer.notify_observer_second_obj()
             popt, pcov = curve_fit(Tools.exponential_func, bl_trace.time,
                                    bl_trace.data, p0=(1, -1, 1))
             a_fit, b_fit, c_fit = popt
@@ -684,6 +687,25 @@ class BlComp(ModifierHandler):
         fit_baseline_obj.show_data(self.baseline_window)
 
         return bl_comp_trace
+
+class DifImage(ModifierHandler):
+    def __init__(self, modifier_name):
+        super().__init__(modifier_name)
+        #self._val_obj is for subtracting image
+
+    def set_val(self, val: list):  # val = [start, width]
+        start, width = val
+        self._val_obj = TimeWindowVal(start,
+                                      width)  # replace the roi
+        print(f"set DifImage: {self._val_obj.data} ")
+
+    def set_data(self, data_obj) -> object:
+        print("DifImage:     Enable")
+        data_type = data_obj.data_tag['DataType'].replace('Image', 'Frames')
+        bl_trace = self.observer.notify_observer_second_obj(data_type)
+        dif_image = bl_trace - data_obj
+        return dif_image
+
 
 class TagMaker(ModifierHandler):
     def __init__(self, modifier_name):
@@ -743,9 +765,9 @@ class Observer:
             # observer_name.update()
         # print("Update Notification from ROI")
 
-    def notify_observer_baseline(self, data_type) -> object:
+    def notify_observer_second_obj(self, data_type) -> object:
         for observer_name in self._observers:
-            return observer_name.make_baseline(data_type)
+            return observer_name.make_second_obj(data_type)
 
     @property
     def observers(self) -> list:

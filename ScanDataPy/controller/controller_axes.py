@@ -104,6 +104,9 @@ class AxesController(metaclass=ABCMeta):
     def replace_key_manager_tag(self, list_name, old_tag, new_tag):
         self._key_manager.replace_tag(list_name, old_tag, new_tag)
 
+    def change_color(self, color):
+        self.color_mode = color
+
     def print_infor(self):
         print(f"{self.__class__.__name__} current data list = ")
         self._key_manager.print_infor()
@@ -135,6 +138,7 @@ class ImageAxesController(AxesController):
     def __init__(self, main_controller, model, canvas, ax):
         super().__init__(main_controller, model, canvas, ax)
         self.mode = None  # no use
+        self.color_mode = 'grey'
 
     def set_click_position(self, event):
         raise NotImplementedError()
@@ -154,6 +158,7 @@ class ImageAxesController(AxesController):
             item_key = ''.join(value_obj.data_tag.values())
             # make a new item dict for a graph
             self.ax_item_dict[item_key] = plot_data
+            self._ax_obj.setPredefinedGradient(self.color_mode)
 
     # override    should be in main controller
     def update(self) -> None:
@@ -190,6 +195,22 @@ class ImageAxesController(AxesController):
 
     def set_scale(self):
         raise NotImplementedError()
+
+    def make_second_obj(self, data_type):
+        current_filename = self._key_manager.filename_list[0]
+        baseline_data_tag = {
+            'Filename': current_filename,
+            'Attribute': 'Data',
+            'DataType': data_type,
+            'Origin': 'File'
+        }
+        # TimeWindow = [5,-1], -1 means whole trace. see modifier.TimeWindow()
+        baseline_modifier_tag_list = [
+            'TimeWindow1',
+            'Average0'
+        ]
+        # return to modifier BlComp class
+        return self._model.get_data(baseline_data_tag, baseline_modifier_tag_list)
 
 
 class TraceAxesController(AxesController):
@@ -275,13 +296,8 @@ class TraceAxesController(AxesController):
             return modifier_name
 
     # Be called by modifier.BlComp.observer.notify_observer_baseline()
-    def make_baseline(self, data_type):
+    def make_second_obj(self, data_type):
         current_filename = self._key_manager.filename_list[0]
-
-
-
-
-
         current_baseline_roi = self._key_manager.bl_roi_list[0]
         baseline_data_tag = {
             'Filename': current_filename,

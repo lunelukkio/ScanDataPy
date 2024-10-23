@@ -21,8 +21,6 @@ class QtDataWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.__main_controller = MainController(self)
         self.setWindowTitle('SCANDATA')
-        self.__live_camera_mode = False
-        self.__live_camera_view = None
 
         # import a JSON setting file
         try:
@@ -124,13 +122,11 @@ class QtDataWindow(QtWidgets.QMainWindow):
             QtWidgets.QSizePolicy.Minimum
         )
 
-        # live view
-        self.live_view_checkbox = QtWidgets.QCheckBox("Live View")
-        self.live_view_checkbox.setChecked(False)  # default
-        if self.__live_camera_mode:
-            self.live_view_checkbox.stateChanged.connect(
-                lambda: self.__live_camera_view.start_live_view())
-        mainLayout.addWidget(self.live_view_checkbox)
+        # differential image
+        self.dif_image_button = QtWidgets.QCheckBox("Differential Image")
+        self.dif_image_button.setChecked(False)  # default
+        self.dif_image_button.stateChanged.connect(self.dif_image_switch)
+        mainLayout.addWidget(self.dif_image_button)
 
         # baseline compensation
         self.bl_comp_checkbox = QtWidgets.QCheckBox("Baseline Comp")
@@ -183,6 +179,18 @@ class QtDataWindow(QtWidgets.QMainWindow):
         bottom_btn_layout.addWidget(self.roi_change_btn,
                                     alignment=QtCore.Qt.AlignLeft)
 
+        """ values for the image"""
+        self.image_time_button = QtWidgets.QPushButton("Img time window")
+        bottom_btn_layout.addWidget(self.image_time_button,
+                                    alignment=QtCore.Qt.AlignLeft)
+        self.image_time_button.clicked.connect(self.image_input_dialog)
+
+        """ values for the difference image"""
+        self.dif_button = QtWidgets.QPushButton("dif image")
+        bottom_btn_layout.addWidget(self.dif_button,
+                                    alignment=QtCore.Qt.AlignLeft)
+        self.dif_button.clicked.connect(self.dif_input_dialog)
+
         """ for Fluo Ch """
         self.ch0_change_btn = QtWidgets.QCheckBox("Ch0")
         self.ch0_change_btn.setChecked(False)  # default
@@ -205,9 +213,11 @@ class QtDataWindow(QtWidgets.QMainWindow):
         bottom_btn_layout.addWidget(self.ch2_change_btn,
                                     alignment=QtCore.Qt.AlignLeft)
 
+
         bottom_btn_layout.addSpacerItem(spacer)
         mainLayout.addLayout(bottom_btn_layout)
 
+        """ for elec channel"""
         self.elec_ch1_change_btn = QtWidgets.QCheckBox("Ch1")
         self.elec_ch1_change_btn.setChecked(True)  # default
         self.elec_ch1_change_btn.setFixedSize(40, 30)
@@ -264,29 +274,37 @@ class QtDataWindow(QtWidgets.QMainWindow):
         bottom_btn_layout.addWidget(self.elec_ch8_change_btn,
                                     alignment=QtCore.Qt.AlignLeft)
 
-        if self.__live_camera_mode:
-            # override with live camera view
-            from ScanDataPy.controller.controller_live_view import PcoPanda
-            self.__live_camera_view = PcoPanda()
-            self.__live_camera_view.set_axes(image_ax)
-            """
-            try:
-                from SCANDATA.controller.controller_live_view import PcoPanda
-                self.__live_camera_view = PcoPanda() 
-                self.__live_camera_view.set_axes(image_ax)
-                except:
-                    print("!!!!!!!!!!!!!!!!!!!!!!!!")
-                    print("Failed to find a live camera!")
-                    print("")
-            """
-
-        # mouse click event
+        """ mouse click event """
         image_ax.getView().scene().sigMouseClicked.connect(
             lambda event: self.__main_controller.onclick_axes(
                 event,
                 "ImageAxes"
             )
         )
+
+    def image_input_dialog(self):
+        dialog = InputDialog(self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            val = dialog.get_numbers()
+            if val is not None:
+                print(f"Input values: {val}")
+                self.__main_controller.set_modifier_val('TimeWindow0', val)
+                self.__main_controller.set_update_flag('ImageAxes', True)
+                self.__main_controller.update_view('ImageAxes')
+            else:
+                print("Only numerical are available")
+
+    def dif_input_dialog(self):
+        dialog = InputDialog(self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            val = dialog.get_numbers()
+            if val is not None:
+                print(f"Input values: {val}")
+                self.__main_controller.set_modifier_val('TimeWindow1', val)
+                self.__main_controller.set_update_flag('ImageAxes', True)
+                self.__main_controller.update_view('ImageAxes')
+            else:
+                print("Only numerical are available")
 
         # connect x axis of windows
     def sync_x_axes(self, view):
@@ -405,6 +423,48 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.__main_controller.set_update_flag('ElecAxes', True)
         self.__main_controller.update_view('ElecAxes')
 
+    def dif_image_switch(self):
+        self.__main_controller.set_tag('modifier_list', 'DifImage0', 'ImageAxes')
+        if self.dif_image_button.isChecked():
+            self.__main_controller.change_color('plasma', 'ImageAxes')
+        else:
+            self.__main_controller.change_color('grey', 'ImageAxes')
+        self.__main_controller.set_update_flag('ImageAxes', True)
+        self.__main_controller.update_view('ImageAxes')
+
+    def window_time_set(self):
+        pass
+
+class InputDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("difference image: input values")
+        self.setGeometry(100, 100, 200, 100)
+
+        layout = QtWidgets.QVBoxLayout(self)
+
+        self.inputs = []
+        for i in range(2):
+            number_input = QtWidgets.QLineEdit(self)
+            if i == 0:
+                number_input.setPlaceholderText(f"Start")
+            elif i ==1:
+                number_input.setPlaceholderText(f"width")
+            self.inputs.append(number_input)
+            layout.addWidget(number_input)
+
+        self.ok_button = QtWidgets.QPushButton("OK", self)
+        layout.addWidget(self.ok_button)
+
+        # close dialog
+        self.ok_button.clicked.connect(self.accept)
+
+    def get_numbers(self):
+        try:
+            # return four numbers
+            return [int(input_field.text()) for input_field in self.inputs]
+        except ValueError:
+            return None
 
 class CustomImageView(pg.ImageView):
     def __init__(self, parent=None):

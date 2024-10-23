@@ -1,62 +1,68 @@
-class Handler:
-    """Handlerの基底クラス"""
+from PyQt5 import QtWidgets, QtCore
 
+class InputDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("数値入力")
+        self.setGeometry(100, 100, 200, 100)
+
+        # レイアウト
+        layout = QtWidgets.QVBoxLayout(self)
+
+        # 数値入力用のQLineEdit
+        self.number_input = QtWidgets.QLineEdit(self)
+        layout.addWidget(self.number_input)
+
+        # OKボタン
+        self.ok_button = QtWidgets.QPushButton("OK", self)
+        layout.addWidget(self.ok_button)
+
+        # OKボタンを押すとダイアログを閉じる
+        self.ok_button.clicked.connect(self.accept)
+
+    def get_number(self):
+        try:
+            return int(self.number_input.text())
+        except ValueError:
+            return None
+
+
+class MyWindow(QtWidgets.QWidget):
     def __init__(self):
-        self._next_handler = None
+        super().__init__()
 
-    def set_next(self, handler):
-        self._next_handler = handler
-        return handler
+        # レイアウトを設定
+        layout = QtWidgets.QVBoxLayout(self)
 
-    def handle(self, request):
-        if self._next_handler:
-            return self._next_handler.handle(request)
-        return None
+        # QLineEditを作成
+        self.image_start = QtWidgets.QLineEdit(self)
+        layout.addWidget(self.image_start, alignment=QtCore.Qt.AlignLeft)
 
+        # ボタンを追加するレイアウト
+        bottom_btn_layout = QtWidgets.QHBoxLayout()
+        layout.addLayout(bottom_btn_layout)
 
-class ConcreteHandler1(Handler):
-    """具体的な処理を行うハンドラ1"""
+        # 数値入力用ダイアログを表示するボタン
+        self.button = QtWidgets.QPushButton("数値入力ウィンドウを開く")
+        bottom_btn_layout.addWidget(self.button)
 
-    def handle(self, request):
-        if request == "request1":
-            return f"ConcreteHandler1が処理しました: {request}"
-        else:
-            return super().handle(request)
+        # シグナルとスロットを接続
+        self.button.clicked.connect(self.open_input_dialog)
 
-
-class ConcreteHandler2(Handler):
-    """具体的な処理を行うハンドラ2"""
-
-    def handle(self, request):
-        if request == "request2":
-            return f"ConcreteHandler2が処理しました: {request}"
-        else:
-            return super().handle(request)
-
-
-class ConcreteHandler3(Handler):
-    """具体的な処理を行うハンドラ3"""
-
-    def handle(self, request):
-        if request == "request3":
-            return f"ConcreteHandler3が処理しました: {request}"
-        else:
-            return super().handle(request)
+    # ボタンを押したときに呼ばれる関数
+    def open_input_dialog(self):
+        dialog = InputDialog(self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            number = dialog.get_number()
+            if number is not None:
+                self.image_start.setText(str(number))  # メインウィンドウのQLineEditに数値を反映
+            else:
+                print("無効な数値が入力されました")
 
 
-# 動的なリストを使用してチェーンを構築
-handler_list = [ConcreteHandler1(), ConcreteHandler2(), ConcreteHandler3()]
-
-# チェーンのスタートを設定
-mod_starter = Handler()
-current_handler = mod_starter
-
-# チェーンの構築
-for handler in handler_list:
-    current_handler = current_handler.set_next(handler)
-
-# チェーンの確認
-print(mod_starter.handle("request1"))  # 出力: ConcreteHandler1が処理しました: request1
-print(mod_starter.handle("request2"))  # 出力: ConcreteHandler2が処理しました: request2
-print(mod_starter.handle("request3"))  # 出力: ConcreteHandler3が処理しました: request3
-print(mod_starter.handle("unknown"))   # 出力: None (どのハンドラも処理しない場合)
+# アプリケーションを実行
+if __name__ == "__main__":
+    app = QtWidgets.QApplication([])
+    window = MyWindow()
+    window.show()
+    app.exec_()

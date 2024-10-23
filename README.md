@@ -21,10 +21,12 @@ file_setting.json
         "Average0",
         "Average1",
         "Scale0",
-        "BlComp0"
+        "BlComp0",
+        "DifImage0",
+        "TagMaker0"
       ],
       "modifier_default_val": {
-          "TimeWindow0": [0, 5],   for difference image 
+          "TimeWindow0": [0, 5],   for image  axes
           "TimeWindow1": [0, 5],   for difference image
           "TimeWindow2": [0, 0],  elec trace (whole trace)  -1 means width is whole trace
           "TimeWindow3": [0, 0],  baseline compensation(whole trace)

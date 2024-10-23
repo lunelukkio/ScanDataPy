@@ -162,6 +162,7 @@ class DataService(ModelInterface):
             modified_data = self.__modifier_service.apply_modifier(data_list[0],
                                                                modifier_list)
             # show gotten data
+            assert modified_data is not None, "DataService: Modifier failed to output a value object."
             print(f"DataService: get modified data -> {modified_data.data_tag.values()}")
 
         return modified_data
