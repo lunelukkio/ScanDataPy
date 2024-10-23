@@ -159,27 +159,6 @@ class QtDataWindow(QtWidgets.QMainWindow):
         # send a signal for selected
         self.trace_type.buttonClicked.connect(self.scale)
 
-        # radio check buttons for ch
-        self.button_ch0 = QtWidgets.QRadioButton("Ch0")
-        self.button_ch1 = QtWidgets.QRadioButton("Ch1")
-        self.button_ch2 = QtWidgets.QRadioButton("Ch2")
-        # make a group
-        self.ch_type = QtWidgets.QButtonGroup()
-        self.ch_type.addButton(self.button_ch0)
-        self.ch_type.addButton(self.button_ch1)
-        self.ch_type.addButton(self.button_ch2)
-        # default setting
-        self.button_ch0.setChecked(True)
-        self.current_checked_button = self.button_ch0
-        # add buttons in the widget
-        mainLayout.addWidget(self.button_ch0)
-        mainLayout.addWidget(self.button_ch1)
-        mainLayout.addWidget(self.button_ch2)
-        # label. it need for label selection in self.scale
-        self.ch_label = QtWidgets.QLabel("Selected: None")
-        # send a signal for selected
-        self.ch_type.buttonClicked.connect(self.switch_ch)
-
         # file buttons
         load_btn = QtWidgets.QPushButton("Load")
         load_btn.setFixedSize(30, 30)
