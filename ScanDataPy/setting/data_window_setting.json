@@ -20,7 +20,8 @@
         "ElecTraceCh4": "black",
         "ElecTraceCh5": "black",
         "ElecTraceCh6": "black",
-        "ElecTraceCh7": "black"
+        "ElecTraceCh7": "black",
+        "ElecTraceCh8": "black"
     },
     "controller_color": {
         "Roi0": "white",

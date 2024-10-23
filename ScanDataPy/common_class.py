@@ -176,8 +176,10 @@ class KeyManager:
         list_name = getattr(self, f'{tag_list_name}')  # get list
         if tag in list_name:
             list_name.remove(tag)
+            print(f"KeyManager: removed {tag} from {list_name} ")
         else:
             list_name.append(tag)
+            print(f"KeyManager: added {tag} from {list_name} ")
         # need this line because list_name is just like a copy.
         setattr(self, f'{tag_list_name}', list_name)
 

@@ -60,8 +60,8 @@ class AxesController(metaclass=ABCMeta):
     def key_manager(self, key_dict):
         self._key_manager = key_dict
 
-    def set_tag(self, dict_name, key, val=None):
-        self._key_manager.set_tag(dict_name, key, val)
+    def set_tag(self, list_name, key):
+        self._key_manager.set_tag(list_name, key)
 
     def set_observer(self, modifier_tag) -> None:
         self._model.set_observer(modifier_tag, self)
@@ -159,6 +159,7 @@ class ImageAxesController(AxesController):
     def update(self) -> None:
         if self.update_flag is True:
             # delete old image objects. not delete box
+            self._ax_obj.clear()
             self.ax_item_dict = {}
             self.get_view_data()  # This belong to Image Controller
             print(f"AxesController: {self.__class__.__name__} updated")

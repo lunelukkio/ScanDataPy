@@ -196,16 +196,94 @@ class QtDataWindow(QtWidgets.QMainWindow):
         bottom_btn_layout.addWidget(small_btn, alignment=QtCore.Qt.AlignLeft)
         small_btn.clicked.connect(lambda: self.roi_size("small"))
 
+        """ for baseline"""
         self.roi_change_btn = QtWidgets.QCheckBox("BL")
         self.roi_change_btn.setChecked(False)  # default
-        self.roi_change_btn.stateChanged.connect(self.bl_comp)
         self.roi_change_btn.setFixedSize(30, 30)
+        self.roi_change_btn.clicked.connect(self.bl_roi)
         bottom_btn_layout.addWidget(self.roi_change_btn,
                                     alignment=QtCore.Qt.AlignLeft)
-        self.roi_change_btn.clicked.connect(self.bl_roi)
-        bottom_btn_layout.addSpacerItem(spacer)
 
+        """ for Fluo Ch """
+        self.ch0_change_btn = QtWidgets.QCheckBox("Ch0")
+        self.ch0_change_btn.setChecked(False)  # default
+        self.ch0_change_btn.setFixedSize(40, 30)
+        self.ch0_change_btn.clicked.connect(lambda:self.switch_ch('Ch0'))
+        bottom_btn_layout.addWidget(self.ch0_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        self.ch1_change_btn = QtWidgets.QCheckBox("Ch1")
+        self.ch1_change_btn.setChecked(True)  # default
+        self.ch1_change_btn.setFixedSize(40, 50)
+        self.ch1_change_btn.clicked.connect(lambda:self.switch_ch('Ch1'))
+        bottom_btn_layout.addWidget(self.ch1_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        self.ch2_change_btn = QtWidgets.QCheckBox("Ch2")
+        self.ch2_change_btn.setChecked(False)  # default
+        self.ch2_change_btn.setFixedSize(40, 50)
+        self.ch2_change_btn.clicked.connect(lambda:self.switch_ch('Ch2'))
+        bottom_btn_layout.addWidget(self.ch2_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        bottom_btn_layout.addSpacerItem(spacer)
         mainLayout.addLayout(bottom_btn_layout)
+
+        self.elec_ch1_change_btn = QtWidgets.QCheckBox("Ch1")
+        self.elec_ch1_change_btn.setChecked(True)  # default
+        self.elec_ch1_change_btn.setFixedSize(40, 30)
+        self.elec_ch1_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch1'))
+        bottom_btn_layout.addWidget(self.elec_ch1_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        self.elec_ch2_change_btn = QtWidgets.QCheckBox("Ch2")
+        self.elec_ch2_change_btn.setChecked(False)  # default
+        self.elec_ch2_change_btn.setFixedSize(40, 30)
+        self.elec_ch2_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch2'))
+        bottom_btn_layout.addWidget(self.elec_ch2_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        self.elec_ch3_change_btn = QtWidgets.QCheckBox("Ch3")
+        self.elec_ch3_change_btn.setChecked(False)  # default
+        self.elec_ch3_change_btn.setFixedSize(40, 30)
+        self.elec_ch3_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch3'))
+        bottom_btn_layout.addWidget(self.elec_ch3_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        self.elec_ch4_change_btn = QtWidgets.QCheckBox("Ch4")
+        self.elec_ch4_change_btn.setChecked(False)  # default
+        self.elec_ch4_change_btn.setFixedSize(40, 30)
+        self.elec_ch4_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch4'))
+        bottom_btn_layout.addWidget(self.elec_ch4_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        self.elec_ch5_change_btn = QtWidgets.QCheckBox("Ch5")
+        self.elec_ch5_change_btn.setChecked(False)  # default
+        self.elec_ch5_change_btn.setFixedSize(40, 30)
+        self.elec_ch5_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch5'))
+        bottom_btn_layout.addWidget(self.elec_ch5_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        self.elec_ch6_change_btn = QtWidgets.QCheckBox("Ch6")
+        self.elec_ch6_change_btn.setChecked(False)  # default
+        self.elec_ch6_change_btn.setFixedSize(40, 30)
+        self.elec_ch6_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch6'))
+        bottom_btn_layout.addWidget(self.elec_ch6_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        self.elec_ch7_change_btn = QtWidgets.QCheckBox("Ch7")
+        self.elec_ch7_change_btn.setChecked(False)  # default
+        self.elec_ch7_change_btn.setFixedSize(40, 30)
+        self.elec_ch7_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch7'))
+        bottom_btn_layout.addWidget(self.elec_ch7_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        self.elec_ch8_change_btn = QtWidgets.QCheckBox("Ch8")
+        self.elec_ch8_change_btn.setChecked(False)  # default
+        self.elec_ch8_change_btn.setFixedSize(40, 30)
+        self.elec_ch8_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch8'))
+        bottom_btn_layout.addWidget(self.elec_ch8_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
 
         if self.__live_camera_mode:
             # override with live camera view
@@ -335,23 +413,19 @@ class QtDataWindow(QtWidgets.QMainWindow):
     def switch_bl_roi(self, state):
         raise NotImplementedError()
 
-    def switch_ch(self, button):
-        if self.current_checked_button == button:
-            return
-        self.current_checked_button = button
-        text = button.text()
-        new_tag = 'None'
-        if text == 'Ch0':
-            new_tag = 'Ch0'
-        elif text == 'Ch1':
-            new_tag = 'Ch1'
-        elif text == 'Ch2':
-            new_tag = 'Ch2'
-        else:
-            raise ValueError(f"No such a Ch -> {text}")
+    def switch_ch(self, text):
+        self.__main_controller.set_tag('ch_list', text, 'FluoAxes')
+        self.__main_controller.set_tag('ch_list', text, 'ImageAxes')
+        self.__main_controller.set_update_flag('FluoAxes', True)
+        self.__main_controller.set_update_flag('ImageAxes', True)
+        self.__main_controller.update_view('FluoAxes')
+        self.__main_controller.update_view('ImageAxes')
 
-        self.__main_controller.replace_key_manager_tag('FluoAxes', 'ch_list', 'Ch', new_tag)
-        self.__main_controller.replace_key_manager_tag('ImageAxes', 'ch_list', 'Ch', new_tag)
+    def switch_elec_ch(self, text):
+        self.__main_controller.set_tag('ch_list', text, 'ElecAxes')
+        self.__main_controller.set_update_flag('ElecAxes', True)
+        self.__main_controller.update_view('ElecAxes')
+
 
 class CustomImageView(pg.ImageView):
     def __init__(self, parent=None):

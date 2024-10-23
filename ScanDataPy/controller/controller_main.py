@@ -192,6 +192,12 @@ class MainController():
         self.__ax_dict[ax_key].change_current_ax_mode(mode)
         self.update_view('FluoAxes')
 
+    def set_tag(self, list_name, new_tag, ax_key=None):
+        if ax_key is None:
+            self._key_manager.set_tag(list_name, new_tag)
+        else:
+            self.__ax_dict[ax_key].set_tag(list_name, new_tag)
+
     def default_settings(self, filename_key):
 
         print("=============================================")
