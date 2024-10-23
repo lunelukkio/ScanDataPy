@@ -144,8 +144,8 @@ class TraceData(ValueObj):
         else:
             assert type(val_obj) == TraceData, "TraceData: Wrong type"
             assert self._data_tag['DataType'] == val_obj.data_tag['DataType'], \
-            f"TraceData class: {self._data_tag['DataType']} - {val_obj.data_tag['DataType']} \n" \
-            f"Wrong value. This value object should be {operation} by int or float or other value object"
+            f"TraceData class: data_tag['DataType'] is not the same. {self._data_tag['DataType']} - {val_obj.data_tag['DataType']} \n" \
+            f"Or Wrong value. This value object should be {operation} by int or float or other value object"
             if len(self._data) != len(val_obj.data):
                 print('!!! Caution! The length of these data is not matched!', file=sys.stderr)
             trace = func(self._data, val_obj.data)

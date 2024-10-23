@@ -277,6 +277,10 @@ class TraceAxesController(AxesController):
     # Be called by modifier.BlComp.observer.notify_observer_baseline()
     def make_baseline(self):
         current_filename = self._key_manager.filename_list[0]
+
+
+
+
         current_ch = self._key_manager.ch_list[0]
         current_baseline_roi = self._key_manager.bl_roi_list[0]
         baseline_data_tag = {
