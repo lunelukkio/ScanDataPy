@@ -56,7 +56,6 @@ class MainController():
         self._key_manager = KeyManager()
         self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, ElecAxes: TraceAx class}\
         self.current_filename = [0]
-        self.current_mode = 'Normal'    # Normal, Baseline,
 
     def __del__(self):
         print('.')
@@ -151,66 +150,46 @@ class MainController():
     def set_modifier_val(self, modifier, *args, **kwargs):
         self.__model.set_modifier_val(modifier, *args, **kwargs)
 
-    def set_maker(self):
-        roi_tag = self.__ax_dict['FluoAxes'].get_key_list('modifier_list', 'Roi')
-        for roi in roi_tag:
-            self.__ax_dict['ImageAxes'].set_marker(roi)
+    def set_marker(self, ax_key, roi_tag=None):
+        self.__ax_dict[ax_key].set_marker(roi_tag)
 
     def onclick_axes(self, event, axes_name):
-        if self.current_mode == 'Normal':
-            if axes_name == 'ImageAxes':
-                # get clicked position
-                image_pos = self.__ax_dict['ImageAxes']._ax_obj.getView().mapSceneToView(event.scenePos())
-                if event.button() == 1:  # left click
-                    x = round(image_pos.x())
-                    y = round(image_pos.y())
-                    val = [x, y, None, None]
-                    self.__ax_dict['FluoAxes'].onclick_axes(val)
-                    self.update_view('FluoAxes')
-                    # for RoiBOX
-                    self.set_maker()
+        if axes_name == 'ImageAxes':
+            # get clicked position
+            image_pos = self.__ax_dict['ImageAxes']._ax_obj.getView().mapSceneToView(event.scenePos())
+            if event.button() == 1:  # left click
+                x = round(image_pos.x())
+                y = round(image_pos.y())
+                val = [x, y, None, None]
+                roi_tag = self.__ax_dict['FluoAxes'].onclick_axes(val)
+                self.update_view('FluoAxes')
+                # for RoiBOX
+                self.set_marker('ImageAxes', roi_tag)
 
-                elif event.button() == 2:
-                    pass
-                # move to next controller
-                elif event.button() == 3:
-                    # move and copy ch boolen value
-                    self.__operating_controller_set.next_controller_to_true("ROI")
-                    self.__ax_dict["FluoAxes"].next_controller_to_true("ROI")
-                    self.update_view("FluoAxes")
-            elif axes_name == "FluoAxes":
-                if event.inaxes == self.__ax_dict["FluoAxes"]:
-                    raise NotImplementedError()
-                elif event.inaxes == self.__ax_dict["ElecAxes"]:
-                    raise NotImplementedError()
-            elif axes_name == "ElecAxes":
+            elif event.button() == 2:
+                pass
+            # move to next controller
+            elif event.button() == 3:
+                # move and copy ch boolen value
+                self.__operating_controller_set.next_controller_to_true("ROI")
+                self.__ax_dict["FluoAxes"].next_controller_to_true("ROI")
+                self.update_view("FluoAxes")
+        elif axes_name == "FluoAxes":
+            if event.inaxes == self.__ax_dict["FluoAxes"]:
                 raise NotImplementedError()
-        if self.current_mode == 'Baseline':
-            if axes_name == 'ImageAxes':
-                image_pos = self.__ax_dict[
-                    'ImageAxes']._ax_obj.getView().mapSceneToView(
-                    event.scenePos())
-                if event.button() == 1:  # left click
-                    x = round(image_pos.x())
-                    y = round(image_pos.y())
-                    val = [x, y, None, None]
-                    self.__ax_dict['FluoAxes'].baseline_onclick_axes(val)
-                    self.update_view('FluoAxes')
-                    # for RoiBOX
-                    self.set_maker()
+            elif event.inaxes == self.__ax_dict["ElecAxes"]:
+                raise NotImplementedError()
+        elif axes_name == "ElecAxes":
+            raise NotImplementedError()
 
     def change_roi_size(self, val: list):
         roi_tag = self.__ax_dict['FluoAxes'].change_roi_size(val)
         self.update_view('FluoAxes')
         # for RoiBOX
-        self.__ax_dict['ImageAxes'].set_marker(roi_tag)
+        self.set_marker('ImageAxes', roi_tag)
 
-    def set_scale(self,ax_key):
-        self.set_update_flag('FluoAxes', True)
-        self.update_view('FluoAxes')
-
-    def change_current_mode(self, mode):
-        self.current_mode = mode
+    def change_current_ax_mode(self, ax_key, mode):
+        self.__ax_dict[ax_key].change_current_ax_mode(mode)
         self.update_view('FluoAxes')
 
     def default_settings(self, filename_key):

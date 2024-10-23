@@ -21,7 +21,7 @@
           "TimeWindow1": [0, 5],
           "TimeWindow2": [0, -1],
           "TimeWindow3": [0, -1],
-          "Roi0": [26, 27, 3, 3],
+          "Roi0": [40, 40, 3, 3],
           "Roi1": [40, 40, 1, 1],
           "Average0": "Image",
           "Average1": "Roi",

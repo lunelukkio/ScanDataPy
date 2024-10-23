@@ -21,8 +21,8 @@ class AxesController(metaclass=ABCMeta):
         self._ax_obj = ax
         self._main_controller = main_controller
         self._model = model
-
         self._key_manager = KeyManager()  # see common class
+        self.current_mode = 'Normal'    # Normal, Baseline,
 
         self.ax_item_dict = {}
         self._marker_obj_dict = {}  # This is for makers in axes windows.
@@ -189,7 +189,7 @@ class ImageAxesController(AxesController):
                 self._marker_obj_dict[roi_tag].rectangle_obj)
 
     def set_scale(self):
-        pass
+        raise NotImplementedError()
 
 
 class TraceAxesController(AxesController):
@@ -209,6 +209,9 @@ class TraceAxesController(AxesController):
             print(f"AxesController: {self.__class__.__name__} updated")
         else:
             print("TraceAxesController: update flag is False")
+
+    def change_current_ax_mode(self, mode):
+        self.current_mode = mode
 
     # from the flag, get data from the model and show data. 
     def get_view_data(self):
@@ -251,22 +254,21 @@ class TraceAxesController(AxesController):
                         pg.mkPen(color=self._ch_colors["black"]))
 
     def onclick_axes(self, val):
-        modifier_name_list = self.get_key_list('modifier_list', 'Roi')
+        if self.current_mode == 'Normal':
+            modifier_name_list = self.get_key_list('modifier_list', 'Roi')
+        elif self.current_mode == 'Baseline':
+            modifier_name_list = self.get_key_list('bl_roi_list', 'Roi')
         for modifier_name in modifier_name_list:
-            # set modifier values
-            self._model.set_modifier_val(modifier_name, val)
 
-    def baseline_onclick_axes(self, val):
-        baseline_roi = self.get_key_list('bl_roi_list', 'Roi')
-        for modifier_name in baseline_roi:
             # set modifier values
-            print("ttttttttttttttttttttttttt")
-            print(modifier_name)
-            print(val)
             self._model.set_modifier_val(modifier_name, val)
+            return modifier_name
 
     def change_roi_size(self, val: list):
-        modifier_name_list = [name for name in self._key_manager.modifier_list if 'Roi' in name]
+        if self.current_mode == 'Normal':
+            modifier_name_list = [name for name in self._key_manager.modifier_list if 'Roi' in name]
+        elif self.current_mode == 'Baseline':
+            modifier_name_list = self.get_key_list('bl_roi_list', 'Roi')
         for modifier_name in modifier_name_list:
             # set modifier values
             self._model.set_modifier_val(modifier_name, val)
