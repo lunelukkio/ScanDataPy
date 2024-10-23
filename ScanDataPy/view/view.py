@@ -154,6 +154,8 @@ class QtDataWindow(QtWidgets.QMainWindow):
         mainLayout.addWidget(self.origin_trace)
         mainLayout.addWidget(self.dFoverF_trace)
         mainLayout.addWidget(self.normalized_trace)
+        # label. it need for label selection in self.scale
+        self.scale_label = QtWidgets.QLabel("Selected: None")
         # send a signal for selected
         self.trace_type.buttonClicked.connect(self.scale)
 
@@ -173,6 +175,8 @@ class QtDataWindow(QtWidgets.QMainWindow):
         mainLayout.addWidget(self.button_ch0)
         mainLayout.addWidget(self.button_ch1)
         mainLayout.addWidget(self.button_ch2)
+        # label. it need for label selection in self.scale
+        self.ch_label = QtWidgets.QLabel("Selected: None")
         # send a signal for selected
         self.ch_type.buttonClicked.connect(self.switch_ch)
 
@@ -295,14 +299,12 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.current_checked_button = button
         if button:
             text = button.text()
-            self.label.setText(f"Selected: {text}")
-            # change to keys from labels
-            if button.text() == "dF/F":
-                selected_text = "DFoF"
-            elif button.text() == "Normalize":
-                selected_text = "Normalize"
-            else:
-                selected_text = "Original"
+            self.scale_label.setText(f"Selected: {text}")
+            scale_values = {
+                "dF/F": "DFoF",
+                "Normalize": "Normalize"
+            }
+            selected_text = scale_values.get(text, "Original")
             # send value to modifier through main controller
             self.__main_controller.set_modifier_val(
                 'Scale0',
@@ -310,31 +312,6 @@ class QtDataWindow(QtWidgets.QMainWindow):
             )
             self.__main_controller.set_update_flag('FluoAxes', True)
             self.__main_controller.update_view('FluoAxes')
-
-
-
-    """
-    def scale(self, button):
-        if self.current_checked_button == button:
-            return
-
-        self.current_checked_button = button
-        if button:
-            text = button.text()
-            self.label.setText(f"Selected: {text}")
-
-            # Map button text to scale values
-            scale_values = {
-                "dF/F": "DFoF",
-                "Normalize": "Normalize"
-            }
-            selected_text = scale_values.get(text, "Original")
-
-            # Send the selected value to the main controller
-            self.__main_controller.set_update_flag('FluoAxes', True)
-            self.__main_controller.update_view('FluoAxes')
-    """
-
 
     def bl_comp(self, state):
         if self.bl_comp_checkbox.isChecked():
@@ -358,9 +335,23 @@ class QtDataWindow(QtWidgets.QMainWindow):
     def switch_bl_roi(self, state):
         raise NotImplementedError()
 
-    def switch_ch(self, ch_key):
-        self.__main_controller.replace_key_manager_tag('FluoAxes', 'ch_list', 'Ch', 'Ch0')
-        self.__main_controller.replace_key_manager_tag('ImageAxes', 'ch_list', 'Ch', 'Ch0')
+    def switch_ch(self, button):
+        if self.current_checked_button == button:
+            return
+        self.current_checked_button = button
+        text = button.text()
+        new_tag = 'None'
+        if text == 'Ch0':
+            new_tag = 'Ch0'
+        elif text == 'Ch1':
+            new_tag = 'Ch1'
+        elif text == 'Ch2':
+            new_tag = 'Ch2'
+        else:
+            raise ValueError(f"No such a Ch -> {text}")
+
+        self.__main_controller.replace_key_manager_tag('FluoAxes', 'ch_list', 'Ch', new_tag)
+        self.__main_controller.replace_key_manager_tag('ImageAxes', 'ch_list', 'Ch', new_tag)
 
 class CustomImageView(pg.ImageView):
     def __init__(self, parent=None):

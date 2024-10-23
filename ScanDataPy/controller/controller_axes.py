@@ -166,7 +166,6 @@ class ImageAxesController(AxesController):
             pass
 
     def set_marker(self, roi_tag):
-
         modifier_val_obj = self._model.get_modifier_val(roi_tag)
         roi_val = modifier_val_obj.data
         # if need, box_pos is for adjusting box position as pixels 0.5
