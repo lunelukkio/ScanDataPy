@@ -275,18 +275,18 @@ class TraceAxesController(AxesController):
             return modifier_name
 
     # Be called by modifier.BlComp.observer.notify_observer_baseline()
-    def make_baseline(self):
+    def make_baseline(self, data_type):
         current_filename = self._key_manager.filename_list[0]
 
 
 
 
-        current_ch = self._key_manager.ch_list[0]
+
         current_baseline_roi = self._key_manager.bl_roi_list[0]
         baseline_data_tag = {
             'Filename': current_filename,
             'Attribute': 'Data',
-            'DataType': 'FluoFrames' + current_ch,
+            'DataType': data_type,
             'Origin': 'File'
         }
         # TimeWindow = [5,-1], -1 means whole trace. see modifier.TimeWindow()

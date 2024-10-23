@@ -632,7 +632,8 @@ class BlComp(ModifierHandler):
         elif self.bl_mode == 'PolyVal':
             print("BlComp:     Enable -> <PolyVal> baseline compensation")
             degree_poly = 2
-            bl_trace = self.observer.notify_observer_baseline()
+            data_type = data_obj.data_tag['DataType'].replace('Trace', 'Frames')
+            bl_trace = self.observer.notify_observer_baseline(data_type)
 
             mu = [np.mean(bl_trace.time), np.std(bl_trace.time)]
             # time data centering and scaling
@@ -742,9 +743,9 @@ class Observer:
             # observer_name.update()
         # print("Update Notification from ROI")
 
-    def notify_observer_baseline(self) -> object:
+    def notify_observer_baseline(self, data_type) -> object:
         for observer_name in self._observers:
-            return observer_name.make_baseline()
+            return observer_name.make_baseline(data_type)
 
     @property
     def observers(self) -> list:
