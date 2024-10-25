@@ -83,10 +83,12 @@ class FramesData(ValueObj):
 
 
 class ImageData(ValueObj):
-    def __init__(self, 
-                 val: np.ndarray, 
-                 data_tag=None,
-                 pixel_size=None):
+    def __init__(
+            self,
+            val: np.ndarray,
+            data_tag=None,
+            pixel_size=None
+    ):
         super().__init__(val, data_tag)
         assert val.ndim == 2, 'The argument of ImageData should be numpy 2D data(x, y)'
             
@@ -119,10 +121,13 @@ class ImageData(ValueObj):
         return plt.setImage(self._data)
     
 class TraceData(ValueObj):
-    def __init__(self, 
-                 val: np.ndarray,  
-                 data_tag=None,
-                 interval=0):
+    def __init__(
+            self,
+            val: np.ndarray,
+            data_tag=None,
+            interval=0,
+            time=None,
+    ):
         super().__init__(val, data_tag)
         assert val.ndim == 1, 'The argument of TraceData should be numpy 1D data(x)'
         if  val.shape[0] < 5: 
@@ -131,8 +136,10 @@ class TraceData(ValueObj):
             print('Warning!!! The number of the data points of TraceData is less than 5 !!!')
             print('It makes a bug during dF over calculation !!!')
             print('------------------------------------------------------------------------')
-
-        self.__time = self.__create_time_data(val, interval)
+        if time is None:
+            self.__time = self.__create_time_data(val, interval)
+        else:
+            self.__time = time
         self.__length = val.shape[0]  # the number of data points
         self.__interval = interval  # data interval
 
@@ -187,6 +194,17 @@ class TraceData(ValueObj):
     
     def check_length(self, data: object) -> bool:
         return bool(self.__length == data.__length)
+
+    def slice_data(self, start, width):
+        first_half_data = self._data[:start + 1]
+        second_half_data = self._data[start + width:]
+        first_half_time = self.__time[:start + 1]
+        second_half_time = self.__time[start + width:]
+
+        new_data = np.concatenate((first_half_data, second_half_data))
+        new_time = np.concatenate((first_half_time, second_half_time))
+
+        return TraceData(new_data, self._data_tag, self.__interval, new_time)
     
     def show_data(self, plt=pg) -> list:  # plt should be an axes in a view class object = [matplotlib.lines.Line2D]
             return plt.plot(self.__time, self._data) 

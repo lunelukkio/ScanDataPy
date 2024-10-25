@@ -179,17 +179,23 @@ class QtDataWindow(QtWidgets.QMainWindow):
         bottom_btn_layout.addWidget(self.roi_change_btn,
                                     alignment=QtCore.Qt.AlignLeft)
 
+        """ for baseline cutting time window"""
+        self.bl_time_button = QtWidgets.QPushButton("BL cut")
+        bottom_btn_layout.addWidget(self.bl_time_button,
+                                    alignment=QtCore.Qt.AlignLeft)
+        self.bl_time_button.clicked.connect(lambda: self.two_input_dialog('BlComp0', 'FluoAxes'))
+
         """ values for the image"""
         self.image_time_button = QtWidgets.QPushButton("Img time window")
         bottom_btn_layout.addWidget(self.image_time_button,
                                     alignment=QtCore.Qt.AlignLeft)
-        self.image_time_button.clicked.connect(self.image_input_dialog)
+        self.image_time_button.clicked.connect(lambda: self.two_input_dialog('TimeWindow0', 'ImageAxes'))
 
         """ values for the difference image"""
         self.dif_button = QtWidgets.QPushButton("dif image")
         bottom_btn_layout.addWidget(self.dif_button,
                                     alignment=QtCore.Qt.AlignLeft)
-        self.dif_button.clicked.connect(self.dif_input_dialog)
+        self.dif_button.clicked.connect(lambda: self.two_input_dialog('TimeWindow1', 'ImageAxes'))
 
         """ for Fluo Ch """
         self.ch0_change_btn = QtWidgets.QCheckBox("Ch0")
@@ -282,27 +288,16 @@ class QtDataWindow(QtWidgets.QMainWindow):
             )
         )
 
-    def image_input_dialog(self):
+    # timewindow = TimeWindow0 or BlComp,  axes is for update
+    def two_input_dialog(self, timewindow, axes):
         dialog = InputDialog(self)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             val = dialog.get_numbers()
             if val is not None:
                 print(f"Input values: {val}")
-                self.__main_controller.set_modifier_val('TimeWindow0', val)
-                self.__main_controller.set_update_flag('ImageAxes', True)
-                self.__main_controller.update_view('ImageAxes')
-            else:
-                print("Only numerical are available")
-
-    def dif_input_dialog(self):
-        dialog = InputDialog(self)
-        if dialog.exec_() == QtWidgets.QDialog.Accepted:
-            val = dialog.get_numbers()
-            if val is not None:
-                print(f"Input values: {val}")
-                self.__main_controller.set_modifier_val('TimeWindow1', val)
-                self.__main_controller.set_update_flag('ImageAxes', True)
-                self.__main_controller.update_view('ImageAxes')
+                self.__main_controller.set_modifier_val(timewindow, val)
+                self.__main_controller.set_update_flag(axes, True)
+                self.__main_controller.update_view(axes)
             else:
                 print("Only numerical are available")
 

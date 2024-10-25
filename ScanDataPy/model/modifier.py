@@ -10,6 +10,8 @@ is not stable.
 """
 
 from abc import ABCMeta, abstractmethod
+from logging import raiseExceptions
+
 import numpy as np
 import itertools
 from scipy.optimize import curve_fit
@@ -103,6 +105,15 @@ class ModifierService(ModifierServiceInterface):
             if modifier_obj.modifier_name == modifier_name:
                 return modifier_obj.val_obj
 
+    def set_modifier_val(self, modifier_name, *args, **kwargs):
+        for modifier_obj in self.__modifier_chain_list:
+            if modifier_name == modifier_obj.modifier_name:
+                modifier_obj.set_val(*args, **kwargs)
+                break
+        else:
+            raise ValueError(
+                f"Modifier '{modifier_name}' not found in the modifier chain list.")
+
     @staticmethod
     def check_modifier_type(modifier_name):
         if 'TimeWindow' in modifier_name:
@@ -184,11 +195,6 @@ class ModifierService(ModifierServiceInterface):
         print("")
         print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
         print("")
-
-    def set_modifier_val(self, modifier_name, *args, **kwargs):
-        for modifier_obj in self.__modifier_chain_list:
-            if modifier_name == modifier_obj.modifier_name:
-                modifier_obj.set_val(*args, **kwargs)
 
 
 """ abstract factory """
@@ -309,10 +315,10 @@ class StartModifier(ModifierHandler):
         return super().modifier_request(data_obj, modifier_list)
 
     def set_val(self):
-        pass
+        raise NotImplementedError()
 
     def set_data(self, data_obj):
-        pass
+        raise NotImplementedError()
 
 class TimeWindow(ModifierHandler):
     def __init__(self, modifier_name):
@@ -611,21 +617,25 @@ class Scale(ModifierHandler):
 class BlComp(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
-        self.bl_mode = 'Disable' # or 'PolyVal'
-        self.baseline_window = None
+        self.bl_mode = 'Disable' # or 'PolyVal' or 'Exponential'
+        self.baseline_window = None  # This is to show the baseline and fitting curve
+        self.cutting_time_window = [0, 0]  # [start, width]
 
     def __del__(self):  # make a message when this object is deleted.
         print('.')
         print(f"----- Deleted a BlComp object. + {format(id(self))}")
         # pass
 
-    # currently no use
-    def set_val(self, val: str, baseline_obj = None):  # val = [start, width]
-        if val == 'WindowClose':
-            self.baseline_window = None
-        else:
+    def set_val(self, val):  # val = [start, width]
+        if isinstance(val, str):
             self.bl_mode = val
             print(f"set BlComp: {self.bl_mode}")  # 1.Disable, 2.Enable
+        elif isinstance(val, list):
+            self.cutting_time_window = val
+            print("3333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333")
+            print(f"BlComp: Set new cutting time window value {self.cutting_time_window}")
+        else:
+            raise ValueError(f"value: '{val}' should be a string or a list")
 
     def set_data(self, data_obj) -> object:
         if self.bl_mode == 'Disable':
@@ -636,7 +646,11 @@ class BlComp(ModifierHandler):
             print("BlComp:     Enable -> <PolyVal> baseline compensation")
             degree_poly = 2
             data_type = data_obj.data_tag['DataType'].replace('Trace', 'Frames')
-            bl_trace = self.observer.notify_observer_second_obj(data_type)
+            bl_trace_raw = self.observer.notify_observer_second_obj(data_type)
+            bl_trace = bl_trace_raw.slice_data(
+                self.cutting_time_window[0],
+                self.cutting_time_window[1]
+            )
 
             mu = [np.mean(bl_trace.time), np.std(bl_trace.time)]
             # time data centering and scaling
@@ -653,9 +667,16 @@ class BlComp(ModifierHandler):
         elif self.bl_mode == 'Exponential':
             print("BlComp:     Enable -> <Exponential> baseline compensation")
             data_type = data_obj.data_tag['DataType'].replace('Trace', 'Frames')
-            bl_trace = self.observer.notify_observer_second_obj(data_type)
+            bl_trace_raw = self.observer.notify_observer_second_obj(data_type)
+
+            bl_trace = bl_trace_raw.slice_data(
+                self.cutting_time_window[0],
+                self.cutting_time_window[1]
+            )
+
+            initial_guess = (np.max(bl_trace.data), -0.1, np.min(bl_trace.data))
             popt, pcov = curve_fit(Tools.exponential_func, bl_trace.time,
-                                   bl_trace.data, p0=(1, -1, 1), maxfev=2000)
+                                   bl_trace.data, p0=initial_guess, maxfev=2000)
 
             a_fit, b_fit, c_fit = popt
             fitting_trace_raw = Tools.exponential_func(data_obj.time, a_fit, b_fit, c_fit)

@@ -61,11 +61,9 @@ class CameraWindow(QtWidgets.QMainWindow):
         if event.key() == QtCore.Qt.Key_Space:
 
             if self.camera_status == "off":
-                print("rrrrrrrrrrrrrrrrrrrrr")
                 self.camera_status = "on"
                 self.timer.start(50) 
             elif self.camera_status == "on":
-                print("weeeeeeeeeeeeeeeeeer")
                 self.timer.stop()
                 self.cam.stop()
                 self.camera_status = "off"

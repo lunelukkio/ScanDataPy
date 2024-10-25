@@ -39,7 +39,6 @@ class PcoPanda:
         self.layout.addWidget(self.view)
         
         self.plot = self.view.addPlot()
-        print("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
         ini_image, meta = self.cam.image()
         self.img = pg.ImageItem(ini_image)
         self.plot.addItem(self.img)
