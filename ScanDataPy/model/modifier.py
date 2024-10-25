@@ -108,7 +108,7 @@ class ModifierService(ModifierServiceInterface):
     def set_modifier_val(self, modifier_name, *args, **kwargs):
         for modifier_obj in self.__modifier_chain_list:
             if modifier_name == modifier_obj.modifier_name:
-                modifier_obj.set_val(*args, **kwargs)
+                modifier_obj.set_modifier_val(*args, **kwargs)
                 break
         else:
             raise ValueError(
@@ -294,7 +294,7 @@ class ModifierHandler(metaclass=ABCMeta):  # BaseHandler
         return self._val_obj
 
     @abstractmethod
-    def set_val(self, *args, **kwargs):
+    def set_modifier_val(self, *args, **kwargs):
         raise NotImplementedError()
 
     def get_val(self):  # e.g. roi value
@@ -321,7 +321,7 @@ class StartModifier(ModifierHandler):
     def apply_modifier(self, data_obj, modifier_list):
         return super().modifier_request(data_obj, modifier_list)
 
-    def set_val(self):
+    def set_modifier_val(self):
         raise NotImplementedError()
 
     def set_data(self, data_obj):
@@ -337,7 +337,7 @@ class TimeWindow(ModifierHandler):
         print(f"----- Deleted a TimeWindow object. + {format(id(self))}")
         #pass
 
-    def set_val(self, val: list):  # val = [start, width]
+    def set_modifier_val(self, val: list):  # val = [start, width]
         start, width = val
         self._val_obj = TimeWindowVal(start,
                                       width)  # replace the roi
@@ -438,7 +438,7 @@ class TimeWindow(ModifierHandler):
             return True
 
     def reset(self) -> None:
-        self.set_val([0, 1])
+        self.set_modifier_val([0, 1])
 
 
 class Roi(ModifierHandler):
@@ -451,7 +451,7 @@ class Roi(ModifierHandler):
         #pass
 
     # make a new ROI value object
-    def set_val(self, val: list):
+    def set_modifier_val(self, val: list):
         roi_val = [None, None, None, None]
         if None not in val:
             roi_val = val
@@ -525,7 +525,7 @@ class Roi(ModifierHandler):
             return True
 
     def reset(self) -> None:
-        self.set_val([40, 40, 1, 1])
+        self.set_modifier_val([40, 40, 1, 1])
 
 
 class Average(ModifierHandler):
@@ -539,7 +539,7 @@ class Average(ModifierHandler):
         # pass
 
     # average direction. 1 is for images, 2 is for traces
-    def set_val(self, val: str):  # val = [start, width]
+    def set_modifier_val(self, val: str):  # val = [start, width]
         self.average_mode = val
         print(f"set Average: {self.average_mode}  1=Image, 2=Trace")
 
@@ -594,7 +594,7 @@ class Scale(ModifierHandler):
         # pass
 
     # 'Normal' or 'DFoF' or 'Normalize'
-    def set_val(self, mode: str):  # 'DFoF' or 'Normalize'
+    def set_modifier_val(self, mode: str):  # 'DFoF' or 'Normalize'
         self.scale_mode = mode
         print(f"set Scale: {mode}")
 
@@ -618,7 +618,7 @@ class Scale(ModifierHandler):
             return normalized_data
         else:
             raise ValueError(f"No such a scale mode -> {self.scale_mode} "
-                             f"check set_val in Scale" )
+                             f"check set_modifier_val in Scale" )
 
 
 class BlComp(ModifierHandler):
@@ -633,7 +633,7 @@ class BlComp(ModifierHandler):
         print(f"----- Deleted a BlComp object. + {format(id(self))}")
         # pass
 
-    def set_val(self, val):  # val = [start, width]
+    def set_modifier_val(self, val):  # val = [start, width]
         if isinstance(val, str):
             self.bl_mode = val
             print(f"set BlComp: {self.bl_mode}")  # 1.Disable, 2.Enable
@@ -688,7 +688,7 @@ class BlComp(ModifierHandler):
             fitting_trace_raw = Tools.exponential_func(data_obj.time, a_fit, b_fit, c_fit)
         else:
             raise ValueError(f"No such a BlComp mode -> '{self.bl_mode}' \n "
-                             f"check set_val in BlComp" )
+                             f"check set_modifier_val in BlComp" )
 
         # make baseline value object
         fit_baseline_obj = TraceData(
@@ -724,7 +724,7 @@ class DifImage(ModifierHandler):
         super().__init__(modifier_name)
         #self._val_obj is for subtracting image
 
-    def set_val(self, val: list):  # val = [start, width]
+    def set_modifier_val(self, val: list):  # val = [start, width]
         start, width = val
         self._val_obj = TimeWindowVal(start,
                                       width)  # replace the roi
@@ -742,7 +742,7 @@ class Invert(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
 
-    def set_val(self):
+    def set_modifier_val(self):
         raise NotImplementedError()
 
     def set_data(self, data_obj) -> object:
@@ -760,7 +760,7 @@ class TagMaker(ModifierHandler):
         print(f"----- Deleted a TagMaker object. + {format(id(self))}")
         # pass
 
-    def set_val(self, new_tag_dict: dict):  # val = [start, width]
+    def set_modifier_val(self, new_tag_dict: dict):  # val = [start, width]
         self.tag_dict = new_tag_dict
         print(f"set TagMaker: {new_tag_dict}")
 
@@ -779,7 +779,7 @@ class EndModifier(ModifierHandler):
         assert modifier_list == [], f"EndModifier: Modifier Error. {modifier_list} didn't use."
         return data_obj
 
-    def set_val(self):
+    def set_modifier_val(self):
         pass
 
     def set_data(self, data_obj):
