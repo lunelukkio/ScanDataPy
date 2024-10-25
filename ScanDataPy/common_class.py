@@ -13,16 +13,11 @@ import copy
 import re
 import numpy as np
 import psutil  # for memory check
-
+from PyQt6.QtWidgets import QApplication, QFileDialog
 #import itertools
 
 #from conda.base.context import mockable_context_envs_dirs
 #from sqlalchemy import modifier
-
-try:
-    from pyqt6.QtWidgets import QFileDialog, QApplication
-except:
-    import tkinter as tk
 
 
 class FileService:
@@ -55,31 +50,22 @@ class FileService:
     @staticmethod
     def get_fullname(event=None):
 
-        try:
-            app = QApplication.instance()
-            if app is None:
-                app = QApplication(sys.argv)
 
-            fullname, _ = QFileDialog.getOpenFileName(
-                None,
-                "Open File",
-                os.getcwd(),
-                "Tsm files (*.tsm);;"
-                "Da files (*.da);;"
-                "Axon files (*.abf);;"
-                "WinCP files (*.wcp)"
-                "All files (*.*);;"
-            )
-        except:
-            # open file dialog
-            fullname = tk.filedialog.askopenfilename(
-                initialdir=os.getcwd(),  # current dir
-                filetypes=(('Tsm files', '*.tsm'),
-                           ('Da files', '*.da'),
-                           ('Axon files', '*.abf'),
-                           ('WinCP files', '*.wcp'),
-                           ('All files', '*.*')
-                           ))
+        app = QApplication.instance()
+        if app is None:
+            app = QApplication(sys.argv)
+
+        fullname, _ = QFileDialog.getOpenFileName(
+            None,
+            "Open File",
+            os.getcwd(),
+            "Tsm files (*.tsm);;"
+            "Da files (*.da);;"
+            "Axon files (*.abf);;"
+            "WinCP files (*.wcp)"
+            "All files (*.*);;"
+        )
+
         return fullname
 
     def get_filename_obj(self):

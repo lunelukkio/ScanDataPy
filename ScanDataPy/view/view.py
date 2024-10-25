@@ -340,6 +340,8 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.__main_controller.ax_dict["FluoAxes"].ax_obj.setXRange(
             x_range2[0], x_range2[1], padding=0)
 
+    """ button functions """
+
     def open_file(self, filename_obj=None):
         # make a model and get filename obj
         filename_obj = self.__main_controller.open_file(filename_obj)
@@ -503,17 +505,6 @@ class CustomImageView(pg.ImageView):
         #self.setAttribute(QtCore.Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.setMouseTracking(True)
 
-    """
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.RightButton:
-            print("zzzzzzzzzzzzzzzzzzCustomImageViewzmousePressEvent event ignorezzzzzzzzzzzz")
-            event.ignore()
-        else:
-            #super().mousePressEvent(event)
-            print("wwwwwwwwwwwCustomImageViewwmousePressEvent event ignorewwwwwwwww")
-            #help(pg.ImageView)
-            event.ignore()
-
     def mouseMoveEvent(self, event):
         print("yyyyyyyyyyyyyyCustomImageViewylmousePressEvent event ignoreyyyyyyyyyyyyyyyyy")
         event.ignore()
@@ -522,16 +513,6 @@ class CustomImageView(pg.ImageView):
         print("xxxxxxxxxxxxxxxxxxxxCustomImageViewxPressEvent event ignoredxxxxxxxxxxxxxxxxxxxxx")
         event.ignore()
 
-    def mouseReleaseEvent(self, event):
-        print("vvvvvvvvvvvvvvvvvCustomImageViewvlmousePressEvent event ignorevvvvvvvvvvvvvvvv")
-        print(event.button())
-        if event.button() == QtCore.Qt.RightButton:
-            print("uuuuuuuuuuuuuuuuuuuCustomImageViewuumousePressEvent eventuuuuuuuuuuuuuuuuuu")
-            print(event.button())
-            event.ignore()
-        else:
-            super().mouseReleaseEvent(event)
-   """
 
 if __name__ == '__main__':
     fullname = '..\\..\\220408\\20408B002.tsm'
@@ -548,5 +529,4 @@ if __name__ == '__main__':
     print("＝＝＝to do list＝＝＝")
     print("second trace time shift ")
     print("fix re-open method")
-    print("make difference image functions")
     print("")
