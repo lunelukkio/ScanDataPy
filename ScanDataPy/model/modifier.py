@@ -128,6 +128,8 @@ class ModifierService(ModifierServiceInterface):
             return BlCompFactory()
         elif 'DifImage' in modifier_name:
             return DifImageFactory()
+        elif 'Invert' in modifier_name:
+            return InvertFactory()
         elif 'TagMaker' in modifier_name:
             return TagMakerFactory()
         else:
@@ -154,6 +156,7 @@ class ModifierService(ModifierServiceInterface):
             'BlComp',
             'Scale',
             'DifImage',
+            'Invert',
             'TagMaker',
             'EndModifier'
         ]
@@ -236,6 +239,10 @@ class BlCompFactory(ModifierFactory):
 class DifImageFactory(ModifierFactory):
     def create_modifier(self, modifier_name):
         return DifImage(modifier_name)
+
+class InvertFactory(ModifierFactory):
+    def create_modifier(self, modifier_name):
+        return Invert(modifier_name)
 
 
 class TagMakerFactory(ModifierFactory):
@@ -680,7 +687,7 @@ class BlComp(ModifierHandler):
             a_fit, b_fit, c_fit = popt
             fitting_trace_raw = Tools.exponential_func(data_obj.time, a_fit, b_fit, c_fit)
         else:
-            raise ValueError(f"No such a BlCOmp mode -> {self.bl_mode} "
+            raise ValueError(f"No such a BlComp mode -> '{self.bl_mode}' \n "
                              f"check set_val in BlComp" )
 
         # make baseline value object
@@ -711,6 +718,7 @@ class BlComp(ModifierHandler):
 
         return bl_comp_trace
 
+
 class DifImage(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
@@ -728,6 +736,18 @@ class DifImage(ModifierHandler):
         bl_trace = self.observer.notify_observer_second_obj(data_type)
         dif_image = bl_trace - data_obj
         return dif_image
+
+
+class Invert(ModifierHandler):
+    def __init__(self, modifier_name):
+        super().__init__(modifier_name)
+
+    def set_val(self):
+        raise NotImplementedError()
+
+    def set_data(self, data_obj) -> object:
+        return data_obj * -1
+
 
 # currently noting meaning. but in future this is working with saving in the repository
 class TagMaker(ModifierHandler):

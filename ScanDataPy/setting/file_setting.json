@@ -15,6 +15,7 @@
         "Scale0",
         "BlComp0",
         "DifImage0",
+        "Invert0",
         "TagMaker0"
       ],
       "modifier_default_val": {
@@ -23,12 +24,12 @@
           "TimeWindow2": [0, -1],
           "TimeWindow3": [0, -1],
           "Roi0": [40, 40, 3, 3],
-          "Roi1": [40, 40, 1, 1],
+          "Roi1": [40, 40, 3, 3],
           "Average0": "Image",
           "Average1": "Roi",
           "Scale0": "Original",
-
           "BlComp0": "Disable",
+          "BlComp0": [25, 70],
           "DifImage0": [10, 5],
           "TagMaker0": {"Attribute": "Baseline"}
       },

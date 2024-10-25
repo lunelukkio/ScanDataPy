@@ -182,7 +182,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         """ for baseline use roi1"""
         self.bl_use_roi1 = QtWidgets.QCheckBox("BL Roi1")
         self.bl_use_roi1.setChecked(False)  # default
-        self.bl_use_roi1.setFixedSize(40, 30)
+        self.bl_use_roi1.setFixedSize(60, 30)
         self.bl_use_roi1.clicked.connect(self.bl_use_roi1_switch)
         bottom_btn_layout.addWidget(self.bl_use_roi1,
                                     alignment=QtCore.Qt.AlignLeft)
@@ -215,21 +215,30 @@ class QtDataWindow(QtWidgets.QMainWindow):
 
         self.ch1_change_btn = QtWidgets.QCheckBox("Ch1")
         self.ch1_change_btn.setChecked(True)  # default
-        self.ch1_change_btn.setFixedSize(40, 50)
+        self.ch1_change_btn.setFixedSize(40, 30)
         self.ch1_change_btn.clicked.connect(lambda:self.switch_ch('Ch1'))
         bottom_btn_layout.addWidget(self.ch1_change_btn,
                                     alignment=QtCore.Qt.AlignLeft)
 
         self.ch2_change_btn = QtWidgets.QCheckBox("Ch2")
         self.ch2_change_btn.setChecked(False)  # default
-        self.ch2_change_btn.setFixedSize(40, 50)
+        self.ch2_change_btn.setFixedSize(40, 30)
         self.ch2_change_btn.clicked.connect(lambda:self.switch_ch('Ch2'))
         bottom_btn_layout.addWidget(self.ch2_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        """ for invert trace"""
+        self.invert_switch = QtWidgets.QCheckBox("Invert")
+        self.invert_switch.setChecked(False)  # default
+        self.invert_switch.setFixedSize(60, 30)
+        self.invert_switch.clicked.connect(self.invert_fn)
+        bottom_btn_layout.addWidget(self.invert_switch,
                                     alignment=QtCore.Qt.AlignLeft)
 
 
         bottom_btn_layout.addSpacerItem(spacer)
         mainLayout.addLayout(bottom_btn_layout)
+
 
         """ for elec channel"""
         self.elec_ch1_change_btn = QtWidgets.QCheckBox("Ch1")
@@ -348,7 +357,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.__main_controller.change_roi_size(val)
 
     def bl_roi(self):
-        if self.roi_change_btn.isChecked():
+        if self.bl_roi_change_btn.isChecked():
             self.__main_controller.change_current_ax_mode('FluoAxes', 'Baseline')
         else:
             self.__main_controller.change_current_ax_mode('FluoAxes', 'Normal')
@@ -446,6 +455,11 @@ class QtDataWindow(QtWidgets.QMainWindow):
             'Roi',
             roi
         )
+
+    def invert_fn(self):
+        self.__main_controller.set_tag('modifier_list', 'Invert0', 'FluoAxes')
+        self.__main_controller.set_update_flag('FluoAxes', True)
+        self.__main_controller.update_view('FluoAxes')
 
 class InputDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
