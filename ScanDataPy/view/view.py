@@ -172,11 +172,19 @@ class QtDataWindow(QtWidgets.QMainWindow):
         small_btn.clicked.connect(lambda: self.roi_size("small"))
 
         """ for baseline"""
-        self.roi_change_btn = QtWidgets.QCheckBox("BL")
-        self.roi_change_btn.setChecked(False)  # default
-        self.roi_change_btn.setFixedSize(30, 30)
-        self.roi_change_btn.clicked.connect(self.bl_roi)
-        bottom_btn_layout.addWidget(self.roi_change_btn,
+        self.bl_roi_change_btn = QtWidgets.QCheckBox("BL")
+        self.bl_roi_change_btn.setChecked(False)  # default
+        self.bl_roi_change_btn.setFixedSize(30, 30)
+        self.bl_roi_change_btn.clicked.connect(self.bl_roi)
+        bottom_btn_layout.addWidget(self.bl_roi_change_btn,
+                                    alignment=QtCore.Qt.AlignLeft)
+
+        """ for baseline use roi1"""
+        self.bl_use_roi1 = QtWidgets.QCheckBox("BL Roi1")
+        self.bl_use_roi1.setChecked(False)  # default
+        self.bl_use_roi1.setFixedSize(40, 30)
+        self.bl_use_roi1.clicked.connect(self.bl_use_roi1_switch)
+        bottom_btn_layout.addWidget(self.bl_use_roi1,
                                     alignment=QtCore.Qt.AlignLeft)
 
         """ for baseline cutting time window"""
@@ -427,8 +435,17 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.__main_controller.set_update_flag('ImageAxes', True)
         self.__main_controller.update_view('ImageAxes')
 
-    def window_time_set(self):
-        pass
+    def bl_use_roi1_switch(self):
+        if self.bl_use_roi1.isChecked():
+            roi = 'Roi1'
+        else:
+            roi = 'Roi0'
+        self.__main_controller.replace_key_manager_tag(
+            'FluoAxes',
+            'bl_roi_list',
+            'Roi',
+            roi
+        )
 
 class InputDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):

@@ -632,7 +632,6 @@ class BlComp(ModifierHandler):
             print(f"set BlComp: {self.bl_mode}")  # 1.Disable, 2.Enable
         elif isinstance(val, list):
             self.cutting_time_window = val
-            print("3333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333")
             print(f"BlComp: Set new cutting time window value {self.cutting_time_window}")
         else:
             raise ValueError(f"value: '{val}' should be a string or a list")
@@ -704,6 +703,7 @@ class BlComp(ModifierHandler):
         if self.baseline_window is None:
             self.baseline_window = pg.plot()
             self.baseline_window.setWindowTitle('Baseline fitting')
+            self.baseline_window.setGeometry(100, 100, 200, 150)
         else:
             self.baseline_window.clear()
         bl_trace.show_data(self.baseline_window)
