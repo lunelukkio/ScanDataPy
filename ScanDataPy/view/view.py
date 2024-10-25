@@ -10,8 +10,8 @@ import sys
 import json
 from ScanDataPy.common_class import WholeFilename
 from ScanDataPy.controller.controller_main import MainController
-import PyQt5
-from PyQt5 import QtWidgets, QtCore
+import PyQt6
+from PyQt6 import QtWidgets, QtCore
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtWidgets
 
@@ -61,10 +61,11 @@ class QtDataWindow(QtWidgets.QMainWindow):
         # for fix a image
         # it doesn't work
         image_item = image_ax.getImageItem()
-        image_item.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, False)
+        image_item.setFlag(
+            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
 
-        self.horizontalSplitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        self.verticalSplitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        self.horizontalSplitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
+        self.verticalSplitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
 
         trace_ax1 = pg.PlotWidget()
         trace_ax2 = pg.PlotWidget()
@@ -118,8 +119,8 @@ class QtDataWindow(QtWidgets.QMainWindow):
         spacer = QtWidgets.QSpacerItem(
             40,
             20,
-            QtWidgets.QSizePolicy.Expanding,
-            QtWidgets.QSizePolicy.Minimum
+            QtWidgets.QSizePolicy.Policy.Expanding,
+            QtWidgets.QSizePolicy.Policy.Minimum
         )
 
         # differential image
@@ -157,27 +158,30 @@ class QtDataWindow(QtWidgets.QMainWindow):
 
         # file buttons
         load_btn = QtWidgets.QPushButton("Load")
-        load_btn.setFixedSize(30, 30)
-        bottom_btn_layout.addWidget(load_btn, alignment=QtCore.Qt.AlignLeft)
+        load_btn.setFixedSize(40, 30)
+        bottom_btn_layout.addWidget(load_btn,
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
         load_btn.clicked.connect(lambda: self.open_file())
 
         large_btn = QtWidgets.QPushButton("Large")
-        large_btn.setFixedSize(100, 30)
-        bottom_btn_layout.addWidget(large_btn, alignment=QtCore.Qt.AlignLeft)
+        large_btn.setFixedSize(60, 30)
+        bottom_btn_layout.addWidget(large_btn,
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
         large_btn.clicked.connect(lambda: self.roi_size("large"))
 
         small_btn = QtWidgets.QPushButton("Small")
-        small_btn.setFixedSize(100, 30)
-        bottom_btn_layout.addWidget(small_btn, alignment=QtCore.Qt.AlignLeft)
+        small_btn.setFixedSize(60, 30)
+        bottom_btn_layout.addWidget(small_btn,
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
         small_btn.clicked.connect(lambda: self.roi_size("small"))
 
         """ for baseline"""
         self.bl_roi_change_btn = QtWidgets.QCheckBox("BL")
         self.bl_roi_change_btn.setChecked(False)  # default
-        self.bl_roi_change_btn.setFixedSize(30, 30)
+        self.bl_roi_change_btn.setFixedSize(40, 30)
         self.bl_roi_change_btn.clicked.connect(self.bl_roi)
         bottom_btn_layout.addWidget(self.bl_roi_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         """ for baseline use roi1"""
         self.bl_use_roi1 = QtWidgets.QCheckBox("BL Roi1")
@@ -185,47 +189,47 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.bl_use_roi1.setFixedSize(60, 30)
         self.bl_use_roi1.clicked.connect(self.bl_use_roi1_switch)
         bottom_btn_layout.addWidget(self.bl_use_roi1,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         """ for baseline cutting time window"""
         self.bl_time_button = QtWidgets.QPushButton("BL cut")
         bottom_btn_layout.addWidget(self.bl_time_button,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
         self.bl_time_button.clicked.connect(lambda: self.two_input_dialog('BlComp0', 'FluoAxes'))
 
         """ values for the image"""
         self.image_time_button = QtWidgets.QPushButton("Img time window")
         bottom_btn_layout.addWidget(self.image_time_button,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
         self.image_time_button.clicked.connect(lambda: self.two_input_dialog('TimeWindow0', 'ImageAxes'))
 
         """ values for the difference image"""
         self.dif_button = QtWidgets.QPushButton("dif image")
         bottom_btn_layout.addWidget(self.dif_button,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
         self.dif_button.clicked.connect(lambda: self.two_input_dialog('TimeWindow1', 'ImageAxes'))
 
         """ for Fluo Ch """
         self.ch0_change_btn = QtWidgets.QCheckBox("Ch0")
         self.ch0_change_btn.setChecked(False)  # default
-        self.ch0_change_btn.setFixedSize(40, 30)
+        self.ch0_change_btn.setFixedSize(50, 30)
         self.ch0_change_btn.clicked.connect(lambda:self.switch_ch('Ch0'))
         bottom_btn_layout.addWidget(self.ch0_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         self.ch1_change_btn = QtWidgets.QCheckBox("Ch1")
         self.ch1_change_btn.setChecked(True)  # default
-        self.ch1_change_btn.setFixedSize(40, 30)
+        self.ch1_change_btn.setFixedSize(50, 30)
         self.ch1_change_btn.clicked.connect(lambda:self.switch_ch('Ch1'))
         bottom_btn_layout.addWidget(self.ch1_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         self.ch2_change_btn = QtWidgets.QCheckBox("Ch2")
         self.ch2_change_btn.setChecked(False)  # default
-        self.ch2_change_btn.setFixedSize(40, 30)
+        self.ch2_change_btn.setFixedSize(50, 30)
         self.ch2_change_btn.clicked.connect(lambda:self.switch_ch('Ch2'))
         bottom_btn_layout.addWidget(self.ch2_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         """ for invert trace"""
         self.invert_switch = QtWidgets.QCheckBox("Invert")
@@ -233,7 +237,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.invert_switch.setFixedSize(60, 30)
         self.invert_switch.clicked.connect(self.invert_fn)
         bottom_btn_layout.addWidget(self.invert_switch,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
 
         bottom_btn_layout.addSpacerItem(spacer)
@@ -243,59 +247,59 @@ class QtDataWindow(QtWidgets.QMainWindow):
         """ for elec channel"""
         self.elec_ch1_change_btn = QtWidgets.QCheckBox("Ch1")
         self.elec_ch1_change_btn.setChecked(True)  # default
-        self.elec_ch1_change_btn.setFixedSize(40, 30)
+        self.elec_ch1_change_btn.setFixedSize(50, 30)
         self.elec_ch1_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch1'))
         bottom_btn_layout.addWidget(self.elec_ch1_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         self.elec_ch2_change_btn = QtWidgets.QCheckBox("Ch2")
         self.elec_ch2_change_btn.setChecked(False)  # default
-        self.elec_ch2_change_btn.setFixedSize(40, 30)
+        self.elec_ch2_change_btn.setFixedSize(50, 30)
         self.elec_ch2_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch2'))
         bottom_btn_layout.addWidget(self.elec_ch2_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         self.elec_ch3_change_btn = QtWidgets.QCheckBox("Ch3")
         self.elec_ch3_change_btn.setChecked(False)  # default
-        self.elec_ch3_change_btn.setFixedSize(40, 30)
+        self.elec_ch3_change_btn.setFixedSize(50, 30)
         self.elec_ch3_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch3'))
         bottom_btn_layout.addWidget(self.elec_ch3_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         self.elec_ch4_change_btn = QtWidgets.QCheckBox("Ch4")
         self.elec_ch4_change_btn.setChecked(False)  # default
-        self.elec_ch4_change_btn.setFixedSize(40, 30)
+        self.elec_ch4_change_btn.setFixedSize(50, 30)
         self.elec_ch4_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch4'))
         bottom_btn_layout.addWidget(self.elec_ch4_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         self.elec_ch5_change_btn = QtWidgets.QCheckBox("Ch5")
         self.elec_ch5_change_btn.setChecked(False)  # default
-        self.elec_ch5_change_btn.setFixedSize(40, 30)
+        self.elec_ch5_change_btn.setFixedSize(50, 30)
         self.elec_ch5_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch5'))
         bottom_btn_layout.addWidget(self.elec_ch5_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         self.elec_ch6_change_btn = QtWidgets.QCheckBox("Ch6")
         self.elec_ch6_change_btn.setChecked(False)  # default
-        self.elec_ch6_change_btn.setFixedSize(40, 30)
+        self.elec_ch6_change_btn.setFixedSize(50, 30)
         self.elec_ch6_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch6'))
         bottom_btn_layout.addWidget(self.elec_ch6_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         self.elec_ch7_change_btn = QtWidgets.QCheckBox("Ch7")
         self.elec_ch7_change_btn.setChecked(False)  # default
-        self.elec_ch7_change_btn.setFixedSize(40, 30)
+        self.elec_ch7_change_btn.setFixedSize(50, 30)
         self.elec_ch7_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch7'))
         bottom_btn_layout.addWidget(self.elec_ch7_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         self.elec_ch8_change_btn = QtWidgets.QCheckBox("Ch8")
         self.elec_ch8_change_btn.setChecked(False)  # default
-        self.elec_ch8_change_btn.setFixedSize(40, 30)
+        self.elec_ch8_change_btn.setFixedSize(50, 30)
         self.elec_ch8_change_btn.clicked.connect(lambda:self.switch_elec_ch('Ch8'))
         bottom_btn_layout.addWidget(self.elec_ch8_change_btn,
-                                    alignment=QtCore.Qt.AlignLeft)
+                                    alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         """ mouse click event """
         image_ax.getView().scene().sigMouseClicked.connect(
@@ -308,7 +312,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
     # timewindow = TimeWindow0 or BlComp,  axes is for update
     def two_input_dialog(self, timewindow, axes):
         dialog = InputDialog(self)
-        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:  # exec_() を exec() に変更
             val = dialog.get_numbers()
             if val is not None:
                 print(f"Input values: {val}")
@@ -316,7 +320,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
                 self.__main_controller.set_update_flag(axes, True)
                 self.__main_controller.update_view(axes)
             else:
-                print("Only numerical are available")
+                print("Only numerical values are available")
 
         # connect x axis of windows
     def sync_x_axes(self, view):
@@ -533,13 +537,13 @@ if __name__ == '__main__':
     fullname = '..\\..\\220408\\20408B002.tsm'
     filename_obj = WholeFilename(fullname)
 
-    scandata = PyQt5.QtWidgets.QApplication(sys.argv)
+    scandata = PyQt6.QtWidgets.QApplication(sys.argv)
     mainWindow = QtDataWindow()
     mainWindow.open_file(filename_obj)
     mainWindow.show()
 
     if sys.flags.interactive == 0:
-        scandata.exec_()
+        scandata.exec()
 
     print("＝＝＝to do list＝＝＝")
     print("second trace time shift ")

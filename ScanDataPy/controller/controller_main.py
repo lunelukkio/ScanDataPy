@@ -6,12 +6,12 @@ main for controller
 """
 
 from abc import ABCMeta, abstractmethod
+from PyQt6.QtCore import Qt
 
 from ScanDataPy.model.model import DataService
 from ScanDataPy.controller.controller_axes import TraceAxesController
 from ScanDataPy.controller.controller_axes import ImageAxesController
 from ScanDataPy.common_class import FileService, KeyManager, Tools
-
 
 class ControllerInterface(metaclass=ABCMeta):
 
@@ -156,8 +156,9 @@ class MainController():
     def onclick_axes(self, event, axes_name):
         if axes_name == 'ImageAxes':
             # get clicked position
-            image_pos = self.__ax_dict['ImageAxes']._ax_obj.getView().mapSceneToView(event.scenePos())
-            if event.button() == 1:  # left click
+            image_pos = self.__ax_dict[
+                'ImageAxes']._ax_obj.getView().mapSceneToView(event.scenePos())
+            if event.button() == Qt.MouseButton.LeftButton:  # left click
                 x = round(image_pos.x())
                 y = round(image_pos.y())
                 val = [x, y, None, None]
@@ -166,14 +167,11 @@ class MainController():
                 # for RoiBOX
                 self.set_marker('ImageAxes', roi_tag)
 
-            elif event.button() == 2:
+            elif event.button() == Qt.MouseButton.MiddleButton:
                 pass
             # move to next controller
-            elif event.button() == 3:
-                # move and copy ch boolen value
-                self.__operating_controller_set.next_controller_to_true("ROI")
-                self.__ax_dict["FluoAxes"].next_controller_to_true("ROI")
-                self.update_view("FluoAxes")
+            elif event.button() == Qt.MouseButton.RightButton:
+                pass
         elif axes_name == "FluoAxes":
             if event.inaxes == self.__ax_dict["FluoAxes"]:
                 raise NotImplementedError()

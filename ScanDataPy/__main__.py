@@ -21,20 +21,20 @@ class Main:
 
         if view == "qt":
             try:
-                import PyQt5
-                # print(f"PyQt5 is installed. Version: {PyQt5.QtCore.QT_VERSION_STR}")
-                scandata = PyQt5.QtWidgets.QApplication(sys.argv)
+                import pyqt6
+                # print(f"pyqt6 is installed. Version: {pyqt6.QtCore.QT_VERSION_STR}")
+                scandata = pyqt6.QtWidgets.QApplication(sys.argv)
                 mainWindow = QtDataWindow()
                 mainWindow.show()
                 # Start the Qt event loop unless the user is in an interactive prompt
                 if sys.flags.interactive == 0:
-                    scandata.exec_()
+                    scandata.exec()
             except ImportError:
                 try:
                     import PyQt6
                     # print(f"PyQt6 is installed. Version: {PyQt6.QtCore.QT_VERSION_STR}")
                 except ImportError:
-                    print("Neither PyQt5 nor PyQt6 is installed.")
+                    print("Neither pyqt6 nor PyQt6 is installed.")
                     try:
                         import tkinter as tk
                         # print("tkinter is installed.")

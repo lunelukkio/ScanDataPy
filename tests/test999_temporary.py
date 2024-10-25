@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from pyqt6 import QtWidgets, QtCore
 
 class InputDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):

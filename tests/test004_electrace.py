@@ -10,7 +10,7 @@ from ScanDataPy.common_class import WholeFilename
 from ScanDataPy.model.value_object import TraceData
 from ScanDataPy.model.file_io import TsmFileIo
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from pyqt6.QtWidgets import QApplication, QMainWindow
 
 
 filename_obj = WholeFilename('..\\220408\\20408B002.tsm')  # this is a value object

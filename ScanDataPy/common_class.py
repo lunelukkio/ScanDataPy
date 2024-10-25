@@ -20,7 +20,7 @@ import psutil  # for memory check
 #from sqlalchemy import modifier
 
 try:
-    from PyQt5.QtWidgets import QFileDialog, QApplication
+    from pyqt6.QtWidgets import QFileDialog, QApplication
 except:
     import tkinter as tk
 

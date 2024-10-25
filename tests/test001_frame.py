@@ -11,7 +11,7 @@ from ScanDataPy.model.value_object import FramesData
 from ScanDataPy.model.file_io import TsmFileIo
 try:
     import pyqtgraph as pg
-    from PyQt5.QtWidgets import QApplication, QMainWindow
+    from pyqt6.QtWidgets import QApplication, QMainWindow
 except:
     pass
 

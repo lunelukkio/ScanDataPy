@@ -7,10 +7,10 @@ Created on Fri Apr  5 18:49:15 2024
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt5 import QtWidgets
+from pyqt6 import QtWidgets
 import pco
 import sys
-from PyQt5 import QtCore
+from pyqt6 import QtCore
 
 
 class PcoPanda:

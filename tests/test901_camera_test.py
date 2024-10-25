@@ -7,10 +7,10 @@ Created on Mon Jan 22 08:48:55 2024
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt5 import QtWidgets
+from pyqt6 import QtWidgets
 import pco
 import sys
-from PyQt5 import QtCore
+from pyqt6 import QtCore
 
 class CameraWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
