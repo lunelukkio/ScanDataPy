@@ -460,6 +460,8 @@ class QtDataWindow(QtWidgets.QMainWindow):
             'Roi',
             roi
         )
+        self.__main_controller.set_update_flag('FluoAxes', True)
+        self.__main_controller.update_view('FluoAxes')
 
     def invert_fn(self):
         self.__main_controller.set_tag('modifier_list', 'Invert0', 'FluoAxes')
