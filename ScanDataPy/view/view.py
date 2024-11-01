@@ -345,13 +345,23 @@ class QtDataWindow(QtWidgets.QMainWindow):
     def open_file(self, filename_obj=None):
         # make a model and get filename obj
         filename_obj = self.__main_controller.open_file(filename_obj)
+
         # make user controllers
         self.__main_controller.create_default_modifier(0)  # filename number
         self.__main_controller.default_settings(filename_obj.name)
 
         self.__main_controller.print_infor()
         self.__main_controller.update_view()
-        self.__main_controller.set_marker('ImageAxes', 'Roi1')
+        self.__main_controller.set_marker(ax_key='ImageAxes', roi_tag='Roi1')
+
+        self.default()
+
+    def default(self):
+        self.bl_comp_checkbox.setChecked(True)
+        self.bl_use_roi1.setChecked(True)
+        self.bl_use_roi1_switch()
+        self.dFoverF_trace.setChecked(True)
+        self.scale(self.dFoverF_trace)
 
     def roi_size(self, command):
         if command == "large":
@@ -364,9 +374,9 @@ class QtDataWindow(QtWidgets.QMainWindow):
 
     def bl_roi(self):
         if self.bl_roi_change_btn.isChecked():
-            self.__main_controller.change_current_ax_mode('FluoAxes', 'Baseline')
+            self.__main_controller.change_current_ax_mode(ax_key='FluoAxes', mode='Baseline')
         else:
-            self.__main_controller.change_current_ax_mode('FluoAxes', 'Normal')
+            self.__main_controller.change_current_ax_mode(ax_key='FluoAxes', mode='Normal')
 
     # under construction
     """
@@ -403,7 +413,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
                 'Scale0',
                 selected_text
             )
-            self.__main_controller.set_update_flag('FluoAxes', True)
+            self.__main_controller.set_update_flag(ax_name='FluoAxes', flag=True)
             self.__main_controller.update_view('FluoAxes')
 
     def bl_comp(self, state):
@@ -413,7 +423,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
                 'BlComp0',
                 'Exponential'
             )
-            self.__main_controller.set_update_flag('FluoAxes', True)
+            self.__main_controller.set_update_flag(ax_name='FluoAxes', flag=True)
             self.__main_controller.update_view('FluoAxes')
         else:
             #disable baseline comp
@@ -421,32 +431,32 @@ class QtDataWindow(QtWidgets.QMainWindow):
                 'BlComp0',
                 'Disable'
             )
-            self.__main_controller.set_update_flag('FluoAxes', True)
+            self.__main_controller.set_update_flag(ax_name='FluoAxes', flag=True)
             self.__main_controller.update_view('FluoAxes')
 
     def switch_bl_roi(self, state):
         raise NotImplementedError()
 
     def switch_ch(self, text):
-        self.__main_controller.set_tag('ch_list', text, 'FluoAxes')
-        self.__main_controller.set_tag('ch_list', text, 'ImageAxes')
-        self.__main_controller.set_update_flag('FluoAxes', True)
-        self.__main_controller.set_update_flag('ImageAxes', True)
+        self.__main_controller.set_tag(list_name='ch_list', new_tag=text, ax_key='FluoAxes')
+        self.__main_controller.set_tag(list_name='ch_list', new_tag=text, ax_key='ImageAxes')
+        self.__main_controller.set_update_flag(ax_name='FluoAxes', flag=True)
+        self.__main_controller.set_update_flag(ax_name='ImageAxes', flag=True)
         self.__main_controller.update_view('FluoAxes')
         self.__main_controller.update_view('ImageAxes')
 
     def switch_elec_ch(self, text):
-        self.__main_controller.set_tag('ch_list', text, 'ElecAxes')
-        self.__main_controller.set_update_flag('ElecAxes', True)
+        self.__main_controller.set_tag(list_name='ch_list', new_tag=text, ax_key='ElecAxes')
+        self.__main_controller.set_update_flag(ax_name='ElecAxes', flag=True)
         self.__main_controller.update_view('ElecAxes')
 
     def dif_image_switch(self):
-        self.__main_controller.set_tag('modifier_list', 'DifImage0', 'ImageAxes')
+        self.__main_controller.set_tag(list_name='modifier_list', new_tag='DifImage0', ax_key='ImageAxes')
         if self.dif_image_button.isChecked():
-            self.__main_controller.change_color('plasma', 'ImageAxes')
+            self.__main_controller.change_color(color='plasma', ax_key='ImageAxes')
         else:
-            self.__main_controller.change_color('grey', 'ImageAxes')
-        self.__main_controller.set_update_flag('ImageAxes', True)
+            self.__main_controller.change_color(color='grey', ax_key='ImageAxes')
+        self.__main_controller.set_update_flag(ax_name='ImageAxes', flag=True)
         self.__main_controller.update_view('ImageAxes')
 
     def bl_use_roi1_switch(self):
@@ -460,12 +470,12 @@ class QtDataWindow(QtWidgets.QMainWindow):
             'Roi',
             roi
         )
-        self.__main_controller.set_update_flag('FluoAxes', True)
+        self.__main_controller.set_update_flag(ax_name='FluoAxes', flag=True)
         self.__main_controller.update_view('FluoAxes')
 
     def invert_fn(self):
-        self.__main_controller.set_tag('modifier_list', 'Invert0', 'FluoAxes')
-        self.__main_controller.set_update_flag('FluoAxes', True)
+        self.__main_controller.set_tag(list_name='modifier_list', new_tag='Invert0', ax_key='FluoAxes')
+        self.__main_controller.set_update_flag(ax_name='FluoAxes', flag=True)
         self.__main_controller.update_view('FluoAxes')
 
 class InputDialog(QtWidgets.QDialog):
