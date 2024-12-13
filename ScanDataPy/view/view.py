@@ -16,7 +16,6 @@ from PyQt6 import QtWidgets, QtCore
 import pyqtgraph as pg
 
 
-
 class QtDataWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
