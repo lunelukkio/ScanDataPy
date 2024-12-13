@@ -383,6 +383,21 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.bl_use_roi1_switch()
         self.dFoverF_trace.setChecked(True)
         self.scale(self.dFoverF_trace)
+        self.dif_image_button.setChecked(False)
+        self.invert_switch.setChecked(False)
+
+        self.ch0_change_btn.setChecked(False)
+        self.ch1_change_btn.setChecked(True)
+        self.ch2_change_btn.setChecked(False)
+
+        self.elec_ch1_change_btn.setChecked(True)
+        self.elec_ch2_change_btn.setChecked(False)
+        self.elec_ch3_change_btn.setChecked(False)
+        self.elec_ch4_change_btn.setChecked(False)
+        self.elec_ch5_change_btn.setChecked(False)
+        self.elec_ch6_change_btn.setChecked(False)
+        self.elec_ch7_change_btn.setChecked(False)
+        self.elec_ch8_change_btn.setChecked(False)
 
     def roi_size(self, command):
         if command == "large":
