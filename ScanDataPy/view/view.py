@@ -7,13 +7,14 @@ main for view
 """
 
 import sys
+#import pathlib
 import json
 from ScanDataPy.common_class import WholeFilename
 from ScanDataPy.controller.controller_main import MainController
 import PyQt6
 from PyQt6 import QtWidgets, QtCore
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui, QtWidgets
+
 
 
 class QtDataWindow(QtWidgets.QMainWindow):
@@ -80,6 +81,27 @@ class QtDataWindow(QtWidgets.QMainWindow):
         trace_ax2.getAxis('left').setPen(pg.mkPen(color=(0, 0, 0), width=2))
         trace_ax2.setLabel('bottom', 'Time (ms)', color='black', size=20,
                            width=2)
+
+        """ difference image slide bars """
+
+
+        # slider and label layout
+        slider_layout = QtWidgets.QVBoxLayout()
+        self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
+        self.slider.setMinimum(0)  # max
+        self.slider.setMaximum(100)  # min
+        self.slider.setValue(50)  # default
+        self.slider.valueChanged.connect(self.slider_value_changed)
+
+        self.label = QtWidgets.QLabel("Value: 50", self)
+        slider_layout.addWidget(self.slider)
+        slider_layout.addWidget(self.label)
+
+        # add slider
+        slider_widget = QtWidgets.QWidget()
+        slider_widget.setLayout(slider_layout)
+        self.verticalSplitter.addWidget(slider_widget)
+        """ slider end """
 
         self.horizontalSplitter.addWidget(image_ax)
         self.horizontalSplitter.addWidget(self.verticalSplitter)
@@ -478,6 +500,11 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.__main_controller.set_update_flag(ax_name='FluoAxes', flag=True)
         self.__main_controller.update_view('FluoAxes')
 
+    def slider_value_changed(self):
+        # to show slider labels
+        value = self.slider.value()
+        self.label.setText(f"Value: {value}")
+
 class InputDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -508,6 +535,7 @@ class InputDialog(QtWidgets.QDialog):
             return [int(input_field.text()) for input_field in self.inputs]
         except ValueError:
             return None
+
 
 class CustomImageView(pg.ImageView):
     def __init__(self, parent=None):

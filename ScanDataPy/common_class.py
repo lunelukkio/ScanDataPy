@@ -9,6 +9,7 @@ from abc import ABCMeta, abstractmethod
 import os
 import sys
 import glob
+import pathlib
 import copy
 import re
 import numpy as np
