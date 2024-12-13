@@ -84,7 +84,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         """ difference image slide bars """
 
 
-        # slider and label layout
+        # slider and label layout <slider is not working???>
         slider_layout = QtWidgets.QVBoxLayout()
         self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
         self.slider.setMinimum(0)  # max
