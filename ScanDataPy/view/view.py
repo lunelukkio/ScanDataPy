@@ -136,7 +136,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
             "ElecAxes"].ax_obj.sigXRangeChanged.connect(self.sync_x_axes)
 
         # main buttons
-        bottom_btn_layout = QtWidgets.QHBoxLayout(centralWidget)
+        bottom_btn_layout = QtWidgets.QHBoxLayout()
         spacer = QtWidgets.QSpacerItem(
             40,
             20,

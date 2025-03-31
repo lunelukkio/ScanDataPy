@@ -49,8 +49,6 @@ class FileService:
 
     @staticmethod
     def get_fullname(event=None):
-
-
         app = QApplication.instance()
         if app is None:
             app = QApplication(sys.argv)
@@ -59,10 +57,7 @@ class FileService:
             None,
             "Open File",
             os.getcwd(),
-            "Tsm files (*.tsm);;"
-            "Da files (*.da);;"
-            "Axon files (*.abf);;"
-            "WinCP files (*.wcp)"
+            "Data files (*.tsm *.da *.abf *.wcp);;"  # すべての対応形式を1つのフィルタにまとめる
             "All files (*.*);;"
         )
 
