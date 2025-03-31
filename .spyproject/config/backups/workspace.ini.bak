@@ -1,0 +1,12 @@
+[workspace]
+restore_data_on_startup = True
+save_data_on_exit = True
+save_history = True
+save_non_project_files = False
+project_type = 'empty-project-type'
+recent_files = ['ScanDataPy\\view\\view.py', 'ScanDataPy\\model\\model.py', 'ScanDataPy\\model\\modifiers.py', 'tests\\test999_temporary.py', '..\\..\\..\\.conda\\envs\\scanpy\\lib\\bdb.py']
+
+[main]
+version = 0.2.0
+recent_files = []
+
