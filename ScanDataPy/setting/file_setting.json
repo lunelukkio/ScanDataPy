@@ -73,10 +73,72 @@
   "da": {
     "num_ch": 2,
     "num_elec_ch": 8,
-    "default_controller": {
-      "ROI": 2,
-      "ImageController": 2,
-      "ElecTraceController": 2
+    "default_settings": {
+      "default_modifiers": [
+        "TimeWindow0",
+        "TimeWindow1",
+        "TimeWindow2",
+        "TimeWindow3",
+        "Roi0",
+        "Roi1",
+        "Average0",
+        "Average1",
+        "Scale0",
+        "BlComp0",
+        "DifImage0",
+        "Invert0",
+        "TagMaker0"
+      ],
+      "modifier_default_val": {
+          "TimeWindow0": [40, 10],
+          "TimeWindow1": [55, 10],
+          "TimeWindow2": [0, -1],
+          "TimeWindow3": [0, -1],
+          "Roi0": [40, 40, 3, 3],
+          "Roi1": [40, 40, 3, 3],
+          "Average0": "Image",
+          "Average1": "Roi",
+          "Scale0": "Original",
+          "BlComp0": "Disable",
+          "BlComp0": [25, 70],
+          "DifImage0": [10, 5],
+          "TagMaker0": {"Attribute": "Baseline"}
+      },
+      "default_observer": {
+        "FluoAxes": ["Roi0", "Roi1", "BlComp0"],
+        "ImageAxes": ["TimeWindow0", "TimeWindow1","DifImage0"],
+        "ElecAxes": ["TimeWindow2", "TimeWindow3"]
+      },
+      "main_default_tag": {
+        "attribute_list": ["Data"],
+        "data_type_list": ["FluoFramesCh1", "FluoFramesCh2"],
+        "origin_list": ["File"],
+        "ch_list": ["Ch0", "Ch1", "Ch2"],
+        "roi_list": ["Roi0", "Roi1"]
+      },
+      "image_ax_default_tag": {
+        "attribute_list": ["Data"],
+        "data_type_list": ["FluoFrames"],
+        "origin_list": ["File"],
+        "modifier_list": ["TimeWindow0", "Average0"],
+        "ch_list": ["Ch1"]
+      },
+      "trace_ax_default_tag": {
+        "attribute_list": ["Data"],
+        "data_type_list": ["FluoFrames"],
+        "origin_list" : ["File"],
+        "modifier_list": ["Roi1", "Average1", "Scale0", "BlComp0"],
+        "ch_list": ["Ch1"],
+        "roi_list": ["Roi1"],
+        "bl_roi_list": ["Roi0"]
+      },
+      "elec_ax_default_tag": {
+        "attribute_list": ["Data"],
+        "data_type_list": ["ElecTrace"],
+        "origin_list" : ["File"],
+        "modifier_list": ["TimeWindow2"],
+        "ch_list": ["Ch1"]
+      }
     }
   }
 }

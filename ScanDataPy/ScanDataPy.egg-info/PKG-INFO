@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: ScanDataPy
+Version: 0.1
+Summary: A data scanning application
+Author: lunelukkio
+Requires-Python: >=3.6
+Requires-Dist: PyQt6
