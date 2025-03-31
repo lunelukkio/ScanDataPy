@@ -42,22 +42,22 @@ class AxesController(metaclass=ABCMeta):
             try:
                 with open(path, "r") as json_file:
                     setting = json.load(json_file)
-                print(f"Successfully loaded settings from: {path}")
+                print(f"AxesController: Successfully loaded settings from: {path}")
                 break
             except FileNotFoundError:
                 continue
             except json.JSONDecodeError:
-                print(f"Error: {path} is not a valid JSON file")
+                print(f"AxesController: Error: {path} is not a valid JSON file")
                 continue
             except Exception as e:
-                print(f"Unexpected error while reading {path}: {str(e)}")
+                print(f"AxesController: Unexpected error while reading {path}: {str(e)}")
                 continue
         
         if setting is None:
-            print("Error: Could not find or load data_window_setting.json in any of these locations:")
+            print("AxesController: Error: Could not find or load data_window_setting.json in any of these locations:")
             for path in search_paths:
                 print(f"- {path}")
-            raise FileNotFoundError("No valid settings file found")
+            raise FileNotFoundError("AxesController: No valid settings file found")
 
         self._ch_colors = setting.get("ch_color")
         self._controller_colors = setting.get("controller_color")

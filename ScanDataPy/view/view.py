@@ -34,7 +34,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
             try:
                 with open(path, "r") as json_file:
                     setting = json.load(json_file)
-                print(f"Successfully loaded settings from: {path}")
+                print(f"QtDataWindow: Successfully loaded settings from: {path}")
                 break
             except FileNotFoundError:
                 continue
@@ -42,14 +42,14 @@ class QtDataWindow(QtWidgets.QMainWindow):
                 print(f"Error: {path} is not a valid JSON file")
                 continue
             except Exception as e:
-                print(f"Unexpected error while reading {path}: {str(e)}")
+                print(f"QtDataWindow: Unexpected error while reading {path}: {str(e)}")
                 continue
         
         if setting is None:
-            print("Error: Could not find or load data_window_setting.json in any of these locations:")
+            print("QtDataWindow: Error: Could not find or load data_window_setting.json in any of these locations:")
             for path in search_paths:
                 print(f"- {path}")
-            raise FileNotFoundError("No valid settings file found")
+            raise FileNotFoundError("QtDataWindow: No valid settings file found")
 
         # window color, position and size
         self.setStyleSheet(
