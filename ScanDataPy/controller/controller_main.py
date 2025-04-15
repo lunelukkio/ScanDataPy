@@ -106,7 +106,15 @@ class MainController():
             print("========== MainController: Failed to open the file ==========                :(")
             print("=============================================================")
             print("")
-        return filename_obj
+
+        # get similer files
+        same_ext_file_list = self.__file_service.get_files_with_same_extension(filename_obj.fullname)
+        print('----------------- Similer files:')
+        print(same_ext_file_list)
+        print('--------------------------------')
+        print('')
+        
+        return filename_obj, same_ext_file_list
 
     def create_experiments(self, filename_obj: object):
         print("MainController: create_experiments() ----->")

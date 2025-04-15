@@ -14,6 +14,8 @@ import re
 import numpy as np
 import psutil  # for memory check
 from PyQt6.QtWidgets import QApplication, QFileDialog
+from typing import List
+from pathlib import Path
 #import itertools
 
 #from conda.base.context import mockable_context_envs_dirs
@@ -57,11 +59,55 @@ class FileService:
             None,
             "Open File",
             os.getcwd(),
-            "Data files (*.tsm *.da *.abf *.wcp);;"  # すべての対応形式を1つのフィルタにまとめる
+            "Data files (*.tsm *.da *.abf *.wcp);;"
             "All files (*.*);;"
         )
 
         return fullname
+    
+    @staticmethod
+    def get_files_with_same_extension(
+        file_path: str,
+        extension: str = None
+    ) -> List[str]:
+        """
+        Get a list of files with the same extension in the same folder as the specified file.
+        
+        Args:
+            file_path (str): Path to the reference file
+            extension (str, optional): Specific extension to filter files
+            
+        Returns:
+            List[str]: List of filenames
+        """
+        try:
+            # Normalize path
+            file_path = os.path.normpath(file_path)
+            
+            # Get directory path
+            dir_path = os.path.dirname(file_path)
+            
+            # Get extension if not specified
+            if extension is None:
+                extension = os.path.splitext(file_path)[1]
+            
+            # If extension is empty, target all files
+            if not extension:
+                pattern = os.path.join(dir_path, "*")
+            else:
+                pattern = os.path.join(dir_path, f"*{extension}")
+            
+            # Get list of files
+            files = glob.glob(pattern)
+            
+            # Extract only filenames
+            return [os.path.basename(f) for f in files]
+            
+        except Exception as e:
+            # Output error log
+            print(f"Error getting file list: {str(e)}")
+            return []
+
 
     def get_filename_obj(self):
         return self.filename_obj_list
@@ -77,16 +123,22 @@ Value object
 
 class WholeFilename:  # Use it only in a view and controller
     def __init__(self, fullname: str):
-        self.__fullname = os.path.join(
-            fullname)  # replace separater for each OS
-        self.__filename = os.path.basename(self.__fullname)
-        self.__filepath = os.path.dirname(self.__fullname) + os.sep
-        self.__abspath = os.path.abspath(fullname)  # absolute path
-        split_filename = os.path.splitext(self.__filename)
-        self.__file_name_no_ext = split_filename[0]
-        self.__extension = split_filename[1]  # get only extension
+        # Convert to Path object for cross-platform compatibility
+        self.__path = Path(fullname).resolve()
+        
+        # Basic file information
+        self.__fullname = str(self.__path)
+        self.__filename = self.__path.name
+        self.__filepath = str(self.__path.parent) + str(Path.sep)
+        self.__abspath = str(self.__path.absolute())
+        
+        # Split filename and extension
+        self.__file_name_no_ext = self._path.stem
+        self.__extension = self._path.suffix
+        
+        # Get list of files with same extension
+        self.__filename_list = self._make_filename_list()
 
-        self.__filename_list = self.__make_filename_list()
 
     # List need A000-Z999 in the last of filenames
     def __make_filename_list(self) -> list:

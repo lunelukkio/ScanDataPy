@@ -110,7 +110,7 @@ class DataService(ModelInterface):
         # make value objects from a file.
         data_list = builder.create_data(filename_obj)
         for data in data_list:
-            self.__data_repository.save(data)
+            self._repository.save(data)
         print("")
         print("===============================================================")
         print("==========DataService: Created new expriments data!!!==========")
@@ -119,13 +119,13 @@ class DataService(ModelInterface):
         return True
 
     def add_modifier(self, modifier_name):
-        self.__modifier_service.add_chain(modifier_name)
+        self._modifier_service.add_chain(modifier_name)
 
     def remove_modifier(self, modifier_name):
-        self.__modifier_service.remove_chain(modifier_name)
+        self._modifier_service.remove_chain(modifier_name)
 
     def set_modifier_val(self, modifier_name, *args, **kwargs):
-        self.__modifier_service.set_modifier_val(modifier_name, *args, **kwargs)
+        self._modifier_service.set_modifier_val(modifier_name, *args, **kwargs)
 
         # This is for saving data to repository
     def set_data(self, data_tag, modifier_list=None) -> object:
@@ -133,7 +133,7 @@ class DataService(ModelInterface):
         # create data
         modified_value_obj = self.__create_data(data_tag, modifier_list)
         # save in the repository
-        self.__data_repository.save(modified_value_obj)
+        self._repository.save(modified_value_obj)
         print("----------> Dataservice: set_data Done")
         return modified_value_obj
 
@@ -147,7 +147,7 @@ class DataService(ModelInterface):
 
     def __create_data(self, data_tag, modifier_list=None):
         # get data from repository
-        data_list = self.__data_repository.find_by_keys(data_tag)
+        data_list = self._repository.find_by_keys(data_tag)
 
         assert type(data_list) == list, f"DataService couldn't find {list(data_tag.values())} data"
         assert len(data_list) <=1, f"DataService found more than two data {list(data_tag.values())} data. It should be only a single data."
@@ -159,7 +159,7 @@ class DataService(ModelInterface):
             print(f"DataService: get data without modified-> {modified_data.data_tag.values()}")
         else:
             # apply modifier. the number of data in data_list should be 0.
-            modified_data = self.__modifier_service.apply_modifier(data_list[0],
+            modified_data = self._modifier_service.apply_modifier(data_list[0],
                                                                modifier_list)
             # show gotten data
             assert modified_data is not None, "DataService: Modifier failed to output a value object."
@@ -168,12 +168,12 @@ class DataService(ModelInterface):
         return modified_data
 
     def get_list_of_repository_tag_dict(self):
-        return self.__data_repository.get_list_of_tag_dict()
+        return self._repository.get_list_of_tag_dict()
 
     def set_observer(self, modifier_tag, observer):
         print(f"DataService: set_observer ({observer.__class__.__name__} to {modifier_tag}) ---------->")
         found = False
-        modifier_obj_list = self.__modifier_service.modifier_chain_list
+        modifier_obj_list = self._modifier_service.modifier_chain_list
         for modifier_obj in modifier_obj_list:
             if modifier_obj.modifier_name == modifier_tag:
                 modifier_obj.set_observer(observer)
@@ -186,23 +186,24 @@ class DataService(ModelInterface):
         pass
 
     def get_modifier_val(self, modifier_name):
-        return self.__modifier_service.get_modifier_val(modifier_name)
+        return self._modifier_service.get_modifier_val(modifier_name)
 
     def reset(self):
-        self.__data_repository = Repository()
-        self.__modifier_service = ModifierService()
+        self._repository = Repository()
+        self._modifier_service = ModifierService()
 
     def print_infor(self, tag_dict=None, except_dict=None):
         print("Dataservice: print_infor ---------->")
         if tag_dict is None:
-            self.__modifier_service.print_chain()
-            self.__data_repository.print_infor()
+            self._modifier_service.print_chain()
+            self._repository.print_infor()
         elif tag_dict == 'Modifier':
-            self.__modifier_service.print_chain()
+            self._modifier_service.print_chain()
         else:
-            self.__data_repository.print_infor(tag_dict, except_dict)
+            self._repository.print_infor(tag_dict, except_dict)
         print("----------> Dataservice: print_infor END")
         print("")
+
 """
 Repository
 """
