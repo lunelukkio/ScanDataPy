@@ -2,8 +2,8 @@
     "file_path": "./setting/",
     
     "main_window": {
-        "window_posX": 100,
-        "window_posY": 100,
+        "window_posX": 10,
+        "window_posY": 10,
         "geometryX" : 1400,
         "geometryY" : 700,
          

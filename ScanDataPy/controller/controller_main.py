@@ -11,10 +11,10 @@ from PyQt6.QtCore import Qt
 from ScanDataPy.model.model import DataService
 from ScanDataPy.controller.controller_axes import TraceAxesController
 from ScanDataPy.controller.controller_axes import ImageAxesController
-from ScanDataPy.common_class import FileService, KeyManager, Tools
+from ScanDataPy.common_class import FileService, KeyManager
+
 
 class ControllerInterface(metaclass=ABCMeta):
-
     @abstractmethod
     def get_filename(self):
         raise NotImplementedError()
@@ -49,7 +49,7 @@ class ControllerInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
 
-class MainController():
+class MainController:
     def __init__(self, view=None):
         self.__model = DataService()
         self.__file_service = FileService()
@@ -58,7 +58,7 @@ class MainController():
         self.current_filename = [0]
 
     def __del__(self):
-        print('.')
+        print(".")
         # print('Deleted a MainController.' + '  myId= {}'.format(id(self)))
         # pass
 
@@ -71,12 +71,10 @@ class MainController():
         return self._key_manager
 
     def add_axes(self, ax_type, axes_name: str, canvas, ax: object) -> None:
-        if ax_type == 'Image':
-            new_axes_controller = ImageAxesController(self, self.__model,
-                                                      canvas, ax)
-        elif ax_type == 'Trace':
-            new_axes_controller = TraceAxesController(self, self.__model,
-                                                      canvas, ax)
+        if ax_type == "Image":
+            new_axes_controller = ImageAxesController(self, self.__model, canvas, ax)
+        elif ax_type == "Trace":
+            new_axes_controller = TraceAxesController(self, self.__model, canvas, ax)
         else:
             new_axes_controller = None
             raise Exception(f"There is no {ax_type} axes controller")
@@ -96,24 +94,34 @@ class MainController():
         # make experiments data
         open_experiments = self.create_experiments(filename_obj)
         if open_experiments is True:
-            self._key_manager.set_tag('filename_list', filename_obj.name)
-            print("============================================================================")
-            print(f"========== MainController: Open {filename_obj.name}: suceeded!!! ==========          :)")
-            print("============================================================================")
+            self._key_manager.set_tag("filename_list", filename_obj.name)
+            print(
+                "============================================================================"
+            )
+            print(
+                f"========== MainController: Open {filename_obj.name}: suceeded!!! ==========          :)"
+            )
+            print(
+                "============================================================================"
+            )
             print("")
         else:
             print("=============================================================")
-            print("========== MainController: Failed to open the file ==========                :(")
+            print(
+                "========== MainController: Failed to open the file ==========                :("
+            )
             print("=============================================================")
             print("")
 
         # get similer files
-        same_ext_file_list = self.__file_service.get_files_with_same_extension(filename_obj.fullname)
-        print('----------------- Similer files:')
+        same_ext_file_list = self.__file_service.get_files_with_same_extension(
+            filename_obj.fullname
+        )
+        print("----------------- Similer files:")
         print(same_ext_file_list)
-        print('--------------------------------')
-        print('')
-        
+        print("--------------------------------")
+        print("")
+
         return filename_obj, same_ext_file_list
 
     def create_experiments(self, filename_obj: object):
@@ -121,7 +129,7 @@ class MainController():
         new_data = self.__model.create_experiments(filename_obj.fullname)
         # create_model end process
         if new_data is not True:
-            raise Exception('Failed to create a model.')
+            raise Exception("Failed to create a model.")
         else:
             print("-----> MainController: create_experiments() Done")
             return True
@@ -133,13 +141,14 @@ class MainController():
         filename = self._key_manager.filename_list[self.current_filename[0]]
         # get default information from text data in the json file
         default = self.__model.get_data(
-            {'Filename': filename, 'Attribute': 'Default', 'DataType': 'Text'})
+            {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
+        )
 
-        for modifier_name in default.data['default_settings']['default_modifiers']:
+        for modifier_name in default.data["default_settings"]["default_modifiers"]:
             self.create_modifier(modifier_name)
         print("-----> MainController: create_default_modifier() Done")
 
-        self.__model.print_infor('Modifier')
+        self.__model.print_infor("Modifier")
         print("=======================================================================")
         print("========== MainController: Made new Modifiers chain ==================")
         print("=======================================================================")
@@ -162,18 +171,21 @@ class MainController():
         self.__ax_dict[ax_key].set_marker(roi_tag)
 
     def onclick_axes(self, event, axes_name):
-        if axes_name == 'ImageAxes':
+        if axes_name == "ImageAxes":
             # get clicked position
-            image_pos = self.__ax_dict[
-                'ImageAxes']._ax_obj.getView().mapSceneToView(event.scenePos())
+            image_pos = (
+                self.__ax_dict["ImageAxes"]
+                ._ax_obj.getView()
+                .mapSceneToView(event.scenePos())
+            )
             if event.button() == Qt.MouseButton.LeftButton:  # left click
                 x = round(image_pos.x())
                 y = round(image_pos.y())
                 val = [x, y, None, None]
-                roi_tag = self.__ax_dict['FluoAxes'].onclick_axes(val)
-                self.update_view('FluoAxes')
+                roi_tag = self.__ax_dict["FluoAxes"].onclick_axes(val)
+                self.update_view("FluoAxes")
                 # for RoiBOX
-                self.set_marker('ImageAxes', roi_tag)
+                self.set_marker("ImageAxes", roi_tag)
 
             elif event.button() == Qt.MouseButton.MiddleButton:
                 pass
@@ -189,14 +201,14 @@ class MainController():
             raise NotImplementedError()
 
     def change_roi_size(self, val: list):
-        roi_tag = self.__ax_dict['FluoAxes'].change_roi_size(val)
-        self.update_view('FluoAxes')
+        roi_tag = self.__ax_dict["FluoAxes"].change_roi_size(val)
+        self.update_view("FluoAxes")
         # for RoiBOX
-        self.set_marker('ImageAxes', roi_tag)
+        self.set_marker("ImageAxes", roi_tag)
 
     def change_current_ax_mode(self, ax_key, mode):
         self.__ax_dict[ax_key].change_current_ax_mode(mode)
-        self.update_view('FluoAxes')
+        self.update_view("FluoAxes")
 
     def set_tag(self, list_name, new_tag, ax_key=None):
         if ax_key is None:
@@ -210,24 +222,27 @@ class MainController():
         else:
             self.__ax_dict[ax_key].change_color(color)
 
-    def default_settings(self, filename_key):
+    def get_current_file_path(self):
+        return self.__file_service.get_current_file_path()
 
+    def default_settings(self, filename_key):
         print("=============================================")
         print("========== Start default settings. ==========")
         print("=============================================")
         print("")
 
         # get default information from text data in the json file
-        #get the first of the filename true list
+        # get the first of the filename true list
         filename = self._key_manager.filename_list[self.current_filename[0]]
 
         # get default information from JSON
         default = self.__model.get_data(
-            {'Filename': filename, 'Attribute': 'Default', 'DataType': 'Text'})
+            {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
+        )
         print("")
         print("========== observer setting ==========")
         print("")
-        default_observer = default.data['default_settings']['default_observer']
+        default_observer = default.data["default_settings"]["default_observer"]
         # set_observer. see KeyManager and  file_setting.json
         for key, item_list in default_observer.items():
             for value in item_list:
@@ -236,7 +251,7 @@ class MainController():
         print("========== controller setting ==========")
         print("")
         # MainController default settings from file_setting.json
-        main_default_tag_list = default.data['default_settings']['main_default_tag']
+        main_default_tag_list = default.data["default_settings"]["main_default_tag"]
         # set_tags.   see KeyManager and file_setting.json in class common_class set_tag_list_to_dict, set_dict_to_dict
         for tag_list_name, tag_list in main_default_tag_list.items():
             for tag in tag_list:
@@ -246,37 +261,39 @@ class MainController():
         self._key_manager.print_infor()
 
         # set ax view flags
-        self.ax_dict['FluoAxes'].key_manager.set_tag('filename_list', filename)
-        fluo_default_tag_list = default.data['default_settings']['trace_ax_default_tag']
+        self.ax_dict["FluoAxes"].key_manager.set_tag("filename_list", filename)
+        fluo_default_tag_list = default.data["default_settings"]["trace_ax_default_tag"]
         for tag_list_name, tag_list in fluo_default_tag_list.items():
             for tag in tag_list:
-                self.ax_dict['FluoAxes'].key_manager.set_tag(tag_list_name, tag)
+                self.ax_dict["FluoAxes"].key_manager.set_tag(tag_list_name, tag)
         # show the final default infor of the main controller
         print("========== Trace AxesController key manager infor =========")
-        self.ax_dict['FluoAxes']._key_manager.print_infor()
+        self.ax_dict["FluoAxes"]._key_manager.print_infor()
 
-        self.ax_dict['ImageAxes'].key_manager.set_tag('filename_list', filename)
-        image_default_tag_list = default.data['default_settings']['image_ax_default_tag']
+        self.ax_dict["ImageAxes"].key_manager.set_tag("filename_list", filename)
+        image_default_tag_list = default.data["default_settings"][
+            "image_ax_default_tag"
+        ]
         for tag_list_name, tag_list in image_default_tag_list.items():
             for tag in tag_list:
-                self.ax_dict['ImageAxes'].key_manager.set_tag(tag_list_name, tag)
+                self.ax_dict["ImageAxes"].key_manager.set_tag(tag_list_name, tag)
         # show the final default infor of the main controller
         print("========== Image AxesController key manager infor =========")
-        self.ax_dict['ImageAxes']._key_manager.print_infor()
+        self.ax_dict["ImageAxes"]._key_manager.print_infor()
 
-        self.ax_dict['ElecAxes'].key_manager.set_tag('filename_list', filename)
-        elec_default_tag_list = default.data['default_settings']['elec_ax_default_tag']
+        self.ax_dict["ElecAxes"].key_manager.set_tag("filename_list", filename)
+        elec_default_tag_list = default.data["default_settings"]["elec_ax_default_tag"]
         for tag_list_name, tag_list in elec_default_tag_list.items():
             for tag in tag_list:
-                self.ax_dict['ElecAxes'].key_manager.set_tag(tag_list_name, tag)
+                self.ax_dict["ElecAxes"].key_manager.set_tag(tag_list_name, tag)
         # show the final default infor of the main controller
         print("========== Elec AxesController key manager infor ==========")
-        self.ax_dict['ElecAxes']._key_manager.print_infor()
+        self.ax_dict["ElecAxes"]._key_manager.print_infor()
         print("")
         print("========== modifier setting ==========")
         print("")
         # default modifiers values.
-        default_values_list = default.data['default_settings']['modifier_default_val']
+        default_values_list = default.data["default_settings"]["modifier_default_val"]
         for modifier, value in default_values_list.items():
             self.set_modifier_val(modifier, value)
 

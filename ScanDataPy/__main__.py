@@ -13,14 +13,14 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
-from PyQt6 import QtWidgets
-from ScanDataPy.view.view import QtDataWindow
+from PyQt6 import QtWidgets  # noqa: E402
+from ScanDataPy.view.view import QtDataWindow  # noqa: E402
 
 
 class Main:
     def __init__(self):
         print("============== Main ==============")
-        print('          Start SCANDATA')
+        print("          Start SCANDATA")
         print("==================================")
 
         # Initialize QApplication
@@ -32,5 +32,6 @@ class Main:
         if sys.flags.interactive == 0:
             self.scandata.exec()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app = Main()
