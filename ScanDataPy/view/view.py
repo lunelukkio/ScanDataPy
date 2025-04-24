@@ -14,6 +14,68 @@ import PyQt6
 from PyQt6 import QtWidgets, QtCore
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets
+import os
+
+
+class MainWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("SCANDATA Main Window")
+        self.data_window_list = {}
+        self._main_controller = MainController(self)  # Add MainController
+
+        # Create central widget and layout
+        central_widget = QtWidgets.QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QtWidgets.QVBoxLayout(central_widget)
+
+        # Create list widget for files
+        self.file_list = QtWidgets.QListWidget()
+        self.file_list.setSelectionMode(
+            QtWidgets.QAbstractItemView.SelectionMode.SingleSelection
+        )
+
+        # Set minimum size for better visibility
+        self.file_list.setMinimumSize(300, 400)
+
+        # Add list widget to layout
+        layout.addWidget(self.file_list)
+
+        # Create load button
+        load_btn = QtWidgets.QPushButton("Load")
+        load_btn.setFixedSize(100, 30)
+        load_btn.clicked.connect(self.load_file)
+        layout.addWidget(load_btn)
+
+    def update_file_list(self):
+        """
+        Update the file list with files from filename_obj
+        """
+        self.file_list.clear()
+        if hasattr(self, "_main_controller") and hasattr(
+            self._main_controller, "filename_obj"
+        ):
+            # Get the folder path from filename_obj
+            folder_path = os.path.dirname(self._main_controller.filename_obj.fullname)
+            # Get all files in the folder
+            files = [f for f in os.listdir(folder_path) if f.endswith(".tsm")]
+            for file in files:
+                self.file_list.addItem(os.path.join(folder_path, file))
+
+    def load_file(self):
+        """
+        Open file dialog and load selected file
+        """
+        filename_obj, same_ext_file_list = self._main_controller.open_file(filename_obj)
+
+        # Create and show QtDataWindow
+        new_window = QtDataWindow()
+        new_window.open_file(filename_obj)
+        new_window.show()
+        self.data_window_list[filename_obj.name] = new_window
+
+        # Update the file list
+        self.update_file_list()
 
 
 class QtDataWindow(QtWidgets.QMainWindow):

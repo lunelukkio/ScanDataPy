@@ -14,7 +14,7 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 from PyQt6 import QtWidgets  # noqa: E402
-from ScanDataPy.view.view import QtDataWindow  # noqa: E402
+from ScanDataPy.view.view import MainWindow  # noqa: E402
 
 
 class Main:
@@ -25,7 +25,7 @@ class Main:
 
         # Initialize QApplication
         self.scandata = QtWidgets.QApplication(sys.argv)
-        self.mainWindow = QtDataWindow()
+        self.mainWindow = MainWindow()
         self.mainWindow.show()
 
         # Start the Qt event loop unless the user is in an interactive prompt
