@@ -388,12 +388,6 @@ class QtDataWindow(QtWidgets.QMainWindow):
 
         self.default()
 
-        # make a file list window
-        self.file_list_window = FileListWindow(
-            parent=self, file_list=same_ext_file_list
-        )
-        self.file_list_window.show_list_window()
-
     def default(self):
         self.bl_comp_checkbox.setChecked(True)
         self.bl_use_roi1.setChecked(True)
@@ -567,63 +561,6 @@ class CustomImageView(pg.ImageView):
             "xxxxxxxxxxxxxxxxxxxxCustomImageViewxPressEvent event ignoredxxxxxxxxxxxxxxxxxxxxx"
         )
         event.ignore()
-
-
-class FileListWindow(QtWidgets.QWidget):
-    def __init__(self, parent=None, file_list=None):
-        super().__init__(parent)
-        # Create main window as child of parent MainWindow
-        self.setWindowTitle("File List")
-        self.setGeometry(100, 100, 400, 600)
-        self.setWindowFlags(QtCore.Qt.WindowType.Window)  # Set as independent window
-
-        # Create layout
-        layout = QtWidgets.QVBoxLayout()
-        self.setLayout(layout)
-
-        # Create list widget
-        self.list_widget = QtWidgets.QListWidget()
-        layout.addWidget(self.list_widget)
-
-        # Store parent window reference
-        self.parent = parent
-        self.update_file_list(file_list)
-
-    def show_list_window(self):
-        self.show()  # Changed to use the parent class's show method
-
-    def update_file_list(self, file_list):
-        # Clear existing items
-        self.list_widget.clear()
-
-        # Add files to list widget
-        for file in file_list:
-            item = QtWidgets.QListWidgetItem(file)
-            self.list_widget.addItem(item)
-
-        # Connect click event
-        self.list_widget.itemClicked.connect(self.on_item_clicked)
-
-    def on_item_clicked(self, item):
-        # Get clicked filename
-        filename = item.text()
-
-        # Create WholeFilename object
-        filename_obj = WholeFilename(
-            self.parent._main_controller.get_current_file_path() + filename
-        )
-
-        # Open file in main window
-        self.parent.open_file(filename_obj)
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("Under construction. which class shold hold Filemanager class?")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
 
 if __name__ == "__main__":
