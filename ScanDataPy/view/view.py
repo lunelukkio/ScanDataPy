@@ -22,7 +22,6 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.setWindowTitle("SCANDATA Main Window")
         self.data_window_list = {}
-        self._main_controller = MainController(self)  # Add MainController
 
         # Create central widget and layout
         central_widget = QtWidgets.QWidget()
@@ -36,7 +35,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         # Set minimum size for better visibility
-        self.file_list.setMinimumSize(300, 400)
+        self.file_list.setMinimumSize(300, 200)
 
         # Add list widget to layout
         layout.addWidget(self.file_list)
@@ -46,6 +45,8 @@ class MainWindow(QtWidgets.QMainWindow):
         load_btn.setFixedSize(100, 30)
         load_btn.clicked.connect(self.load_file)
         layout.addWidget(load_btn)
+
+        
 
     def update_file_list(self):
         """
