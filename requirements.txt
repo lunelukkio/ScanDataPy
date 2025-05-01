@@ -1,0 +1,8 @@
+PyQt6
+numpy
+pandas
+pytest
+pyqtgraph
+scipy
+psutil
+torch # Optional: if PyTorch is a core dependency 
