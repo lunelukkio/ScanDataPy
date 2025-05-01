@@ -5,37 +5,38 @@ Created on Thu Aug 29 14:29:01 2024
 @author: lunelukkio
 """
 
-from ScanDataPy.common_class import FileService
-from ScanDataPy.view.view import QtDataWindow
 import sys
 import os
-
 
 # Add parent directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
-from PyQt6 import QtWidgets  # noqa: E402
+#from PyQt6 import QtWidgets  # noqa: E402
+
+from ScanDataPy.common_class import FileService  # noqa: E402
+from ScanDataPy.view.view import QtDataWindow  # noqa: E402
 
 
 # Main controller class for the application
 class Main:
-    def __init__(self):
+    def __init__(self, file_service=None, qt_app=None):
         print("============== Main ==============")
         print("          Start SCANDATA          ")
         print("==================================")
 
-        self.__file_service = FileService()
+        # Allow dependency injection for testing
+        self.__file_service = file_service if file_service is not None else FileService()
         self.data_window_list = {}
 
         # Initialize QApplication (view class)
-        self.scandata = QtWidgets.QApplication(sys.argv)
+        self.scandata = qt_app if qt_app is not None else QtWidgets.QApplication(sys.argv)
         self.main_window = MainWindow(self)
         self.main_window.show()
 
         # Start the Qt event loop unless the user is in an interactive prompt
-        if sys.flags.interactive == 0:
+        if sys.flags.interactive == 0 and qt_app is None:
             self.scandata.exec()
 
     def open_file(self):
@@ -53,6 +54,14 @@ class Main:
 
         # Update the file list
         self.update_file_list()
+
+    def update_file_list(self):
+        """Update the file list in the main window based on the current data"""
+        if hasattr(self, "filename_obj"):
+            same_ext_files = self.__file_service.get_files_with_same_extension(
+                self.filename_obj.fullname
+            )
+            self.main_window.update_file_list(same_ext_files)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -104,5 +113,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.scandata_controller.open_file()
 
 
+def create_app():
+    """Create and return a new application instance.
+    This function is useful for testing as it separates app creation from running.
+    """
+    return Main()
+
+
 if __name__ == "__main__":
-    app = Main()
+    app = create_app()

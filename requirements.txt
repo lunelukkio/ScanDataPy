@@ -5,4 +5,5 @@ pytest
 pyqtgraph
 scipy
 psutil
-torch # Optional: if PyTorch is a core dependency 
+torch # Optional: if PyTorch is a core dependency
+matplotlib 

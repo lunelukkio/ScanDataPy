@@ -1,0 +1,19 @@
+{
+    "color_ch": {
+        "Ch0": "black",
+        "Ch1": "red",
+        "Ch2": "blue"
+    },
+    "color_roi": {
+        "Roi1": "black",
+        "Roi2": "red",
+        "Roi3": "blue",
+        "Roi4": "green",
+        "Roi5": "purple",
+        "Roi6": "brown",
+        "Roi7": "pink",
+        "Roi8": "olive",
+        "Roi9": "cyan",
+        "Roi10": "orange"
+    }
+}
