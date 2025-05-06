@@ -37,7 +37,7 @@ class FileService:
         self.filename_obj_list.append(new_filename_obj)
         return new_filename_obj
 
-    # Function to rename multiple files: https://www.youtube.com/watch?v=uhpnT8hGTnY&t=511s
+    # Function to rename multiple files. This is for nnU-net model: https://www.youtube.com/watch?v=uhpnT8hGTnY&t=511s
     def rename_files(self):
         folder_path = "C:/Users/lunel/Documents/python/nnUNetFrame/testfolder"
         for count, filename in enumerate(sorted(os.listdir(folder_path))):
