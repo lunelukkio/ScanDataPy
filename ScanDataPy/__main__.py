@@ -13,7 +13,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
-from PyQt6 import QtWidgets  # noqa: E402
+from PyQt6 import QtWidgets, QtCore  # noqa: E402
 
 from ScanDataPy.common_class import FileService  # noqa: E402; Import Filename
 from ScanDataPy.view.view import QtDataWindow  # noqa: E402
@@ -105,16 +105,24 @@ class MainListWindow(QtWidgets.QMainWindow):
     def update_file_list(self, files_to_display: list[str]):
         """
         Update the file list with the provided list of file paths.
+        Display only the file names but store the full paths as item data.
         """
         self.file_list.clear()
-        for file_name in files_to_display:
-            self.file_list.addItem(file_name)
+        for full_path in files_to_display:
+            # Extract just the file name from the full path
+            file_name = os.path.basename(full_path)
+            # Create a new item with the file name
+            item = QtWidgets.QListWidgetItem(file_name)
+            # Store the full path as item data for later retrieval
+            item.setData(QtCore.Qt.ItemDataRole.UserRole, full_path)
+            self.file_list.addItem(item)
 
     def handle_file_item_clicked(self, item: QtWidgets.QListWidgetItem):
         """Handles the event when an item in the file list is clicked."""
-        selected_file_name = item.text()
-        if selected_file_name:
-            self.scandata_controller.open_file_from_list(selected_file_name)
+        # Get the full path from the item's data
+        selected_file_path = item.data(QtCore.Qt.ItemDataRole.UserRole)
+        if selected_file_path:
+            self.scandata_controller.open_file_from_list(selected_file_path)
 
 
     def load_file(self):
