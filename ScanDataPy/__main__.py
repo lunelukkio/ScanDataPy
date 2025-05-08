@@ -15,25 +15,25 @@ sys.path.append(parent_dir)
 
 from PyQt6 import QtWidgets  # noqa: E402
 
-from ScanDataPy.common_class import FileService  # noqa: E402
+from ScanDataPy.common_class import FileService  # noqa: E402; Import Filename
 from ScanDataPy.view.view import QtDataWindow  # noqa: E402
 
 
 # Main controller class for the application
 class Main:
-    def __init__(self, file_service=None, qt_app=None):
+    def __init__(self, file_service=FileService(), qt_app=None):
         print("============== Main ==============")
         print("          Start SCANDATA          ")
         print("==================================")
 
         # Allow dependency injection for testing
-        self.__file_service = file_service if file_service is not None else FileService()
+        self.__file_service = file_service
         self.data_window_list = {}
 
         # Initialize QApplication (view class)
         self.scandata = qt_app if qt_app is not None else QtWidgets.QApplication(sys.argv)
-        self.main_window = MainWindow(self)
-        self.main_window.show()
+        self.main_list_window = MainListWindow(self)
+        self.main_list_window.show()
 
         # Start the Qt event loop unless the user is in an interactive prompt
         if sys.flags.interactive == 0 and qt_app is None:
@@ -41,30 +41,38 @@ class Main:
 
     def open_file(self):
         filename_obj = self.__file_service.open_file()
+        if not filename_obj:  # Handle case where no file is selected or dialog is cancelled
+            print("File selection cancelled or failed.")
+            return
+
         same_ext_file_list = self.__file_service.get_files_with_same_extension(
             filename_obj.fullname
         )
-        self.main_window.update_file_list(same_ext_file_list)
+        self.main_list_window.update_file_list(same_ext_file_list)
 
         # Create and show QtDataWindow
-        new_window = QtDataWindow()
-        new_window.open_file(filename_obj)
-        new_window.show()
-        self.data_window_list[filename_obj.name] = new_window
+        new_data_controller = QtDataWindow()
+        new_data_controller.open_file(filename_obj)
+        new_data_controller.show()
+        self.data_window_list[filename_obj.name] = new_data_controller
+        print(f"Created {filename_obj.name}.")
 
-        # Update the file list
-        self.update_file_list()
+    def open_file_from_list(self, full_name: str):
+        if not full_name or not os.path.exists(full_name):
+            print(f"Invalid file name from list: {full_name}")
+            return
+        filename_obj = self.__file_service.open_file(full_name)
 
-    def update_file_list(self):
-        """Update the file list in the main window based on the current data"""
-        if hasattr(self, "filename_obj"):
-            same_ext_files = self.__file_service.get_files_with_same_extension(
-                self.filename_obj.fullname
-            )
-            self.main_window.update_file_list(same_ext_files)
+        # Create and show QtDataWindow for the selected file
+        new_data_controller = QtDataWindow()
+        new_data_controller.open_file(filename_obj)
+        new_data_controller.show()
+        self.data_window_list[filename_obj.name] = new_data_controller
+        print(f"Created {filename_obj.name} from list.")
+        print(self.data_window_list)
 
 
-class MainWindow(QtWidgets.QMainWindow):
+class MainListWindow(QtWidgets.QMainWindow):
     def __init__(self, scandata_controller):
         super().__init__()
         self.setWindowTitle("SCANDATA Main Window")
@@ -80,6 +88,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.file_list.setSelectionMode(
             QtWidgets.QAbstractItemView.SelectionMode.SingleSelection
         )
+        self.file_list.itemClicked.connect(self.handle_file_item_clicked)  # Connect itemClicked signal
 
         # Set minimum size for better visibility
         self.file_list.setMinimumSize(300, 200)
@@ -93,20 +102,20 @@ class MainWindow(QtWidgets.QMainWindow):
         load_btn.clicked.connect(self.load_file)
         layout.addWidget(load_btn)
 
-    def update_file_list(self):
+    def update_file_list(self, files_to_display: list[str]):
         """
-        Update the file list with files from filename_obj
+        Update the file list with the provided list of file paths.
         """
         self.file_list.clear()
-        if hasattr(self, "_main_controller") and hasattr(
-            self._main_controller, "filename_obj"
-        ):
-            # Get the folder path from filename_obj
-            folder_path = os.path.dirname(self._main_controller.filename_obj.fullname)
-            # Get all files in the folder
-            files = [f for f in os.listdir(folder_path) if f.endswith(".tsm")]
-            for file in files:
-                self.file_list.addItem(os.path.join(folder_path, file))
+        for file_name in files_to_display:
+            self.file_list.addItem(file_name)
+
+    def handle_file_item_clicked(self, item: QtWidgets.QListWidgetItem):
+        """Handles the event when an item in the file list is clicked."""
+        selected_file_name = item.text()
+        if selected_file_name:
+            self.scandata_controller.open_file_from_list(selected_file_name)
+
 
     def load_file(self):
         # scandata_controller = Main class

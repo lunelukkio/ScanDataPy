@@ -347,7 +347,7 @@ class DaFileIo:
                 # http://www.redshirtimaging.com/support/dfo.html
 
                 binary_data = f.read()
-
+                
                 """ read imaging infor """
                 # header is first 5120 bytes (2560 integers)
                 self.header = np.frombuffer(
@@ -379,16 +379,16 @@ class DaFileIo:
 
                 """ read imaging data"""
                 # data 80*80*100
-                pixel_count = (
+                pixel_count = int(
                     self.data_pixel[0] * self.data_pixel[1] * self.num_full_frames
                 )
 
                 # read data from a file. 5120=header byte.
                 pre_frames = np.frombuffer(
-                    binary_data[read_data_byte : pixel_count * 2 + read_data_byte],
+                    binary_data[int(read_data_byte) : int(pixel_count * 2 + read_data_byte)],
                     dtype=np.int16,
                 )
-                read_data_byte = read_data_byte + pre_frames.nbytes
+                read_data_byte = int(read_data_byte) + int(pre_frames.nbytes)
                 # container size
                 full_framesize = tuple(self.full_3D_size)  # without dark frame
                 # make a full data.
@@ -401,28 +401,28 @@ class DaFileIo:
                 self.num_elec_ch = 8  # fixed
                 self.bnc_ratio = self.header[391]
                 self.elec_interval = self.full_frame_interval / self.bnc_ratio
-                self.num_elec_data = self.num_full_frames * self.bnc_ratio
+                self.num_elec_data = int(self.num_full_frames * self.bnc_ratio)
                 self.elec_trace = np.empty([self.num_elec_data, 8])  # = [data, ch]
 
                 for ch in range(8):
                     data = np.frombuffer(
-                        binary_data[
-                            read_data_byte : read_data_byte + self.num_elec_data * 2
-                        ],
-                        dtype=np.int16,
+                    binary_data[
+                        int(read_data_byte):int(read_data_byte) + int(self.num_elec_data) * 2
+                        ],dtype=np.int16,
                     )
-                    read_data_byte = read_data_byte + data.nbytes
+                    read_data_byte = int(read_data_byte) + int(data.nbytes)
                     data = data / 32678
                     data = data * 1000  # convert AtoD values to mV
                     self.elec_trace[:, ch] = data
 
                 """ read dark frame """
                 # make dark frame
+                dark_frame_size = int(self.data_pixel[0]) * int(self.data_pixel[1]) * 2
+                dark_frame_start = int(read_data_byte)
+                dark_frame_end = dark_frame_start + dark_frame_size
+                
                 pre_dark_frame = np.frombuffer(
-                    binary_data[
-                        read_data_byte : read_data_byte
-                        + self.data_pixel[0] * self.data_pixel[1] * 2
-                    ],
+                    binary_data[dark_frame_start:dark_frame_end],
                     dtype=np.int16,
                 )
                 # dark frame reshape

@@ -22,10 +22,10 @@ from pathlib import Path
 
 class FileService:
     def __init__(self):
-        self.filename_obj_list = []
+        self.filename_obj_dict = {}
 
-    def open_file(self, *filename):  # it can catch variable num of filenames.
-        if filename == ():
+    def open_file(self, filename=None):
+        if filename is None:
             fullname = self.get_fullname()  # This is str filename
             if fullname is None:
                 print("No filename.")
@@ -33,8 +33,9 @@ class FileService:
             new_full_filename = fullname
         else:
             new_full_filename = filename
+            print(new_full_filename)
         new_filename_obj = WholeFilename(new_full_filename)
-        self.filename_obj_list.append(new_filename_obj)
+        self.filename_obj_dict[new_filename_obj.name] = new_filename_obj
         return new_filename_obj
 
     # Function to rename multiple files. This is for nnU-net model: https://www.youtube.com/watch?v=uhpnT8hGTnY&t=511s
@@ -97,7 +98,7 @@ class FileService:
             files = glob.glob(pattern)
 
             # Extract only filenames
-            return [os.path.basename(f) for f in files]
+            return files
 
         except Exception as e:
             # Output error log
