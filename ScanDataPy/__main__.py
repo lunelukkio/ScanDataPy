@@ -31,7 +31,9 @@ class Main:
         self.data_window_list = {}
 
         # Initialize QApplication (view class)
-        self.scandata = qt_app if qt_app is not None else QtWidgets.QApplication(sys.argv)
+        self.scandata = (
+            qt_app if qt_app is not None else QtWidgets.QApplication(sys.argv)
+        )
         self.main_list_window = MainListWindow(self)
         self.main_list_window.show()
 
@@ -41,7 +43,9 @@ class Main:
 
     def open_file(self):
         filename_obj = self.__file_service.open_file()
-        if not filename_obj:  # Handle case where no file is selected or dialog is cancelled
+        if (
+            not filename_obj
+        ):  # Handle case where no file is selected or dialog is cancelled
             print("File selection cancelled or failed.")
             return
 
@@ -51,7 +55,7 @@ class Main:
         self.main_list_window.update_file_list(same_ext_file_list)
 
         # Create and show QtDataWindow
-        new_data_controller = QtDataWindow()
+        new_data_controller = QtDataWindow(self.main_list_window)
         new_data_controller.open_file(filename_obj)
         new_data_controller.show()
         self.data_window_list[filename_obj.name] = new_data_controller
@@ -64,7 +68,7 @@ class Main:
         filename_obj = self.__file_service.open_file(full_name)
 
         # Create and show QtDataWindow for the selected file
-        new_data_controller = QtDataWindow()
+        new_data_controller = QtDataWindow(self.main_list_window)
         new_data_controller.open_file(filename_obj)
         new_data_controller.show()
         self.data_window_list[filename_obj.name] = new_data_controller
@@ -88,7 +92,9 @@ class MainListWindow(QtWidgets.QMainWindow):
         self.file_list.setSelectionMode(
             QtWidgets.QAbstractItemView.SelectionMode.SingleSelection
         )
-        self.file_list.itemClicked.connect(self.handle_file_item_clicked)  # Connect itemClicked signal
+        self.file_list.itemClicked.connect(
+            self.handle_file_item_clicked
+        )  # Connect itemClicked signal
 
         # Set minimum size for better visibility
         self.file_list.setMinimumSize(300, 200)
@@ -124,10 +130,20 @@ class MainListWindow(QtWidgets.QMainWindow):
         if selected_file_path:
             self.scandata_controller.open_file_from_list(selected_file_path)
 
-
     def load_file(self):
         # scandata_controller = Main class
         self.scandata_controller.open_file()
+
+    def closeEvent(self, event):
+        """Close all associated QtDataWindow instances when MainListWindow is closed."""
+        # Iterate over a copy of the dictionary's keys in case the dictionary is modified during iteration
+        for window_name in list(self.scandata_controller.data_window_list.keys()):
+            child_window = self.scandata_controller.data_window_list.pop(
+                window_name, None
+            )
+            if child_window:
+                child_window.close()  # Explicitly close the child window
+        super().closeEvent(event)  # Call the parent class's closeEvent
 
 
 def create_app():
