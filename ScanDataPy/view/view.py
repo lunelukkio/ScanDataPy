@@ -543,6 +543,33 @@ class InputDialog(QtWidgets.QDialog):
             return None
 
 
+# This is for baseline comp.
+class FloatWindow(QtWidgets.QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Float Window")
+        self.setGeometry(100, 100, 300, 200)  # Adjusted size for plot
+
+        # Set central widget and layout
+        central_widget = QtWidgets.QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QtWidgets.QVBoxLayout(central_widget)
+
+        # Create PlotWidget
+        plot_widget = pg.PlotWidget()
+        layout.addWidget(plot_widget)
+
+        # Style the plot widget (optional, similar to QtDataWindow)
+        plot_widget.setBackground("w")  # White background
+        plot_widget.getAxis("bottom").setPen(pg.mkPen(color=(0, 0, 0), width=2))
+        plot_widget.getAxis("left").setPen(pg.mkPen(color=(0, 0, 0), width=2))
+        plot_widget.setLabel("bottom", "X Axis", color="black")
+        plot_widget.setLabel("left", "Y Axis", color="black")
+
+        # Store the plot widget if you need to access it later
+        self.plot_widget = plot_widget
+
+
 class CustomImageView(pg.ImageView):
     def __init__(self, parent=None):
         super().__init__(parent)
