@@ -456,7 +456,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
             
             # Create and show FloatWindow
             if not hasattr(self, 'float_window') or self.float_window is None:
-                self.float_window = FloatWindow(self)
+                self.float_window = FloatWindow(self, self._main_controller)
                 self.float_window.show()
         else:
             # disable baseline comp
@@ -555,8 +555,9 @@ class InputDialog(QtWidgets.QDialog):
 
 # This is for baseline comp.
 class FloatWindow(QtWidgets.QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, main_controller=None):
         super().__init__(parent)
+        self.main_controller = main_controller
         self.setWindowTitle("Float Window")
         self.setGeometry(100, 100, 300, 200)  # Adjusted size for plot
 
@@ -568,6 +569,8 @@ class FloatWindow(QtWidgets.QMainWindow):
         # Create PlotWidget
         plot_widget = pg.PlotWidget()
         layout.addWidget(plot_widget)
+
+        self._main_controller.add_axes("Float", "FloatAxes", self, plot_widget)
 
         # Style the plot widget (optional, similar to QtDataWindow)
         plot_widget.setBackground("w")  # White background
