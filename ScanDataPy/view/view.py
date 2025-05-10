@@ -453,11 +453,21 @@ class QtDataWindow(QtWidgets.QMainWindow):
             self._main_controller.set_modifier_val("BlComp0", "Exponential")
             self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
             self._main_controller.update_view("FluoAxes")
+            
+            # Create and show FloatWindow
+            if not hasattr(self, 'float_window') or self.float_window is None:
+                self.float_window = FloatWindow(self)
+                self.float_window.show()
         else:
             # disable baseline comp
             self._main_controller.set_modifier_val("BlComp0", "Disable")
             self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
             self._main_controller.update_view("FluoAxes")
+            
+            # Close FloatWindow if it exists
+            if hasattr(self, 'float_window') and self.float_window is not None:
+                self.float_window.close()
+                self.float_window = None
 
     def switch_bl_roi(self, state):
         raise NotImplementedError()
