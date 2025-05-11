@@ -197,7 +197,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         )
 
         """ for baseline use roi1"""
-        self.bl_use_roi1 = QtWidgets.QCheckBox("BL Roi1")
+        self.bl_use_roi1 = QtWidgets.QCheckBox("BL=Roi1")
         self.bl_use_roi1.setChecked(False)  # default
         self.bl_use_roi1.setFixedSize(60, 30)
         self.bl_use_roi1.clicked.connect(self.bl_use_roi1_switch)
@@ -344,7 +344,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         dialog = InputDialog(self)
         if (
             dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted
-        ):  # exec_() を exec() に変更
+        ):
             val = dialog.get_numbers()
             if val is not None:
                 print(f"Input values: {val}")
@@ -390,11 +390,11 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.default()
 
     def default(self):
-        self.bl_comp_checkbox.setChecked(True)
         self.bl_use_roi1.setChecked(True)
         self.bl_use_roi1_switch()
         self.dFoverF_trace.setChecked(True)
         self.scale(self.dFoverF_trace)
+        #self.bl_comp_checkbox.setChecked(True)
 
     def roi_size(self, command):
         if command == "large":
@@ -406,15 +406,21 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self._main_controller.change_roi_size(val)
 
     def bl_roi(self):
+        """
+        Handle the event when the BL (baseline ROI) checkbox is toggled.
+        If the checkbox is checked, switch the FluoAxes controller to 'Baseline_control' mode.
+        If unchecked, switch it back to 'Normal' mode.
+        This allows the user to interactively change the ROI mode for baseline correction.
+        """
         if self.bl_roi_change_btn.isChecked():
             self._main_controller.change_current_ax_mode(
-                ax_key="FluoAxes", mode="Baseline"
+                ax_key="FluoAxes", mode="Baseline_control"
             )
         else:
             self._main_controller.change_current_ax_mode(
                 ax_key="FluoAxes", mode="Normal"
             )
-
+   
     # under construction
     """
     def change_roi(self, state):
@@ -450,6 +456,9 @@ class QtDataWindow(QtWidgets.QMainWindow):
     def bl_comp(self, state):
         if self.bl_comp_checkbox.isChecked():
             # activate baseline comp
+            self._main_controller.set_tag(
+                list_name="modifier_list", new_tag="BlComp0", ax_key="FluoAxes"
+            )
             self._main_controller.set_modifier_val("BlComp0", "Exponential")
             self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
             self._main_controller.update_view("FluoAxes")
@@ -461,6 +470,9 @@ class QtDataWindow(QtWidgets.QMainWindow):
         else:
             # disable baseline comp
             self._main_controller.set_modifier_val("BlComp0", "Disable")
+            self._main_controller.set_tag(
+                list_name="modifier_list", new_tag="BlComp0", ax_key="FluoAxes"
+            )
             self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
             self._main_controller.update_view("FluoAxes")
             
@@ -557,7 +569,7 @@ class InputDialog(QtWidgets.QDialog):
 class FloatWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None, main_controller=None):
         super().__init__(parent)
-        self.main_controller = main_controller
+        self._main_controller = main_controller
         self.setWindowTitle("Float Window")
         self.setGeometry(100, 100, 300, 200)  # Adjusted size for plot
 

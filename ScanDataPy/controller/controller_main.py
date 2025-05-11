@@ -135,11 +135,12 @@ class MainController:
             return True
 
     # filename number from the list in dict
+    # prepare all default modifiers in this function from the json setting file
     def create_default_modifier(self, filename_number):
         print("MainController: create_default_modifiers() ----->")
 
         filename = self._key_manager.filename_list[self.current_filename[0]]
-        # get default information from text data in the json file
+        # get default information from text data in the json setting file
         default = self.__model.get_data(
             {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
         )
@@ -163,9 +164,6 @@ class MainController:
     # set modifier values e.g. 'Roi1', [40, 40, 1, 1]. Be called by view and self.default_settings.
     def set_modifier_val(self, modifier, *args, **kwargs):
         self.__model.set_modifier_val(modifier, *args, **kwargs)
-
-    def replace_key_manager_tag(self, ax_key, list_name, old_tag, new_tag):
-        self.__ax_dict[ax_key].replace_key_manager_tag(list_name, old_tag, new_tag)
 
     def set_marker(self, ax_key, roi_tag=None):
         self.__ax_dict[ax_key].set_marker(roi_tag)
@@ -215,6 +213,9 @@ class MainController:
             self._key_manager.set_tag(list_name, new_tag)
         else:
             self.__ax_dict[ax_key].set_tag(list_name, new_tag)
+
+    def replace_key_manager_tag(self, ax_key, list_name, old_tag, new_tag):
+        self.__ax_dict[ax_key].replace_key_manager_tag(list_name, old_tag, new_tag)
 
     def change_color(self, color, ax_key=None):
         if ax_key is None:
@@ -305,11 +306,22 @@ class MainController:
         self.__ax_dict[ax_name].set_update_flag(flag)
 
     def update_view(self, axes=None) -> None:
+        """
+        Update the view(s) for the specified axes controller(s).
+        If axes is None, update all registered axes controllers (e.g., FluoAxes, ImageAxes, ElecAxes).
+        If axes is specified, update only the corresponding axes controller.
+        After updating, reset the update flag to deactivate further updates until needed.
+
+        Args:
+            axes (str or None): The key of the axes controller to update, or None to update all.
+        """
         if axes is None:
+            # Update all axes controllers
             for ax in self.__ax_dict.values():
                 ax.update()
                 ax.set_update_flag(False)  # return to deactive
         else:
+            # Update only the specified axes controller
             self.__ax_dict[axes].update()
             self.__ax_dict[axes].set_update_flag(False)  # return to deactive
         print("Main controller: Update done!")

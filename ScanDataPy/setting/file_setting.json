@@ -28,7 +28,6 @@
           "Average0": "Image",
           "Average1": "Roi",
           "Scale0": "Original",
-          "BlComp0": "Disable",
           "BlComp0": [25, 70],
           "DifImage0": [10, 5],
           "TagMaker0": {"Attribute": "Baseline"}
@@ -56,7 +55,7 @@
         "attribute_list": ["Data"],
         "data_type_list": ["FluoFrames"],
         "origin_list" : ["File"],
-        "modifier_list": ["Roi1", "Average1", "Scale0", "BlComp0"],
+        "modifier_list": ["Roi1", "Average1", "Scale0"],
         "ch_list": ["Ch1"],
         "roi_list": ["Roi1"],
         "bl_roi_list": ["Roi0"]

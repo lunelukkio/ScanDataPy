@@ -216,7 +216,7 @@ class KeyManager:
             print(f"KeyManager: removed {tag} from {list_name} ")
         else:
             list_name.append(tag)
-            print(f"KeyManager: added {tag} from {list_name} ")
+            print(f"KeyManager: added {tag} to {list_name} ")
         # need this line because list_name is just like a copy.
         setattr(self, f"{tag_list_name}", list_name)
 

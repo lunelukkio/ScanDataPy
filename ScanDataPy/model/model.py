@@ -240,8 +240,7 @@ class Repository:
         extracted_data = [item for item in self._data if
                           target_key_set.issubset(set(item.data_tag.values()))]
         if extracted_data == []:
-            print(
-                f"Repository: There is no data in {list(target_data_tag.values())}")
+            assert False, f"Repository: There is no data in the repository with {list(target_data_tag.values())}"
         # remove data from extracted_data using except_dict.
         elif except_dict is not None:
             extracted_data = [data for data in extracted_data

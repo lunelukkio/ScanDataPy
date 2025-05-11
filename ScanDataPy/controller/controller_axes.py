@@ -22,7 +22,7 @@ class AxesController(metaclass=ABCMeta):
         self._main_controller = main_controller
         self._model = model
         self._key_manager = KeyManager()  # see common class
-        self.current_mode = 'Normal'    # Normal, Baseline,
+        self.current_mode = 'Normal'    # Normal, Baseline_control,
 
         self.ax_item_dict = {}
         self._marker_obj_dict = {}  # This is for makers in axes windows.
@@ -108,12 +108,13 @@ class AxesController(metaclass=ABCMeta):
             pass
         else:
             self.update_flag = update_flag
-
+    """
     def set_data(self, data_tag, modifier_list=None):
-        self._model.set_data(self, data_tag, modifier_list)
+        self._model.set_data(data_tag, modifier_list)
 
     def get_data(self, data_tag, modifier_list=None):
-        self._model.get_data(self, data_tag, modifier_list)
+        self._model.get_data(data_tag, modifier_list)
+    """
 
     # return only items with modifier_name in list_name.
     def get_key_list(self, list_name, modifier_name='All'):
@@ -159,7 +160,7 @@ class AxesController(metaclass=ABCMeta):
 class ImageAxesController(AxesController):
     def __init__(self, main_controller, model, canvas, ax):
         super().__init__(main_controller, model, canvas, ax)
-        self.mode = None  # no use
+        self.line_color_mode = None  # no use
         self.color_mode = 'grey'
 
     def set_click_position(self, event):
@@ -219,6 +220,18 @@ class ImageAxesController(AxesController):
         raise NotImplementedError()
 
     def make_second_obj(self, data_type):
+        """
+        Generate and return a baseline data object for the specified data_type.
+        This function constructs a data tag and a modifier tag list for baseline calculation,
+        then retrieves the corresponding data object from the model. It is typically used for
+        baseline correction or comparison in data processing.
+
+        Args:
+            data_type (str): The type of data to retrieve (e.g., 'Frames', 'Trace').
+
+        Returns:
+            value object: The baseline data object obtained from the model.
+        """
         current_filename = self._key_manager.filename_list[0]
         baseline_data_tag = {
             'Filename': current_filename,
@@ -239,7 +252,7 @@ class TraceAxesController(AxesController):
     def __init__(self, main_controller, model, canvas,
                  ax):  # controller is for getting ROI information from FLU-AXES.
         super().__init__(main_controller, model, canvas, ax)
-        self.mode = 'ChMode'
+        self.line_color_mode = 'ChMode'  # ChMode, RoiMode. This is for color setting.
 
     def update(self):
         if self.update_flag is True:
@@ -253,16 +266,28 @@ class TraceAxesController(AxesController):
         else:
             print("TraceAxesController: update flag is False")
 
-    def change_current_ax_mode(self, mode):
-        self.current_mode = mode
+    def change_current_ax_mode(self, bl_control_mode):
+        self.current_mode = bl_control_mode
 
     # from the flag, get data from the model and show data. 
     def get_view_data(self):
-        # get lists of the data tag list
+        # get lists of the data tag list from whole dict convinations.
         lists_of_tag_dict = self._key_manager.get_dicts_from_tag_list()
         # get modifier list
         modifier_list = self._key_manager.get_list('modifier_list')
         for tag_dict in lists_of_tag_dict:
+            if any('BlComp' in m for m in modifier_list):
+                # Caution!! This code take only one tag_dict.
+                for tag_dict in lists_of_tag_dict:
+                    # tae a trace daata for baseline trace.
+                    bl_value_obj = self.get_bl_obj(tag_dict['DataType'])
+                # Find the first modifier name containing 'BlComp'
+                blcomp_modifier = next((m for m in modifier_list if 'BlComp' in m), None)
+                if blcomp_modifier is not None:
+                    self._model.set_modifier_val(blcomp_modifier, bl_value_obj)
+                else:
+                    print("TraceAxesController: No BlComp modifier found")
+
             value_obj = self._model.get_data(tag_dict, modifier_list)
 
             # show data
@@ -273,7 +298,7 @@ class TraceAxesController(AxesController):
             self.ax_item_dict[item_key] = plot_data
 
             # color setting
-            if self.mode == "ChMode":
+            if self.line_color_mode == "ChMode":
                 if 'Elec' in value_obj.data_tag['DataType']:
                     plot_data.setPen(
                         pg.mkPen(color=self._ch_colors[value_obj.data_tag['DataType']]))
@@ -283,7 +308,7 @@ class TraceAxesController(AxesController):
                 else:
                     plot_data.setPen(
                         pg.mkPen(color=self._ch_colors["black"]))
-            elif self.mode == "RoiMode":
+            elif self.line_color_mode == "RoiMode":
                 if 'Elec' in value_obj.data_tag['DataType']:
                     plot_data.setPen(
                         pg.mkPen(color=self._ch_colors[value_obj.data_tag['DataType']]))
@@ -296,29 +321,41 @@ class TraceAxesController(AxesController):
                     plot_data.setPen(
                         pg.mkPen(color=self._ch_colors["black"]))
 
+    # change a ROI position
     def onclick_axes(self, val):
         if self.current_mode == 'Normal':
             modifier_name_list = self.get_key_list('modifier_list', 'Roi')
-        elif self.current_mode == 'Baseline':
+        elif self.current_mode == 'Baseline_control':
             modifier_name_list = self.get_key_list('bl_roi_list', 'Roi')
         for modifier_name in modifier_name_list:
-
-            # set modifier values
+            #set modifier values for ROI or bl_ROI
             self._model.set_modifier_val(modifier_name, val)
             return modifier_name
 
     def change_roi_size(self, val: list):
         if self.current_mode == 'Normal':
             modifier_name_list = [name for name in self._key_manager.modifier_list if 'Roi' in name]
-        elif self.current_mode == 'Baseline':
+        elif self.current_mode == 'Baseline_control':
             modifier_name_list = self.get_key_list('bl_roi_list', 'Roi')
         for modifier_name in modifier_name_list:
-            # set modifier values
+            # set modifier values for ROI or bl_ROI
             self._model.set_modifier_val(modifier_name, val)
             return modifier_name
 
     # Be called by modifier.BlComp.observer.notify_observer_baseline()
-    def make_second_obj(self, data_type):
+    def get_bl_obj(self, data_type):
+        """
+        Generate and return a baseline data object for the specified data_type.
+        This function constructs a data tag and a modifier tag list for baseline calculation,
+        then retrieves the corresponding data object from the model. It is typically used for
+        baseline correction or comparison in data processing.
+
+        Args:
+            data_type (str): The type of data to retrieve (e.g., 'Frames', 'Trace').
+
+        Returns:
+            value object: The baseline data object obtained from the model.
+        """
         current_filename = self._key_manager.filename_list[0]
         current_baseline_roi = self._key_manager.bl_roi_list[0]
         baseline_data_tag = {
@@ -327,12 +364,12 @@ class TraceAxesController(AxesController):
             'DataType': data_type,
             'Origin': 'File'
         }
-        # TimeWindow = [5,-1], -1 means whole trace. see modifier.TimeWindow()
+        # this is for baseline trace mod calculation.
         baseline_modifier_tag_list = [
-            'TimeWindow3',
+            'TimeWindow3',  # [0,-1], -1 means whole trace.
             current_baseline_roi,
-            'Average1',
-            'TagMaker0'
+            'Average1',  # for Roi avarage
+            'TagMaker0'  # {"Attribute": "Baseline"}
         ]
         # return to modifier BlComp class
         return self._model.get_data(baseline_data_tag, baseline_modifier_tag_list)

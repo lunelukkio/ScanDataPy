@@ -109,11 +109,11 @@ class ModifierService(ModifierServiceInterface):
             if modifier_obj.modifier_name == modifier_name:
                 return modifier_obj.val_obj
 
+    # return object will save to repository
     def set_modifier_val(self, modifier_name, *args, **kwargs):
         for modifier_obj in self.__modifier_chain_list:
             if modifier_name == modifier_obj.modifier_name:
-                modifier_obj.set_modifier_val(*args, **kwargs)
-                break
+                return modifier_obj.set_modifier_val(*args, **kwargs)
         else:
             raise ValueError(
                 f"Modifier '{modifier_name}' not found in the modifier chain list."
@@ -642,7 +642,7 @@ class Scale(ModifierHandler):
 class BlComp(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
-        self.bl_mode = "Disable"  # or 'PolyVal' or 'Exponential'
+        self.bl_mode = "Exponential"  # or 'PolyVal' or 'Exponential'
         self.baseline_window = None  # This is to show the baseline and fitting curve
         self.cutting_time_window = [0, 0]  # [start, width]
 
@@ -651,15 +651,68 @@ class BlComp(ModifierHandler):
         print(f"----- Deleted a BlComp object. + {format(id(self))}")
         # pass
 
-    def set_modifier_val(self, val):  # val = [start, width]
+    def set_modifier_val(self, val):  # val = [start, width] or 'Disable' or 'PolyVal' or 'Exponential'
         if isinstance(val, str):
             self.bl_mode = val
-            print(f"set BlComp: {self.bl_mode}")  # 1.Disable, 2.Enable
+            print(f"set BlComp: {self.bl_mode}")
         elif isinstance(val, list):
             self.cutting_time_window = val
             print(
                 f"BlComp: Set new cutting time window value {self.cutting_time_window}"
             )
+        elif isinstance(val, TraceData):
+            bl_trace_raw = val
+            if self.bl_mode == "Disable":
+                print("BlComp:     Currently BlComp is disabled")
+            # make Polyval fitting curve
+            elif self.bl_mode == "PolyVal":
+                print("BlComp:     Enable -> <PolyVal> baseline compensation")
+                degree_poly = 2
+                bl_trace = bl_trace_raw.slice_data(
+                    self.cutting_time_window[0], self.cutting_time_window[1]
+                )
+                mu = [np.mean(bl_trace.time), np.std(bl_trace.time)]
+                # time data centering and scaling
+                t_scaled = (bl_trace.time - mu[0]) / mu[1]
+                # Polynomial fitting with scaled data
+                fitcoef = np.polyfit(t_scaled, bl_trace.data, degree_poly)
+                # Evaluate fitted polynomial in data points
+                fitting_trace_raw = np.polyval(fitcoef, t_scaled)
+                # Scaling x values
+                #x_scaled = (data_obj.time - mu[0]) / mu[1]
+                # Evaluate polynomial
+                #fitting_trace_raw = np.polyval(fitcoef, x_scaled)
+
+            elif self.bl_mode == "Exponential":
+                print("BlComp:     Enable -> <Exponential> baseline compensation")
+                bl_trace = bl_trace_raw.slice_data(
+                    self.cutting_time_window[0], self.cutting_time_window[1]
+                )
+                initial_guess = (np.max(bl_trace.data), -0.1, np.min(bl_trace.data))
+                popt, pcov = curve_fit(
+                    Tools.exponential_func,
+                    bl_trace.time,
+                    bl_trace.data,
+                    p0=initial_guess,
+                    maxfev=2000,
+                )
+                a_fit, b_fit, c_fit = popt
+                fitting_trace_raw = Tools.exponential_func(
+                    bl_trace_raw.time, a_fit, b_fit, c_fit
+                )
+
+            else:
+                raise ValueError(
+                    f"No such a BlComp mode -> '{self.bl_mode}' \n "
+                    f"check set_modifier_val in BlComp"
+                )
+            
+            self._val_obj = TraceData(
+                fitting_trace_raw, bl_trace.data_tag, bl_trace.interval
+        )
+
+            print("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+            print(f"BlComp: Set new baseline trace value {self._val_obj}")
         else:
             raise ValueError(f"value: '{val}' should be a string or a list")
 
@@ -667,81 +720,28 @@ class BlComp(ModifierHandler):
         if self.bl_mode == "Disable":
             print("BlComp:     No modified")
             return data_obj
-        # make Polyval fitting curve
-        elif self.bl_mode == "PolyVal":
-            print("BlComp:     Enable -> <PolyVal> baseline compensation")
-            degree_poly = 2
-            data_type = data_obj.data_tag["DataType"].replace("Trace", "Frames")
-            bl_trace_raw = self.observer.notify_observer_second_obj(data_type)
-            bl_trace = bl_trace_raw.slice_data(
-                self.cutting_time_window[0], self.cutting_time_window[1]
-            )
-
-            mu = [np.mean(bl_trace.time), np.std(bl_trace.time)]
-            # time data centering and scaling
-            t_scaled = (bl_trace.time - mu[0]) / mu[1]
-            # Polynomial fitting with scaled data
-            fitcoef = np.polyfit(t_scaled, bl_trace.data, degree_poly)
-            # Evaluate fitted polynomial in data points
-            # fitting_trace = np.polyval(fitcoef, t_scaled)
-            # Scaling x values
-            x_scaled = (data_obj.time - mu[0]) / mu[1]
-            # Evaluate polynomial
-            fitting_trace_raw = np.polyval(fitcoef, x_scaled)
-        # make exponential fitting curve: currently doen't work well
-        elif self.bl_mode == "Exponential":
-            print("BlComp:     Enable -> <Exponential> baseline compensation")
-            data_type = data_obj.data_tag["DataType"].replace("Trace", "Frames")
-            bl_trace_raw = self.observer.notify_observer_second_obj(data_type)
-
-            bl_trace = bl_trace_raw.slice_data(
-                self.cutting_time_window[0], self.cutting_time_window[1]
-            )
-
-            initial_guess = (np.max(bl_trace.data), -0.1, np.min(bl_trace.data))
-            popt, pcov = curve_fit(
-                Tools.exponential_func,
-                bl_trace.time,
-                bl_trace.data,
-                p0=initial_guess,
-                maxfev=2000,
-            )
-
-            a_fit, b_fit, c_fit = popt
-            fitting_trace_raw = Tools.exponential_func(
-                data_obj.time, a_fit, b_fit, c_fit
-            )
         else:
-            raise ValueError(
-                f"No such a BlComp mode -> '{self.bl_mode}' \n "
-                f"check set_modifier_val in BlComp"
-            )
+            # get ratio of f (data/baseline)
+            f_val = Tools.f_value(data_obj.data)
+            baseline_f_val = Tools.f_value(self._val_obj.data)
+            f_val_ratio = f_val / baseline_f_val
+            # set size of baseline to data
+            norm_bl_trace = self._val_obj * f_val_ratio
+            # get comp delta F
+            delta_F_trace = data_obj - norm_bl_trace
+            bl_comp_trace = delta_F_trace + f_val
 
-        # make baseline value object
-        fit_baseline_obj = TraceData(
-            fitting_trace_raw, bl_trace.data_tag, bl_trace.interval
-        )
-        # get ratio of f (data/baseline)
-        f_val = Tools.f_value(data_obj.data)
-        baseline_f_val = Tools.f_value(fit_baseline_obj.data)
-        f_val_ratio = f_val / baseline_f_val
-        # set size of baseline to data
-        norm_bl_trace = fit_baseline_obj * f_val_ratio
-        # get comp delta F
-        delta_F_trace = data_obj - norm_bl_trace
-        bl_comp_trace = delta_F_trace + f_val
+            # should be deleted
+            # show a baseline fitting trace : this should be in the view class
+            if self.baseline_window is None:
+                self.baseline_window = pg.plot()
+                self.baseline_window.setWindowTitle("Baseline fitting")
+                self.baseline_window.setGeometry(100, 100, 200, 150)
+            else:
+                self.baseline_window.clear()
+            self._val_obj.show_data(self.baseline_window)
 
-        # show a baseline fitting trace : this should be in the view class
-        if self.baseline_window is None:
-            self.baseline_window = pg.plot()
-            self.baseline_window.setWindowTitle("Baseline fitting")
-            self.baseline_window.setGeometry(100, 100, 200, 150)
-        else:
-            self.baseline_window.clear()
-        bl_trace.show_data(self.baseline_window)
-        fit_baseline_obj.show_data(self.baseline_window)
-
-        return bl_comp_trace
+            return bl_comp_trace
 
 
 class DifImage(ModifierHandler):
