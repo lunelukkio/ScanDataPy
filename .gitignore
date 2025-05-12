@@ -167,4 +167,6 @@ cython_debug/
 /heka_reader-master/
 **/__pycache__/
 **/*.egg-info/
-
+**/Docker/
+**/Scripts/
+.python-version
