@@ -22,11 +22,12 @@ from ScanDataPy.view.view import QtDataWindow  # noqa: E402
 # Main controller class for the application
 class Main:
     def __init__(self, file_service=None, gui_app=None):
-        if file_service is None:
-            file_service = FileService()
         print("============== Main ==============")
         print("          Start SCANDATA          ")
         print("==================================")
+
+        if file_service is None:
+            file_service = FileService()
 
         # Allow dependency injection for testing
         self.__file_service = file_service

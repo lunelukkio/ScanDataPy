@@ -1,0 +1,10 @@
+apt install vim
+apt install python3 -y
+apt install python3-pip
+pip install numpy pandas matplotlib torch torchvision pyqt6
+
+
+psutil
+
+scipy
+pyqtgraph
