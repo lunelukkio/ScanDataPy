@@ -219,34 +219,6 @@ class ImageAxesController(AxesController):
     def set_scale(self):
         raise NotImplementedError()
 
-    def make_second_obj(self, data_type):
-        """
-        Generate and return a baseline data object for the specified data_type.
-        This function constructs a data tag and a modifier tag list for baseline calculation,
-        then retrieves the corresponding data object from the model. It is typically used for
-        baseline correction or comparison in data processing.
-
-        Args:
-            data_type (str): The type of data to retrieve (e.g., 'Frames', 'Trace').
-
-        Returns:
-            value object: The baseline data object obtained from the model.
-        """
-        current_filename = self._key_manager.filename_list[0]
-        baseline_data_tag = {
-            'Filename': current_filename,
-            'Attribute': 'Data',
-            'DataType': data_type,
-            'Origin': 'File'
-        }
-        # TimeWindow = [5,-1], -1 means whole trace. see modifier.TimeWindow()
-        baseline_modifier_tag_list = [
-            'TimeWindow1',
-            'Average0'
-        ]
-        # return to modifier BlComp class
-        return self._model.get_data(baseline_data_tag, baseline_modifier_tag_list)
-
 
 class TraceAxesController(AxesController):
     def __init__(self, main_controller, model, canvas,

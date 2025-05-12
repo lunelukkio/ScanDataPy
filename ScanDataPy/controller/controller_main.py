@@ -79,6 +79,7 @@ class MainController:
             new_axes_controller = None
             raise Exception(f"There is no {ax_type} axes controller")
         self.__ax_dict[axes_name] = new_axes_controller
+        print(f"MainController: Added {axes_name} axes controller")
 
     def get_canvas_axes(self, view_controller) -> object:
         return self.__ax_dict[view_controller].get_canvas_axes()

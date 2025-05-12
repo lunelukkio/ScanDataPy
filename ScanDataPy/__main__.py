@@ -21,7 +21,9 @@ from ScanDataPy.view.view import QtDataWindow  # noqa: E402
 
 # Main controller class for the application
 class Main:
-    def __init__(self, file_service=FileService(), qt_app=None):
+    def __init__(self, file_service=None, gui_app=None):
+        if file_service is None:
+            file_service = FileService()
         print("============== Main ==============")
         print("          Start SCANDATA          ")
         print("==================================")
@@ -32,13 +34,13 @@ class Main:
 
         # Initialize QApplication (view class)
         self.scandata = (
-            qt_app if qt_app is not None else QtWidgets.QApplication(sys.argv)
+            gui_app if gui_app is not None else QtWidgets.QApplication(sys.argv)
         )
         self.main_list_window = MainListWindow(self)
         self.main_list_window.show()
 
         # Start the Qt event loop unless the user is in an interactive prompt
-        if sys.flags.interactive == 0 and qt_app is None:
+        if sys.flags.interactive == 0 and gui_app is None:
             self.scandata.exec()
 
     def open_file(self):

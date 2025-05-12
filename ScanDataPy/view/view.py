@@ -466,6 +466,11 @@ class QtDataWindow(QtWidgets.QMainWindow):
             # Create and show FloatWindow
             if not hasattr(self, 'float_window') or self.float_window is None:
                 self.float_window = FloatWindow(self, self._main_controller)
+                self._main_controller.add_axes("Trace", "FloatAxes1", self.float_window, self.float_window.plot_widget)
+                #ここでfloat_windowのaxesのtagを設定する        
+                # default = self.main_controller._model.get_data(
+                # {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
+                # )
                 self.float_window.show()
         else:
             # disable baseline comp
@@ -582,8 +587,6 @@ class FloatWindow(QtWidgets.QMainWindow):
         plot_widget = pg.PlotWidget()
         layout.addWidget(plot_widget)
 
-        self._main_controller.add_axes("Float", "FloatAxes", self, plot_widget)
-
         # Style the plot widget (optional, similar to QtDataWindow)
         plot_widget.setBackground("w")  # White background
         plot_widget.getAxis("bottom").setPen(pg.mkPen(color=(0, 0, 0), width=2))
@@ -628,7 +631,3 @@ if __name__ == "__main__":
     if sys.flags.interactive == 0:
         scandata.exec()
 
-    print("＝＝＝to do list＝＝＝")
-    print("second trace time shift ")
-    print("fix re-open method")
-    print("")

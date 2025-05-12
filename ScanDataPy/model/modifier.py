@@ -682,7 +682,6 @@ class BlComp(ModifierHandler):
                 #x_scaled = (data_obj.time - mu[0]) / mu[1]
                 # Evaluate polynomial
                 #fitting_trace_raw = np.polyval(fitcoef, x_scaled)
-
             elif self.bl_mode == "Exponential":
                 print("BlComp:     Enable -> <Exponential> baseline compensation")
                 bl_trace = bl_trace_raw.slice_data(
@@ -700,19 +699,16 @@ class BlComp(ModifierHandler):
                 fitting_trace_raw = Tools.exponential_func(
                     bl_trace_raw.time, a_fit, b_fit, c_fit
                 )
-
             else:
                 raise ValueError(
                     f"No such a BlComp mode -> '{self.bl_mode}' \n "
                     f"check set_modifier_val in BlComp"
                 )
-            
             self._val_obj = TraceData(
                 fitting_trace_raw, bl_trace.data_tag, bl_trace.interval
-        )
-
-            print("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
-            print(f"BlComp: Set new baseline trace value {self._val_obj}")
+            )
+            print(f"BlComp: Set new baseline trace as {self._val_obj.data_tag}")
+            self.observer.notify_observer()
         else:
             raise ValueError(f"value: '{val}' should be a string or a list")
 
@@ -834,10 +830,6 @@ class Observer:
             # This is for direct view axes update
             # observer_name.update()
         # print("Update Notification from ROI")
-
-    def notify_observer_second_obj(self, data_type) -> object:
-        for observer_name in self._observers:
-            return observer_name.make_second_obj(data_type)
 
     @property
     def observers(self) -> list:
