@@ -9,7 +9,7 @@ main for view
 import sys
 import json
 from ScanDataPy.common_class import WholeFilename
-from ScanDataPy.controller.controller_main import MainController
+from ScanDataPy.controller.controller_data import DataController
 import PyQt6
 from PyQt6 import QtWidgets, QtCore
 import pyqtgraph as pg
@@ -20,7 +20,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
     def __init__(self, window=None):
         super().__init__(window)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
-        self._main_controller = MainController(self)
+        self._main_controller = DataController(self)
         self.setWindowTitle("SCANDATA")
 
         # import a JSON setting file

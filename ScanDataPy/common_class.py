@@ -26,17 +26,13 @@ class FileService:
 
     def open_file(self, filename=None):
         if filename is None:
-            fullname = self.get_fullname()  # This is str filename
-            if fullname is None:
+            fullname = self.get_fullname()
+            if not fullname:
                 print("No filename.")
-                return
-            new_full_filename = fullname
+                return None
         else:
-            new_full_filename = filename
-            print(new_full_filename)
-        new_filename_obj = WholeFilename(new_full_filename)
-        self.filename_obj_dict[new_filename_obj.name] = new_filename_obj
-        return new_filename_obj
+            fullname = filename
+        return WholeFilename(fullname)
 
     # Function to rename multiple files. This is for nnU-net model: https://www.youtube.com/watch?v=uhpnT8hGTnY&t=511s
     def rename_files(self):
@@ -49,61 +45,22 @@ class FileService:
             os.rename(src, dst)
 
     @staticmethod
-    def get_fullname(event=None):
+    def get_fullname():
         app = QApplication.instance()
         if app is None:
             app = QApplication(sys.argv)
-
         fullname, _ = QFileDialog.getOpenFileName(
-            None,
-            "Open File",
-            os.getcwd(),
-            "Data files (*.tsm *.da *.abf *.wcp);;All files (*.*);;",
+            None, "Open File", str(Path.cwd()),
+            "Data files (*.tsm *.da *.abf *.wcp);;All files (*.*);;"
         )
-
         return fullname
 
     @staticmethod
-    def get_files_with_same_extension(
-        file_path: str, extension: str = None
-    ) -> List[str]:
-        """
-        Get a list of files with the same extension in the same folder as the specified file.
-
-        Args:
-            file_path (str): Path to the reference file
-            extension (str, optional): Specific extension to filter files
-
-        Returns:
-            List[str]: List of filenames
-        """
-        try:
-            # Normalize path
-            file_path = os.path.normpath(file_path)
-
-            # Get directory path
-            dir_path = os.path.dirname(file_path)
-
-            # Get extension if not specified
-            if extension is None:
-                extension = os.path.splitext(file_path)[1]
-
-            # If extension is empty, target all files
-            if not extension:
-                pattern = os.path.join(dir_path, "*")
-            else:
-                pattern = os.path.join(dir_path, f"*{extension}")
-
-            # Get list of files
-            files = glob.glob(pattern)
-
-            # Extract only filenames
-            return files
-
-        except Exception as e:
-            # Output error log
-            print(f"Error getting file list: {str(e)}")
-            return []
+    def get_files_with_same_extension(file_path: str, extension: str = None):
+        path = Path(file_path)
+        ext = extension or path.suffix
+        files = list(path.parent.glob(f"*{ext}")) if ext else list(path.parent.glob("*"))
+        return [str(f) for f in files]
 
     def get_filename_obj(self):
         return self.filename_obj_list
@@ -122,26 +79,32 @@ Value object
 
 class WholeFilename:  # Use it only in a view and controller
     def __init__(self, fullname: str):
-        # Convert to Path object for cross-platform compatibility
-        self.__path = Path(fullname).resolve()
+        self.path = Path(fullname).resolve()
 
-        # Basic file information
-        self.__fullname = str(self.__path)
-        self.__filename = self.__path.name
-        self.__filepath = str(self.__path.parent) + "/"
-        self.__abspath = str(self.__path.absolute())
+    @property
+    def fullname(self) -> str:
+        return str(self.path)
 
-        # Split filename and extension
-        self.__file_name_no_ext = self.__path.stem
-        self.__extension = self.__path.suffix
+    @property
+    def name(self) -> str:
+        return self.path.name
 
-        # Get list of files with same extension
-        # self.__filename_list = self.__make_filename_list()
+    @property
+    def dir(self) -> str:
+        return str(self.path.parent)
+
+    @property
+    def stem(self) -> str:
+        return self.path.stem
+
+    @property
+    def extension(self) -> str:
+        return self.path.suffix
 
     # List need A000-Z999 in the last of filenames
     def __make_filename_list(self) -> list:
         find = os.path.join(
-            os.path.dirname(self.__abspath), "*" + str(self.__extension)
+            os.path.dirname(self.path.absolute()), "*" + str(self.extension)
         )
         filename_list = [os.path.basename(f) for f in glob.glob(find)]
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -157,42 +120,14 @@ class WholeFilename:  # Use it only in a view and controller
         # print('Deleted a ImageData object.' + '  myId= {}'.format(id(self)))
         pass
 
-    @property
-    def fullname(self) -> str:
-        return self.__fullname
-
-    @property
-    def name(self) -> str:
-        return self.__filename
-
-    @property
-    def path(self) -> str:
-        return self.__filepath
-
-    @property
-    def abspath(self) -> str:
-        return self.__abspath
-
-    @property
-    def file_name_no_ext(self) -> str:
-        return self.__file_name_no_ext
-
-    @property
-    def extension(self) -> str:
-        return self.__extension
-
-    @property
-    def filename_list(self) -> list:
-        return self.__filename_list
-
     def print_infor(self) -> None:
-        print("THe absolute path = " + self.__abspath)
-        print("The full path = " + self.__fullname)
-        print("The file name = " + self.__filename)
-        print("The file path = " + self.__filepath)
-        print("The file name without extension = " + self.__file_name_no_ext)
-        print("The file extension = " + self.__extension)
-        print("The file name list in the same folder = " + str(self.__filename_list))
+        print("THe absolute path = " + str(self.path.absolute()))
+        print("The full path = " + str(self.path))
+        print("The file name = " + self.name)
+        print("The file path = " + self.dir)
+        print("The file name without extension = " + self.stem)
+        print("The file extension = " + self.extension)
+        print("The file name list in the same folder = " + str(self.__make_filename_list()))
 
 
 class KeyManager:
@@ -362,3 +297,28 @@ class Tools:
         maximum_memory = psutil.virtual_memory().total
         available_memory = psutil.virtual_memory().available
         return memory_infor, maximum_memory, available_memory
+
+
+class FileHistoryManager:
+    def __init__(self, max_history=10):
+        self.history = []
+        self.current_file = None
+        self.max_history = max_history
+
+    def add_file(self, file_obj: WholeFilename):
+        self.current_file = file_obj
+        # Remove if already in history
+        self.history = [f for f in self.history if f.fullname != file_obj.fullname]
+        self.history.insert(0, file_obj)
+        # Keep only the latest N
+        self.history = self.history[:self.max_history]
+
+    def get_recent_files(self):
+        return self.history
+
+    def get_current_file(self):
+        return self.current_file
+
+    def clear_history(self):
+        self.history = []
+        self.current_file = None

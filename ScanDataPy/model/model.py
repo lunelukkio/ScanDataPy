@@ -19,7 +19,7 @@ from ScanDataPy.model.builder import HekaBuilder
 
 class ModelInterface(metaclass=ABCMeta):
     """
-    Model interface controlled by MainController
+    Model interface controlled by DataController
     It has a data repository which have whole value object data.
     Basically, call set_modifier_values > 
     """

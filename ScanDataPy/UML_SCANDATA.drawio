@@ -518,7 +518,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="U5yRhZ5jWp-kJ9tWom7W-6" value="MainController" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#b1ddf0;strokeColor=#10739e;" parent="1" vertex="1">
+        <mxCell id="U5yRhZ5jWp-kJ9tWom7W-6" value="DataController" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#b1ddf0;strokeColor=#10739e;" parent="1" vertex="1">
           <mxGeometry x="-440" y="-800" width="240" height="138" as="geometry">
             <mxRectangle x="-560" y="-159" width="90" height="30" as="alternateBounds" />
           </mxGeometry>
@@ -568,7 +568,7 @@
         <mxCell id="U5yRhZ5jWp-kJ9tWom7W-16" value="_view_flag_set = FlagDict() # This Dict can decide witch data are showed" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="U5yRhZ5jWp-kJ9tWom7W-12" vertex="1">
           <mxGeometry y="108" width="320" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="U5yRhZ5jWp-kJ9tWom7W-17" value="update_flag = False # When this is true MainController can update" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="U5yRhZ5jWp-kJ9tWom7W-12" vertex="1">
+        <mxCell id="U5yRhZ5jWp-kJ9tWom7W-17" value="update_flag = False # When this is true DataController can update" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="U5yRhZ5jWp-kJ9tWom7W-12" vertex="1">
           <mxGeometry y="134" width="320" height="26" as="geometry" />
         </mxCell>
         <mxCell id="U5yRhZ5jWp-kJ9tWom7W-18" value="update_flag_lock = False # This is to avoid redraw data" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="U5yRhZ5jWp-kJ9tWom7W-12" vertex="1">
@@ -1125,7 +1125,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="B0cYNyP5DOQJRs0QmeUZ-130" value="MainController" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#b1ddf0;strokeColor=#10739e;" parent="B0cYNyP5DOQJRs0QmeUZ-1" vertex="1">
+        <mxCell id="B0cYNyP5DOQJRs0QmeUZ-130" value="DataController" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#b1ddf0;strokeColor=#10739e;" parent="B0cYNyP5DOQJRs0QmeUZ-1" vertex="1">
           <mxGeometry x="-2400" y="-2720" width="240" height="138" as="geometry">
             <mxRectangle x="-560" y="-159" width="90" height="30" as="alternateBounds" />
           </mxGeometry>
@@ -1170,7 +1170,7 @@
         <mxCell id="B0cYNyP5DOQJRs0QmeUZ-141" value="_view_flag_set = FlagDict() # This Dict can decide witch data are showed" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="B0cYNyP5DOQJRs0QmeUZ-137" vertex="1">
           <mxGeometry y="108" width="320" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="B0cYNyP5DOQJRs0QmeUZ-142" value="update_flag = False # When this is true MainController can update" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="B0cYNyP5DOQJRs0QmeUZ-137" vertex="1">
+        <mxCell id="B0cYNyP5DOQJRs0QmeUZ-142" value="update_flag = False # When this is true DataController can update" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="B0cYNyP5DOQJRs0QmeUZ-137" vertex="1">
           <mxGeometry y="134" width="320" height="26" as="geometry" />
         </mxCell>
         <mxCell id="B0cYNyP5DOQJRs0QmeUZ-143" value="update_flag_lock = False # This is to avoid redraw data" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="B0cYNyP5DOQJRs0QmeUZ-137" vertex="1">
@@ -2149,7 +2149,7 @@
         <mxCell id="ob-8EQ2PNy5KbJTWj8rf-8" value="Repository" style="html=1;fontColor=#0000FF;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="-40" y="200" width="160" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="ob-8EQ2PNy5KbJTWj8rf-12" value="MainController" style="html=1;fontColor=#0000FF;fillColor=none;" parent="1" vertex="1">
+        <mxCell id="ob-8EQ2PNy5KbJTWj8rf-12" value="DataController" style="html=1;fontColor=#0000FF;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="-960" y="200" width="160" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ob-8EQ2PNy5KbJTWj8rf-13" value="AxesController" style="html=1;fontColor=#0000FF;fillColor=none;" parent="1" vertex="1">
