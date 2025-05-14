@@ -14,6 +14,8 @@ from ScanDataPy.controller.controller_axes import TraceAxesController
 from ScanDataPy.controller.controller_axes import ImageAxesController
 from ScanDataPy.controller.controller_filename import FileService
 from ScanDataPy.controller.controller_key_manager import KeyManager
+from ScanDataPy.view.view_data import DataWindowFactory
+
 
 class ControllerInterface(metaclass=ABCMeta):
     @abstractmethod
@@ -50,22 +52,27 @@ class ControllerInterface(metaclass=ABCMeta):
         raise NotImplementedError()
 
 
-class DataController:
-    def __init__(self, view=None):
-        self.__model = DataService()
-        self.__file_service = FileService()
-        self._key_manager = KeyManager()
-        self.__ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, ElecAxes: TraceAx class}\
+class DataController(ControllerInterface):
+    def __init__(self, view=None, filename_obj=None, gui_backend_name=None):
+        self._gui_backend_name = gui_backend_name
+        self.filename_obj = filename_obj
         self.current_filename = [0]
+        self._model = DataService()
+        self._file_service = FileService()
+        self._key_manager = KeyManager()
+        self._ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, ElecAxes: TraceAx class}
 
-    def __del__(self):
-        print(".")
-        # print('Deleted a DataController.' + '  myId= {}'.format(id(self)))
-        # pass
+        # Create appropriate data window based on GUI backend
+        if view is not None:
+            self._data_window = DataWindowFactory.create_window(
+                view, self._gui_backend_name
+            )
+            self._data_window.setParent(view)
+            self._data_window.show()
 
     @property
     def ax_dict(self):
-        return self.__ax_dict
+        return self._ax_dict
 
     @property
     def key_manager(self):
@@ -73,23 +80,23 @@ class DataController:
 
     def add_axes(self, ax_type, axes_name: str, canvas, ax: object) -> None:
         if ax_type == "Image":
-            new_axes_controller = ImageAxesController(self, self.__model, canvas, ax)
+            new_axes_controller = ImageAxesController(self, self._model, canvas, ax)
         elif ax_type == "Trace":
-            new_axes_controller = TraceAxesController(self, self.__model, canvas, ax)
+            new_axes_controller = TraceAxesController(self, self._model, canvas, ax)
         else:
             new_axes_controller = None
             raise Exception(f"There is no {ax_type} axes controller")
-        self.__ax_dict[axes_name] = new_axes_controller
+        self._ax_dict[axes_name] = new_axes_controller
         print(f"DataController: Added {axes_name} axes controller")
 
     def get_canvas_axes(self, view_controller) -> object:
-        return self.__ax_dict[view_controller].get_canvas_axes()
+        return self._ax_dict[view_controller].get_canvas_axes()
 
     def open_file(self, filename_obj=None) -> dict:
         self.__reset()
         # get filename object
         if filename_obj is None:
-            filename_obj = self.__file_service.open_file()
+            filename_obj = self._file_service.open_file()
         elif filename_obj.name == "":
             print("DataController: File opening is Cancelled!!")
             return {}
@@ -116,7 +123,7 @@ class DataController:
             print("")
 
         # get similer files
-        same_ext_file_list = self.__file_service.get_files_with_same_extension(
+        same_ext_file_list = self._file_service.get_files_with_same_extension(
             filename_obj.fullname
         )
         print("----------------- Similer files:")
@@ -128,7 +135,7 @@ class DataController:
 
     def create_experiments(self, filename_obj: object):
         print("DataController: create_experiments() ----->")
-        new_data = self.__model.create_experiments(filename_obj.fullname)
+        new_data = self._model.create_experiments(filename_obj.fullname)
         # create_model end process
         if new_data is not True:
             raise Exception("Failed to create a model.")
@@ -143,7 +150,7 @@ class DataController:
 
         filename = self._key_manager.filename_list[self.current_filename[0]]
         # get default information from text data in the json setting file
-        default = self.__model.get_data(
+        default = self._model.get_data(
             {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
         )
 
@@ -151,30 +158,30 @@ class DataController:
             self.create_modifier(modifier_name)
         print("-----> DataController: create_default_modifier() Done")
 
-        self.__model.print_infor("Modifier")
+        self._model.print_infor("Modifier")
         print("=======================================================================")
         print("========== DataController: Made new Modifiers chain ==================")
         print("=======================================================================")
         print("")
 
     def create_modifier(self, modifier_name):
-        self.__model.add_modifier(modifier_name)
+        self._model.add_modifier(modifier_name)
 
     def set_observer(self, ax_name: str, modifier_tag: str) -> None:
-        self.__ax_dict[ax_name].set_observer(modifier_tag)
+        self._ax_dict[ax_name].set_observer(modifier_tag)
 
     # set modifier values e.g. 'Roi1', [40, 40, 1, 1]. Be call by view and self.default_settings.
     def set_modifier_val(self, modifier, *args, **kwargs):
-        self.__model.set_modifier_val(modifier, *args, **kwargs)
+        self._model.set_modifier_val(modifier, *args, **kwargs)
 
     def set_marker(self, ax_key, roi_tag=None):
-        self.__ax_dict[ax_key].set_marker(roi_tag)
+        self._ax_dict[ax_key].set_marker(roi_tag)
 
     def onclick_axes(self, event, axes_name):
         if axes_name == "ImageAxes":
             # get clicked position
             image_pos = (
-                self.__ax_dict["ImageAxes"]
+                self._ax_dict["ImageAxes"]
                 ._ax_obj.getView()
                 .mapSceneToView(event.scenePos())
             )
@@ -182,7 +189,7 @@ class DataController:
                 x = round(image_pos.x())
                 y = round(image_pos.y())
                 val = [x, y, None, None]
-                roi_tag = self.__ax_dict["FluoAxes"].onclick_axes(val)
+                roi_tag = self._ax_dict["FluoAxes"].onclick_axes(val)
                 self.update_view("FluoAxes")
                 # for RoiBOX
                 self.set_marker("ImageAxes", roi_tag)
@@ -193,40 +200,40 @@ class DataController:
             elif event.button() == Qt.MouseButton.RightButton:
                 pass
         elif axes_name == "FluoAxes":
-            if event.inaxes == self.__ax_dict["FluoAxes"]:
+            if event.inaxes == self._ax_dict["FluoAxes"]:
                 raise NotImplementedError()
-            elif event.inaxes == self.__ax_dict["ElecAxes"]:
+            elif event.inaxes == self._ax_dict["ElecAxes"]:
                 raise NotImplementedError()
         elif axes_name == "ElecAxes":
             raise NotImplementedError()
 
     def change_roi_size(self, val: list):
-        roi_tag = self.__ax_dict["FluoAxes"].change_roi_size(val)
+        roi_tag = self._ax_dict["FluoAxes"].change_roi_size(val)
         self.update_view("FluoAxes")
         # for RoiBOX
         self.set_marker("ImageAxes", roi_tag)
 
     def change_current_ax_mode(self, ax_key, mode):
-        self.__ax_dict[ax_key].change_current_ax_mode(mode)
+        self._ax_dict[ax_key].change_current_ax_mode(mode)
         self.update_view("FluoAxes")
 
     def set_tag(self, list_name, new_tag, ax_key=None):
         if ax_key is None:
             self._key_manager.set_tag(list_name, new_tag)
         else:
-            self.__ax_dict[ax_key].set_tag(list_name, new_tag)
+            self._ax_dict[ax_key].set_tag(list_name, new_tag)
 
     def replace_key_manager_tag(self, ax_key, list_name, old_tag, new_tag):
-        self.__ax_dict[ax_key].replace_key_manager_tag(list_name, old_tag, new_tag)
+        self._ax_dict[ax_key].replace_key_manager_tag(list_name, old_tag, new_tag)
 
     def change_color(self, color, ax_key=None):
         if ax_key is None:
             raise NotImplementedError()
         else:
-            self.__ax_dict[ax_key].change_color(color)
+            self._ax_dict[ax_key].change_color(color)
 
     def get_current_file_path(self):
-        return self.__file_service.get_current_file_path()
+        return self._file_service.get_current_file_path()
 
     def default_settings(self, filename_key):
         print("=============================================")
@@ -239,7 +246,7 @@ class DataController:
         filename = self._key_manager.filename_list[self.current_filename[0]]
 
         # get default information from JSON
-        default = self.__model.get_data(
+        default = self._model.get_data(
             {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
         )
         print("")
@@ -305,7 +312,7 @@ class DataController:
         print("")
 
     def set_update_flag(self, ax_name, flag):
-        self.__ax_dict[ax_name].set_update_flag(flag)
+        self._ax_dict[ax_name].set_update_flag(flag)
 
     def update_view(self, axes=None) -> None:
         """
@@ -319,32 +326,32 @@ class DataController:
         """
         if axes is None:
             # Update all axes controllers
-            for ax in self.__ax_dict.values():
+            for ax in self._ax_dict.values():
                 ax.update()
                 ax.set_update_flag(False)  # return to deactive
         else:
             # Update only the specified axes controller
-            self.__ax_dict[axes].update()
-            self.__ax_dict[axes].set_update_flag(False)  # return to deactive
+            self._ax_dict[axes].update()
+            self._ax_dict[axes].set_update_flag(False)  # return to deactive
         print("Main controller: Update done!")
         print("")
 
     def __reset(self):
-        self.__model.reset()
-        self.__file_service.reset()
+        self._model.reset()
+        self._file_service.reset()
         self._key_manager.reset()
-        for ax in self.__ax_dict.values():
+        for ax in self._ax_dict.values():
             ax.key_manager.reset()
 
     def print_infor(self):
         print("======================================")
         print("========== Data Information ==========")
         print("======================================")
-        self.__model.print_infor()
+        self._model.print_infor()
         print("Operating controller list ---------->")
         self._key_manager.print_infor()
         print("Axes controller infor ---------->")
-        for ax in self.__ax_dict.values():
+        for ax in self._ax_dict.values():
             ax.print_infor()
         print("========== Data Information End ==========")
         print("")
@@ -352,10 +359,10 @@ class DataController:
 
 class AiController:
     def __init__(self):
-        self.__file_service = FileService()
+        self._file_service = FileService()
 
     def rename_files(self):
-        self.__file_service.rename_files()
+        self._file_service.rename_files()
 
 
 class WholeFilename:

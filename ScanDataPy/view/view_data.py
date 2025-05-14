@@ -8,12 +8,92 @@ main for view
 
 import sys
 import json
-from ScanDataPy.common_class import WholeFilename
+from abc import ABCMeta, abstractmethod
+
+from ScanDataPy.controller.controller_filename import WholeFilename
 from ScanDataPy.controller.controller_data import DataController
 import PyQt6
 from PyQt6 import QtWidgets, QtCore
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+
+class AbstractDataWindowFactory(metaclass=ABCMeta):
+    @abstractmethod
+    def create_data_window(self, gui_backend_name: str):
+        raise NotImplementedError()
+
+
+class DataWindowFactory(AbstractDataWindowFactory):
+    """Factory class for creating appropriate data windows based on GUI backend"""
+
+    @staticmethod
+    def create_window(view, gui_backend_name):
+        if gui_backend_name == "pyqt6":
+            return QtDataWindow(view)
+        elif gui_backend_name == "matplotlib":
+            return MatplotlibDataWindow(view)
+        else:
+            raise ValueError(f"Unsupported GUI backend: {gui_backend_name}")
+
+
+class MatplotlibDataWindow(QtWidgets.QMainWindow):
+    def __init__(self, window=None):
+        super().__init__(window)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
+        self._main_controller = DataController(self)
+        self.setWindowTitle("SCANDATA (Matplotlib)")
+
+        # Create central widget and layout
+        central_widget = QtWidgets.QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QtWidgets.QVBoxLayout(central_widget)
+
+        # Create figure with subplots
+        self.figure = Figure(figsize=(12, 8))
+        self.canvas = FigureCanvas(self.figure)
+
+        # Create subplots
+        self.image_ax = self.figure.add_subplot(221)  # Image plot
+        self.fluo_ax = self.figure.add_subplot(223)  # Fluorescence trace
+        self.elec_ax = self.figure.add_subplot(224)  # Electrical trace
+
+        # Add canvas to layout
+        main_layout.addWidget(self.canvas)
+
+        # Add buttons and controls
+        control_layout = QtWidgets.QHBoxLayout()
+
+        # Load button
+        load_btn = QtWidgets.QPushButton("Load")
+        load_btn.clicked.connect(self.open_file)
+        control_layout.addWidget(load_btn)
+
+        # Add control layout to main layout
+        main_layout.addLayout(control_layout)
+
+        # Connect the axes to the controller
+        self._main_controller.add_axes("Image", "ImageAxes", self, self.image_ax)
+        self._main_controller.add_axes("Trace", "FluoAxes", self, self.fluo_ax)
+        self._main_controller.add_axes("Trace", "ElecAxes", self, self.elec_ax)
+
+    def open_file(self, filename_obj=None):
+        # make a model and get filename obj
+        filename_obj, same_ext_file_list = self._main_controller.open_file(filename_obj)
+
+        # make user controllers
+        self._main_controller.create_default_modifier(0)  # filename number
+        self._main_controller.default_settings(filename_obj.name)
+
+        self._main_controller.print_infor()
+        self._main_controller.update_view()
+        self._main_controller.set_marker(ax_key="ImageAxes", roi_tag="Roi1")
+
+    def update_plot(self):
+        """Update all plots"""
+        self.canvas.draw()
 
 
 class QtDataWindow(QtWidgets.QMainWindow):
@@ -342,9 +422,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
     # timewindow = TimeWindow0 or BlComp,  axes is for update
     def two_input_dialog(self, timewindow, axes):
         dialog = InputDialog(self)
-        if (
-            dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted
-        ):
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             val = dialog.get_numbers()
             if val is not None:
                 print(f"Input values: {val}")
@@ -394,7 +472,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.bl_use_roi1_switch()
         self.dFoverF_trace.setChecked(True)
         self.scale(self.dFoverF_trace)
-        #self.bl_comp_checkbox.setChecked(True)
+        # self.bl_comp_checkbox.setChecked(True)
 
     def roi_size(self, command):
         if command == "large":
@@ -420,7 +498,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
             self._main_controller.change_current_ax_mode(
                 ax_key="FluoAxes", mode="Normal"
             )
-   
+
     # under construction
     """
     def change_roi(self, state):
@@ -462,12 +540,17 @@ class QtDataWindow(QtWidgets.QMainWindow):
             self._main_controller.set_modifier_val("BlComp0", "Exponential")
             self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
             self._main_controller.update_view("FluoAxes")
-            
+
             # Create and show FloatWindow
-            if not hasattr(self, 'float_window') or self.float_window is None:
+            if not hasattr(self, "float_window") or self.float_window is None:
                 self.float_window = FloatWindow(self, self._main_controller)
-                self._main_controller.add_axes("Trace", "FloatAxes1", self.float_window, self.float_window.plot_widget)
-                #ここでfloat_windowのaxesのtagを設定する        
+                self._main_controller.add_axes(
+                    "Trace",
+                    "FloatAxes1",
+                    self.float_window,
+                    self.float_window.plot_widget,
+                )
+                # ここでfloat_windowのaxesのtagを設定する
                 # default = self.main_controller._model.get_data(
                 # {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
                 # )
@@ -480,9 +563,9 @@ class QtDataWindow(QtWidgets.QMainWindow):
             )
             self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
             self._main_controller.update_view("FluoAxes")
-            
+
             # Close FloatWindow if it exists
-            if hasattr(self, 'float_window') and self.float_window is not None:
+            if hasattr(self, "float_window") and self.float_window is not None:
                 self.float_window.close()
                 self.float_window = None
 
@@ -630,4 +713,3 @@ if __name__ == "__main__":
 
     if sys.flags.interactive == 0:
         scandata.exec()
-
