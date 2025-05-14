@@ -6,7 +6,7 @@ Created on Fri Dec 15 09:01:53 2023
 """
 
 from abc import ABCMeta, abstractmethod
-from ScanDataPy.common_class import KeyManager, Tools
+from ScanDataPy.controller.controller_key_manager import KeyManager
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets
 

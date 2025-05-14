@@ -10,7 +10,6 @@ import copy
 from logging import raiseExceptions
 
 from ScanDataPy.common_class import Tools
-from ScanDataPy.common_class import WholeFilename
 from ScanDataPy.model.modifier import ModifierService
 from ScanDataPy.model.builder import TsmBuilder
 from ScanDataPy.model.builder import DaBuilder

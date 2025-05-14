@@ -12,8 +12,8 @@ from pathlib import Path
 from ScanDataPy.model.model import DataService
 from ScanDataPy.controller.controller_axes import TraceAxesController
 from ScanDataPy.controller.controller_axes import ImageAxesController
-from ScanDataPy.common_class import FileService, KeyManager
-
+from ScanDataPy.controller.controller_filename import FileService
+from ScanDataPy.controller.controller_key_manager import KeyManager
 
 class ControllerInterface(metaclass=ABCMeta):
     @abstractmethod
