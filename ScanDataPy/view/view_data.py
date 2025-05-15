@@ -24,9 +24,9 @@ class AbstractDataWindowFactory(metaclass=ABCMeta):
     @abstractmethod
     def create_data_window(self, gui_backend_name: str):
         raise NotImplementedError()
+    
 
-
-class DataWindowFactory(AbstractDataWindowFactory):
+class QtDataWindowFactory(AbstractDataWindowFactory):
     """Factory class for creating appropriate data windows based on GUI backend"""
 
     @staticmethod
@@ -39,69 +39,15 @@ class DataWindowFactory(AbstractDataWindowFactory):
             raise ValueError(f"Unsupported GUI backend: {gui_backend_name}")
 
 
-class MatplotlibDataWindow(QtWidgets.QMainWindow):
+class DataWindow(QtWidgets.QMainWindow):
+    def __init__(self, window=None):
+        self._main_controller = DataController(self)
+        self.setWindowTitle("SCANDATA")   
+
+class QtDataWindow(DataWindow):
     def __init__(self, window=None):
         super().__init__(window)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
-        self._main_controller = DataController(self)
-        self.setWindowTitle("SCANDATA (Matplotlib)")
-
-        # Create central widget and layout
-        central_widget = QtWidgets.QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QtWidgets.QVBoxLayout(central_widget)
-
-        # Create figure with subplots
-        self.figure = Figure(figsize=(12, 8))
-        self.canvas = FigureCanvas(self.figure)
-
-        # Create subplots
-        self.image_ax = self.figure.add_subplot(221)  # Image plot
-        self.fluo_ax = self.figure.add_subplot(223)  # Fluorescence trace
-        self.elec_ax = self.figure.add_subplot(224)  # Electrical trace
-
-        # Add canvas to layout
-        main_layout.addWidget(self.canvas)
-
-        # Add buttons and controls
-        control_layout = QtWidgets.QHBoxLayout()
-
-        # Load button
-        load_btn = QtWidgets.QPushButton("Load")
-        load_btn.clicked.connect(self.open_file)
-        control_layout.addWidget(load_btn)
-
-        # Add control layout to main layout
-        main_layout.addLayout(control_layout)
-
-        # Connect the axes to the controller
-        self._main_controller.add_axes("Image", "ImageAxes", self, self.image_ax)
-        self._main_controller.add_axes("Trace", "FluoAxes", self, self.fluo_ax)
-        self._main_controller.add_axes("Trace", "ElecAxes", self, self.elec_ax)
-
-    def open_file(self, filename_obj=None):
-        # make a model and get filename obj
-        filename_obj, same_ext_file_list = self._main_controller.open_file(filename_obj)
-
-        # make user controllers
-        self._main_controller.create_default_modifier(0)  # filename number
-        self._main_controller.default_settings(filename_obj.name)
-
-        self._main_controller.print_infor()
-        self._main_controller.update_view()
-        self._main_controller.set_marker(ax_key="ImageAxes", roi_tag="Roi1")
-
-    def update_plot(self):
-        """Update all plots"""
-        self.canvas.draw()
-
-
-class QtDataWindow(QtWidgets.QMainWindow):
-    def __init__(self, window=None):
-        super().__init__(window)
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
-        self._main_controller = DataController(self)
-        self.setWindowTitle("SCANDATA")
 
         # import a JSON setting file
         setting = None
@@ -700,6 +646,62 @@ class CustomImageView(pg.ImageView):
             "xxxxxxxxxxxxxxxxxxxxCustomImageViewxPressEvent event ignoredxxxxxxxxxxxxxxxxxxxxx"
         )
         event.ignore()
+
+class MatplotlibDataWindow(DataWindow):
+    def __init__(self, window=None):
+        super().__init__(window)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
+        self._main_controller = DataController(self)
+        self.setWindowTitle("SCANDATA (Matplotlib)")
+
+        # Create central widget and layout
+        central_widget = QtWidgets.QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QtWidgets.QVBoxLayout(central_widget)
+
+        # Create figure with subplots
+        self.figure = Figure(figsize=(12, 8))
+        self.canvas = FigureCanvas(self.figure)
+
+        # Create subplots
+        self.image_ax = self.figure.add_subplot(221)  # Image plot
+        self.fluo_ax = self.figure.add_subplot(223)  # Fluorescence trace
+        self.elec_ax = self.figure.add_subplot(224)  # Electrical trace
+
+        # Add canvas to layout
+        main_layout.addWidget(self.canvas)
+
+        # Add buttons and controls
+        control_layout = QtWidgets.QHBoxLayout()
+
+        # Load button
+        load_btn = QtWidgets.QPushButton("Load")
+        load_btn.clicked.connect(self.open_file)
+        control_layout.addWidget(load_btn)
+
+        # Add control layout to main layout
+        main_layout.addLayout(control_layout)
+
+        # Connect the axes to the controller
+        self._main_controller.add_axes("Image", "ImageAxes", self, self.image_ax)
+        self._main_controller.add_axes("Trace", "FluoAxes", self, self.fluo_ax)
+        self._main_controller.add_axes("Trace", "ElecAxes", self, self.elec_ax)
+
+    def open_file(self, filename_obj=None):
+        # make a model and get filename obj
+        filename_obj, same_ext_file_list = self._main_controller.open_file(filename_obj)
+
+        # make user controllers
+        self._main_controller.create_default_modifier(0)  # filename number
+        self._main_controller.default_settings(filename_obj.name)
+
+        self._main_controller.print_infor()
+        self._main_controller.update_view()
+        self._main_controller.set_marker(ax_key="ImageAxes", roi_tag="Roi1")
+
+    def update_plot(self):
+        """Update all plots"""
+        self.canvas.draw()
 
 
 if __name__ == "__main__":

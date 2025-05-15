@@ -14,7 +14,7 @@ from ScanDataPy.controller.controller_axes import TraceAxesController
 from ScanDataPy.controller.controller_axes import ImageAxesController
 from ScanDataPy.controller.controller_filename import FileService
 from ScanDataPy.controller.controller_key_manager import KeyManager
-from ScanDataPy.view.view_data import DataWindowFactory
+from ScanDataPy.view.view_data import QtDataWindowFactory
 
 
 class ControllerInterface(metaclass=ABCMeta):
@@ -64,7 +64,7 @@ class DataController(ControllerInterface):
 
         # Create appropriate data window based on GUI backend
         if view is not None:
-            self._data_window = DataWindowFactory.create_window(
+            self._data_window = dataWindowFactory.create_window(
                 view, self._gui_backend_name
             )
             self._data_window.setParent(view)
