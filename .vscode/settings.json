@@ -1,0 +1,9 @@
+{
+    "python.linting.enabled": true,
+    "python.linting.lintOnSave": true,
+    "python.linting.ruffEnabled": true,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.ruff": "explicit"
+    }
+} 
