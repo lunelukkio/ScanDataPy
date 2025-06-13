@@ -25,28 +25,69 @@ class FileService:
         self.filename_obj_dict = {}
 
     def open_file(self, filename=None):
-        if filename is None:
-            fullname = self.get_fullname()  # This is str filename
-            if fullname is None:
-                print("No filename.")
-                return
-            new_full_filename = fullname
-        else:
-            new_full_filename = filename
-            print(new_full_filename)
-        new_filename_obj = WholeFilename(new_full_filename)
-        self.filename_obj_dict[new_filename_obj.name] = new_filename_obj
-        return new_filename_obj
+        """
+        Open a file and create a WholeFilename object.
+        
+        Args:
+            filename (str, optional): Path to the file. If None, opens file dialog.
+            
+        Returns:
+            WholeFilename: File object or None if operation was cancelled
+            
+        Raises:
+            FileNotFoundError: If the specified file doesn't exist
+            ValueError: If filename is invalid
+        """
+        try:
+            if filename is None:
+                fullname = self.get_fullname()  # This is str filename
+                if fullname is None or fullname == "":
+                    print("File selection cancelled or no filename provided.")
+                    return None
+                new_full_filename = fullname
+            else:
+                if not isinstance(filename, str) or filename.strip() == "":
+                    raise ValueError("Filename must be a non-empty string")
+                if not os.path.exists(filename):
+                    raise FileNotFoundError(f"File not found: {filename}")
+                new_full_filename = filename
+                print(f"Opening file: {new_full_filename}")
+                
+            new_filename_obj = WholeFilename(new_full_filename)
+            self.filename_obj_dict[new_filename_obj.name] = new_filename_obj
+            return new_filename_obj
+            
+        except Exception as e:
+            print(f"Error opening file: {str(e)}")
+            raise
 
     # Function to rename multiple files. This is for nnU-net model: https://www.youtube.com/watch?v=uhpnT8hGTnY&t=511s
-    def rename_files(self):
-        folder_path = "C:/Users/lunel/Documents/python/nnUNetFrame/testfolder"
-        for count, filename in enumerate(sorted(os.listdir(folder_path))):
-            dst = "ABD_" + str(count).zfill(3) + ".nii.gz"
-            src = f"{folder_path}/{filename}"  # foldername/filename, if .py file
-            dst = f"{folder_path}/{dst}"
-            # rename() function will rename all the files
-            os.rename(src, dst)
+    def rename_files(self, folder_path: str = None, prefix: str = "ABD_", extension: str = ".nii.gz"):
+        """
+        Rename multiple files in a folder with sequential numbering.
+        
+        Args:
+            folder_path (str): Path to the folder containing files to rename
+            prefix (str): Prefix for the new filenames
+            extension (str): File extension for the renamed files
+        """
+        if folder_path is None:
+            # Use a default path relative to the current working directory
+            folder_path = os.path.join(os.getcwd(), "testfolder")
+            
+        if not os.path.exists(folder_path):
+            raise FileNotFoundError(f"Folder path does not exist: {folder_path}")
+            
+        try:
+            for count, filename in enumerate(sorted(os.listdir(folder_path))):
+                old_path = os.path.join(folder_path, filename)
+                new_filename = f"{prefix}{str(count).zfill(3)}{extension}"
+                new_path = os.path.join(folder_path, new_filename)
+                os.rename(old_path, new_path)
+                print(f"Renamed: {filename} -> {new_filename}")
+        except Exception as e:
+            print(f"Error renaming files: {str(e)}")
+            raise
 
     @staticmethod
     def get_fullname(event=None):

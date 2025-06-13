@@ -8,6 +8,8 @@ main for view
 
 import sys
 import json
+from abc import ABCMeta, abstractmethod
+from typing import Any
 from ScanDataPy.common_class import WholeFilename
 from ScanDataPy.controller.controller_main import MainController
 import PyQt6
@@ -16,7 +18,50 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets
 
 
-class QtDataWindow(QtWidgets.QMainWindow):
+class QABCMeta(type(QtWidgets.QMainWindow), ABCMeta):
+    pass
+
+
+class ViewInterface(metaclass=ABCMeta):
+    """Interface for View classes to break circular dependency with Controller"""
+
+    @abstractmethod
+    def update_scale_label(self, text: str) -> None:
+        """Update scale label text"""
+        pass
+
+    @abstractmethod
+    def set_bl_use_roi1_checked(self, checked: bool) -> None:
+        """Set bl_use_roi1 checkbox state"""
+        pass
+
+    @abstractmethod
+    def set_dFoverF_trace_checked(self, checked: bool) -> None:
+        """Set dFoverF_trace checkbox state"""
+        pass
+
+    @abstractmethod
+    def create_float_window(self) -> Any:
+        """Create and return float window"""
+        pass
+
+    @abstractmethod
+    def close_float_window(self) -> None:
+        """Close float window if exists"""
+        pass
+
+    @abstractmethod
+    def get_current_roi_mode(self) -> str:
+        """Get current ROI mode from UI state"""
+        pass
+
+    @abstractmethod
+    def update_display(self) -> None:
+        """Update the view display"""
+        pass
+
+
+class QtDataWindow(QtWidgets.QMainWindow, ViewInterface, metaclass=QABCMeta):
     def __init__(self, window=None):
         super().__init__(window)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -342,9 +387,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
     # timewindow = TimeWindow0 or BlComp,  axes is for update
     def two_input_dialog(self, timewindow, axes):
         dialog = InputDialog(self)
-        if (
-            dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted
-        ):
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             val = dialog.get_numbers()
             if val is not None:
                 print(f"Input values: {val}")
@@ -394,7 +437,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
         self.bl_use_roi1_switch()
         self.dFoverF_trace.setChecked(True)
         self.scale(self.dFoverF_trace)
-        #self.bl_comp_checkbox.setChecked(True)
+        # self.bl_comp_checkbox.setChecked(True)
 
     def roi_size(self, command):
         if command == "large":
@@ -420,7 +463,7 @@ class QtDataWindow(QtWidgets.QMainWindow):
             self._main_controller.change_current_ax_mode(
                 ax_key="FluoAxes", mode="Normal"
             )
-   
+
     # under construction
     """
     def change_roi(self, state):
@@ -463,14 +506,35 @@ class QtDataWindow(QtWidgets.QMainWindow):
             self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
             self._main_controller.update_view("FluoAxes")
             
-            # Create and show FloatWindow
-            if not hasattr(self, 'float_window') or self.float_window is None:
-                self.float_window = FloatWindow(self, self._main_controller)
-                self._main_controller.add_axes("Trace", "FloatAxes1", self.float_window, self.float_window.plot_widget)
-                #ここでfloat_windowのaxesのtagを設定する        
-                # default = self.main_controller._model.get_data(
-                # {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
-                # )
+            # Update baseline window if it exists
+            if hasattr(self, "float_window") and self.float_window is not None:
+                self._main_controller.set_update_flag(ax_name="FloatAxes1", flag=True)
+                self._main_controller.update_view("FloatAxes1")
+
+            # Create and show BaselineFittingWindow
+            if not hasattr(self, "float_window") or self.float_window is None:
+                self.float_window = BaselineFittingWindow(self, self._main_controller)
+                self._main_controller.add_axes(
+                    "Baseline",
+                    "FloatAxes1",
+                    self.float_window,
+                    self.float_window.plot_widget,
+                )
+                # Set observer for BlComp0 modifier to FloatAxes1 controller
+                self._main_controller.set_observer("FloatAxes1", "BlComp0")
+                
+                # Set up tags for baseline display
+                self._main_controller.set_tag(
+                    list_name="modifier_list", new_tag="BlComp0", ax_key="FloatAxes1"
+                )
+                self._main_controller.set_tag(
+                    list_name="attribute_list", new_tag="Baseline", ax_key="FloatAxes1"
+                )
+                
+                # Force initial update of baseline window
+                self._main_controller.set_update_flag(ax_name="FloatAxes1", flag=True)
+                self._main_controller.update_view("FloatAxes1")
+                
                 self.float_window.show()
         else:
             # disable baseline comp
@@ -480,9 +544,9 @@ class QtDataWindow(QtWidgets.QMainWindow):
             )
             self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
             self._main_controller.update_view("FluoAxes")
-            
+
             # Close FloatWindow if it exists
-            if hasattr(self, 'float_window') and self.float_window is not None:
+            if hasattr(self, "float_window") and self.float_window is not None:
                 self.float_window.close()
                 self.float_window = None
 
@@ -536,6 +600,46 @@ class QtDataWindow(QtWidgets.QMainWindow):
         )
         self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
         self._main_controller.update_view("FluoAxes")
+    
+    def update_scale_label(self, text: str) -> None:
+        """Update scale label text"""
+        if hasattr(self, 'scale_label'):
+            self.scale_label.setText(text)
+    
+    def set_bl_use_roi1_checked(self, checked: bool) -> None:
+        """Set bl_use_roi1 checkbox state"""
+        if hasattr(self, 'bl_use_roi1_button'):
+            self.bl_use_roi1_button.setChecked(checked)
+    
+    def set_dFoverF_trace_checked(self, checked: bool) -> None:
+        """Set dFoverF_trace checkbox state"""
+        if hasattr(self, 'dFoverF_trace_button'):
+            self.dFoverF_trace_button.setChecked(checked)
+    
+    def create_float_window(self) -> Any:
+        """Create and return float window"""
+        if not hasattr(self, "float_window") or self.float_window is None:
+            self.float_window = BaselineFittingWindow(self, self._main_controller)
+        return self.float_window
+    
+    def close_float_window(self) -> None:
+        """Close float window if exists"""
+        if hasattr(self, "float_window") and self.float_window is not None:
+            self.float_window.close()
+            self.float_window = None
+    
+    def get_current_roi_mode(self) -> str:
+        """Get current ROI mode from UI state"""
+        if hasattr(self, 'roi_radio_large') and self.roi_radio_large.isChecked():
+            return "large"
+        elif hasattr(self, 'roi_radio_small') and self.roi_radio_small.isChecked():
+            return "small"
+        return "unknown"
+    
+    def update_display(self) -> None:
+        """Update the view display"""
+        # Force a repaint of the main window
+        self.update()
 
 
 class InputDialog(QtWidgets.QDialog):
@@ -571,12 +675,12 @@ class InputDialog(QtWidgets.QDialog):
 
 
 # This is for baseline comp.
-class FloatWindow(QtWidgets.QMainWindow):
+class BaselineFittingWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None, main_controller=None):
         super().__init__(parent)
         self._main_controller = main_controller
-        self.setWindowTitle("Float Window")
-        self.setGeometry(100, 100, 300, 200)  # Adjusted size for plot
+        self.setWindowTitle("Baseline Fitting Window")
+        self.setGeometry(100, 100, 600, 400)  # Adjusted size for plot
 
         # Set central widget and layout
         central_widget = QtWidgets.QWidget()
@@ -591,11 +695,16 @@ class FloatWindow(QtWidgets.QMainWindow):
         plot_widget.setBackground("w")  # White background
         plot_widget.getAxis("bottom").setPen(pg.mkPen(color=(0, 0, 0), width=2))
         plot_widget.getAxis("left").setPen(pg.mkPen(color=(0, 0, 0), width=2))
-        plot_widget.setLabel("bottom", "X Axis", color="black")
-        plot_widget.setLabel("left", "Y Axis", color="black")
+        plot_widget.setLabel("bottom", "Time", color="black")
+        plot_widget.setLabel("left", "Intensity", color="black")
 
         # Store the plot widget if you need to access it later
         self.plot_widget = plot_widget
+
+
+# Keep FloatWindow for backward compatibility
+class FloatWindow(BaselineFittingWindow):
+    pass
 
 
 class CustomImageView(pg.ImageView):
@@ -630,4 +739,3 @@ if __name__ == "__main__":
 
     if sys.flags.interactive == 0:
         scandata.exec()
-

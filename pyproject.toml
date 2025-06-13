@@ -1,9 +1,19 @@
 [project]
 name = "scandata"
 version = "0.1.0"
-description = "Add your description here"
+description = "ScanData - Scientific data analysis application for neurophysiology"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "ruff>=0.11.8",
+    "numpy>=2.2.0",
+    "pandas>=2.2.0",
+    "matplotlib>=3.10.0",
+    "scipy>=1.15.0",
+    "pyqt6>=6.9.0",
+    "pyqtgraph>=0.13.0",
+    "pillow>=11.2.0",
+    "psutil>=7.0.0",
+    "pytest>=8.3.0",
+    "torch>=2.7.0",
 ]

@@ -143,8 +143,11 @@ class MainListWindow(QtWidgets.QMainWindow):
             child_window = self.scandata_controller.data_window_list.pop(
                 window_name, None
             )
-            if child_window:
-                child_window.close()  # Explicitly close the child window
+            if child_window and not child_window.isBeingDeleted():
+                try:
+                    child_window.close()  # Explicitly close the child window
+                except RuntimeError:
+                    pass  # Window already deleted
         super().closeEvent(event)  # Call the parent class's closeEvent
 
 

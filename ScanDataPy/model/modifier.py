@@ -108,6 +108,13 @@ class ModifierService(ModifierServiceInterface):
         for modifier_obj in self.modifier_chain_list:
             if modifier_obj.modifier_name == modifier_name:
                 return modifier_obj.val_obj
+    
+    def get_modifier(self, modifier_name):
+        """Get the modifier object itself"""
+        for modifier_obj in self.modifier_chain_list:
+            if modifier_obj.modifier_name == modifier_name:
+                return modifier_obj
+        return None
 
     # return object will save to repository
     def set_modifier_val(self, modifier_name, *args, **kwargs):
@@ -643,8 +650,8 @@ class BlComp(ModifierHandler):
     def __init__(self, modifier_name):
         super().__init__(modifier_name)
         self.bl_mode = "Exponential"  # or 'PolyVal' or 'Exponential'
-        self.baseline_window = None  # This is to show the baseline and fitting curve
         self.cutting_time_window = [0, 0]  # [start, width]
+        self.baseline_data = None  # Store baseline data for retrieval
 
     def __del__(self):  # make a message when this object is deleted.
         print(".")
@@ -704,9 +711,19 @@ class BlComp(ModifierHandler):
                     f"No such a BlComp mode -> '{self.bl_mode}' \n "
                     f"check set_modifier_val in BlComp"
                 )
+            # Create a new tag for baseline fitting data
+            baseline_tag = dict(bl_trace.data_tag)
+            baseline_tag['Attribute'] = 'Baseline'
+            baseline_tag['Origin'] = self.modifier_name
+            
+            # Create TraceData with the correct tag
             self._val_obj = TraceData(
-                fitting_trace_raw, bl_trace.data_tag, bl_trace.interval
+                fitting_trace_raw, baseline_tag, bl_trace.interval
             )
+            
+            # Store baseline data for retrieval
+            self.baseline_data = self._val_obj
+            
             print(f"BlComp: Set new baseline trace as {self._val_obj.data_tag}")
             self.observer.notify_observer()
         else:
@@ -727,17 +744,11 @@ class BlComp(ModifierHandler):
             delta_F_trace = data_obj - norm_bl_trace
             bl_comp_trace = delta_F_trace + f_val
 
-            # should be deleted
-            # show a baseline fitting trace : this should be in the view class
-            if self.baseline_window is None:
-                self.baseline_window = pg.plot()
-                self.baseline_window.setWindowTitle("Baseline fitting")
-                self.baseline_window.setGeometry(100, 100, 200, 150)
-            else:
-                self.baseline_window.clear()
-            self._val_obj.show_data(self.baseline_window)
-
             return bl_comp_trace
+    
+    def get_baseline_data(self):
+        """Get the baseline fitting data for display"""
+        return self.baseline_data
 
 
 class DifImage(ModifierHandler):

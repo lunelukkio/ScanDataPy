@@ -1,6 +1,6 @@
 try:
     import PyQt6
-    print(f"PyQt6は {PyQt6.__file__} にインストールされています")
-    print(f"Qt6のライブラリディレクトリは {PyQt6.__path__} です")
+    print(f"PyQt6 is installed at: {PyQt6.__file__}")
+    print(f"Qt6 library directory: {PyQt6.__path__}")
 except ImportError as e:
-    print(f"PyQt6をインポートできませんでした: {e}")
+    print(f"Failed to import PyQt6: {e}")

@@ -187,6 +187,13 @@ class DataService(ModelInterface):
 
     def get_modifier_val(self, modifier_name):
         return self._modifier_service.get_modifier_val(modifier_name)
+    
+    def get_modifier_baseline_data(self, modifier_name):
+        """Get baseline data from a specific modifier"""
+        modifier = self._modifier_service.get_modifier(modifier_name)
+        if hasattr(modifier, 'get_baseline_data'):
+            return modifier.get_baseline_data()
+        return None
 
     def reset(self):
         self._repository = Repository()

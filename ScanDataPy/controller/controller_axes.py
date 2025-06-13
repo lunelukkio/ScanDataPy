@@ -366,3 +366,39 @@ class RoiBox:
     @property
     def rectangle_obj(self):
         return self.__rectangle_obj
+
+
+class BaselineAxesController(TraceAxesController):
+    """Specialized controller for displaying baseline fitting data"""
+    
+    def __init__(self, main_controller, model, canvas, ax):
+        super().__init__(main_controller, model, canvas, ax)
+        self.line_color_mode = 'BaselineMode'
+    
+    def get_view_data(self):
+        """Override to display baseline fitting data"""
+        # Get baseline data from BlComp modifier
+        baseline_data = self._main_controller.get_baseline_data('BlComp0')
+        
+        if baseline_data is not None:
+            # Show baseline data using DataTrace.show_data() method
+            plot_data = baseline_data.show_data(self._ax_obj)
+            # Combine keys for graph identification
+            item_key = ''.join(baseline_data.data_tag.values())
+            # Store in ax_item_dict for reference
+            self.ax_item_dict[item_key] = plot_data
+    
+    def update(self):
+        if self.update_flag is True:
+            # Clear previous display
+            self._ax_obj.clear()
+            self.ax_item_dict = {}
+            # Get and display baseline data
+            self.get_view_data()
+            # Auto-range the axes
+            self._ax_obj.autoRange()
+            print(f"AxesController: {self.__class__.__name__} updated")
+            # Reset update flag
+            self.update_flag = False
+        else:
+            print("BaselineAxesController: update flag is False")
