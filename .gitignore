@@ -170,3 +170,4 @@ cython_debug/
 **/Docker/
 **/Scripts/
 .python-version
+**/.claude/
