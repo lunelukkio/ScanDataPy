@@ -2,12 +2,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: ScanDataPy Module",
+            "name": "Debug ScanDataPy",
             "type": "python",
             "request": "launch",
             "module": "ScanDataPy",
+            "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal"
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe"
+        },
+        {
+            "name": "Debug Current File",
+            "type": "python", 
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe"
         }
     ]
 } 
