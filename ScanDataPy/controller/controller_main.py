@@ -19,6 +19,7 @@ class MainController:
 
         self.current_file_list = []
         self.data_controller_dict = {}
+        self.data_window_list = {}  # Add this attribute for compatibility with view_list.py
         self.history_manager = FileHistoryManager()
 
         # Handle gui_app selection

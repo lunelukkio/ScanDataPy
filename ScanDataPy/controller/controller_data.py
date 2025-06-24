@@ -64,11 +64,15 @@ class DataController(ControllerInterface):
 
         # Create appropriate data window based on GUI backend
         if view is not None:
-            self._data_window = dataWindowFactory.create_window(
+            self._data_window = QtDataWindowFactory.create_window(
                 view, self._gui_backend_name
             )
             self._data_window.setParent(view)
             self._data_window.show()
+
+    def get_filename(self):
+        """Return the filename as a string"""
+        return self.filename_obj.name if self.filename_obj else None
 
     @property
     def ax_dict(self):
