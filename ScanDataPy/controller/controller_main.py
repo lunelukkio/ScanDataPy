@@ -118,7 +118,8 @@ class MainController:
             print(
                 f"[MainController] Creating new DataController for {filename_obj.name}."
             )
-            data_controller = DataController(self, filename_obj, self.gui_backend_name)
+            # send view for setting list view as parent
+            data_controller = DataController(view=self.main_list_window, filename_obj=filename_obj, gui_backend_name=self.gui_backend_name)
             self.data_controller_dict[filename_obj.name] = data_controller
             print(
                 f"[MainController] New DataController for {filename_obj.name} created and stored."

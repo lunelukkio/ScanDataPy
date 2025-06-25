@@ -14,7 +14,6 @@ from ScanDataPy.controller.controller_axes import TraceAxesController
 from ScanDataPy.controller.controller_axes import ImageAxesController
 from ScanDataPy.controller.controller_filename import FileService
 from ScanDataPy.controller.controller_key_manager import KeyManager
-from ScanDataPy.view.view_data import QtDataWindowFactory
 
 
 class ControllerInterface(metaclass=ABCMeta):
@@ -53,22 +52,30 @@ class ControllerInterface(metaclass=ABCMeta):
 
 
 class DataController(ControllerInterface):
+    # view is for setting list view as parent
     def __init__(self, view=None, filename_obj=None, gui_backend_name=None):
         self._gui_backend_name = gui_backend_name
         self.filename_obj = filename_obj
         self.current_filename = [0]
         self._model = DataService()
-        self._file_service = FileService()
+        self._file_service = FileService(self._gui_backend_name)
         self._key_manager = KeyManager()
         self._ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, ElecAxes: TraceAx class}
-
         # Create appropriate data window based on GUI backend
         if view is not None:
-            self._data_window = QtDataWindowFactory.create_window(
-                view, self._gui_backend_name
-            )
+            if self._gui_backend_name == "pyqt6":
+                from ScanDataPy.view.view_data import QtDataWindowFactory
+                WindowFactory = QtDataWindowFactory
+            elif self._gui_backend_name == "matplotlib":
+                # Matplotlib implementation is under construction
+                raise NotImplementedError("Matplotlib window creation is on hold.")
+            else:
+                raise ValueError(f"Unsupported GUI backend: {self._gui_backend_name}")
+            self._data_window = WindowFactory.create_data_window(view, self)
             self._data_window.setParent(view)
             self._data_window.show()
+        else:
+            raise ValueError("View is not set")
 
     def get_filename(self):
         """Return the filename as a string"""
@@ -359,14 +366,6 @@ class DataController(ControllerInterface):
             ax.print_infor()
         print("========== Data Information End ==========")
         print("")
-
-
-class AiController:
-    def __init__(self):
-        self._file_service = FileService()
-
-    def rename_files(self):
-        self._file_service.rename_files()
 
 
 class WholeFilename:

@@ -11,7 +11,6 @@ import json
 from abc import ABCMeta, abstractmethod
 
 from ScanDataPy.controller.controller_filename import WholeFilename
-from ScanDataPy.controller.controller_data import DataController
 import PyQt6
 from PyQt6 import QtWidgets, QtCore
 import pyqtgraph as pg
@@ -22,7 +21,7 @@ from matplotlib.figure import Figure
 
 class AbstractDataWindowFactory(metaclass=ABCMeta):
     @abstractmethod
-    def create_data_window(self, gui_backend_name: str):
+    def create_data_window(self, gui_backend_name: str, controller):
         raise NotImplementedError()
     
 
@@ -30,25 +29,15 @@ class QtDataWindowFactory(AbstractDataWindowFactory):
     """Factory class for creating appropriate data windows based on GUI backend"""
 
     @staticmethod
-    def create_window(view, gui_backend_name):
-        if gui_backend_name == "pyqt6":
-            return QtDataWindow(view)
-        elif gui_backend_name == "matplotlib":
-            return MatplotlibDataWindow(view)
-        else:
-            raise ValueError(f"Unsupported GUI backend: {gui_backend_name}")
+    def create_data_window(view, controller):
+        return QtDataWindow(view, controller)
 
 
-class DataWindow(QtWidgets.QMainWindow):
-    def __init__(self, window=None):
-        self._main_controller = DataController(self)
-        self.setWindowTitle("SCANDATA")   
-
-class QtDataWindow(DataWindow):
-    def __init__(self, window=None):
+class QtDataWindow(QtWidgets.QMainWindow):
+    def __init__(self, window=None, data_controller=None):
         super().__init__(window)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
-
+        self._data_controller = data_controller
         # import a JSON setting file
         setting = None
         search_paths = [
@@ -135,17 +124,17 @@ class QtDataWindow(DataWindow):
         self.horizontalSplitter.setSizes([600, 1000])
         self.verticalSplitter.setSizes([450, 150])
 
-        self._main_controller.add_axes(
+        self._data_controller.add_axes(
             "Image", "ImageAxes", self, image_ax
         )  # ax_dict["ImageAxes"]
-        self._main_controller.add_axes("Trace", "FluoAxes", self, trace_ax1)
-        self._main_controller.add_axes("Trace", "ElecAxes", self, trace_ax2)
+        self._data_controller.add_axes("Trace", "FluoAxes", self, trace_ax1)
+        self._data_controller.add_axes("Trace", "ElecAxes", self, trace_ax2)
 
         # connect x axis of windows
-        self._main_controller.ax_dict["FluoAxes"].ax_obj.sigXRangeChanged.connect(
+        self._data_controller.ax_dict["FluoAxes"].ax_obj.sigXRangeChanged.connect(
             self.sync_x_axes
         )
-        self._main_controller.ax_dict["ElecAxes"].ax_obj.sigXRangeChanged.connect(
+        self._data_controller.ax_dict["ElecAxes"].ax_obj.sigXRangeChanged.connect(
             self.sync_x_axes
         )
 
@@ -362,7 +351,7 @@ class QtDataWindow(DataWindow):
 
         """ mouse click event """
         image_ax.getView().scene().sigMouseClicked.connect(
-            lambda event: self._main_controller.onclick_axes(event, "ImageAxes")
+            lambda event: self._data_controller.onclick_axes(event, "ImageAxes")
         )
 
     # timewindow = TimeWindow0 or BlComp,  axes is for update
@@ -372,9 +361,9 @@ class QtDataWindow(DataWindow):
             val = dialog.get_numbers()
             if val is not None:
                 print(f"Input values: {val}")
-                self._main_controller.set_modifier_val(timewindow, val)
-                self._main_controller.set_update_flag(axes, True)
-                self._main_controller.update_view(axes)
+                self._data_controller.set_modifier_val(timewindow, val)
+                self._data_controller.set_update_flag(axes, True)
+                self._data_controller.update_view(axes)
             else:
                 print("Only numerical values are available")
 
@@ -382,18 +371,18 @@ class QtDataWindow(DataWindow):
 
     def sync_x_axes(self, view):
         # get the x axis setting of the fluo axes
-        x_range1 = self._main_controller.ax_dict["FluoAxes"].ax_obj.viewRange()[0]
+        x_range1 = self._data_controller.ax_dict["FluoAxes"].ax_obj.viewRange()[0]
 
         # set the x axis of the elec axes
-        self._main_controller.ax_dict["ElecAxes"].ax_obj.setXRange(
+        self._data_controller.ax_dict["ElecAxes"].ax_obj.setXRange(
             x_range1[0], x_range1[1], padding=0
         )
 
         # get the x axis setting of the elec axes
-        x_range2 = self._main_controller.ax_dict["ElecAxes"].ax_obj.viewRange()[0]
+        x_range2 = self._data_controller.ax_dict["ElecAxes"].ax_obj.viewRange()[0]
 
         # set the x axis of the fluo axes
-        self._main_controller.ax_dict["FluoAxes"].ax_obj.setXRange(
+        self._data_controller.ax_dict["FluoAxes"].ax_obj.setXRange(
             x_range2[0], x_range2[1], padding=0
         )
 
@@ -401,15 +390,15 @@ class QtDataWindow(DataWindow):
 
     def open_file(self, filename_obj=None):
         # make a model and get filename obj
-        filename_obj, same_ext_file_list = self._main_controller.open_file(filename_obj)
+        filename_obj, same_ext_file_list = self._data_controller.open_file(filename_obj)
 
         # make user controllers
-        self._main_controller.create_default_modifier(0)  # filename number
-        self._main_controller.default_settings(filename_obj.name)
+        self._data_controller.create_default_modifier(0)  # filename number
+        self._data_controller.default_settings(filename_obj.name)
 
-        self._main_controller.print_infor()
-        self._main_controller.update_view()
-        self._main_controller.set_marker(ax_key="ImageAxes", roi_tag="Roi1")
+        self._data_controller.print_infor()
+        self._data_controller.update_view()
+        self._data_controller.set_marker(ax_key="ImageAxes", roi_tag="Roi1")
 
         self.default()
 
@@ -427,7 +416,7 @@ class QtDataWindow(DataWindow):
             val = [None, None, -1, -1]
         else:
             raise Exception("Should be Small or Large")
-        self._main_controller.change_roi_size(val)
+        self._data_controller.change_roi_size(val)
 
     def bl_roi(self):
         """
@@ -437,11 +426,11 @@ class QtDataWindow(DataWindow):
         This allows the user to interactively change the ROI mode for baseline correction.
         """
         if self.bl_roi_change_btn.isChecked():
-            self._main_controller.change_current_ax_mode(
+            self._data_controller.change_current_ax_mode(
                 ax_key="FluoAxes", mode="Baseline_control"
             )
         else:
-            self._main_controller.change_current_ax_mode(
+            self._data_controller.change_current_ax_mode(
                 ax_key="FluoAxes", mode="Normal"
             )
 
@@ -454,7 +443,7 @@ class QtDataWindow(DataWindow):
         else:
             remove_tag = 'Roi'
             add_tag = 'Roi1'
-        self._main_controller.replace_key_manager_tag(
+        self._data_controller.replace_key_manager_tag(
             'FluoAxes',
             'modifier_list',
             remove_tag,
@@ -473,42 +462,42 @@ class QtDataWindow(DataWindow):
             scale_values = {"dF/F": "DFoF", "Normalize": "Normalize"}
             selected_text = scale_values.get(text, "Original")
             # send value to modifier through main controller
-            self._main_controller.set_modifier_val("Scale0", selected_text)
-            self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-            self._main_controller.update_view("FluoAxes")
+            self._data_controller.set_modifier_val("Scale0", selected_text)
+            self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
+            self._data_controller.update_view("FluoAxes")
 
     def bl_comp(self, state):
         if self.bl_comp_checkbox.isChecked():
             # activate baseline comp
-            self._main_controller.set_tag(
+            self._data_controller.set_tag(
                 list_name="modifier_list", new_tag="BlComp0", ax_key="FluoAxes"
             )
-            self._main_controller.set_modifier_val("BlComp0", "Exponential")
-            self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-            self._main_controller.update_view("FluoAxes")
+            self._data_controller.set_modifier_val("BlComp0", "Exponential")
+            self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
+            self._data_controller.update_view("FluoAxes")
 
             # Create and show FloatWindow
             if not hasattr(self, "float_window") or self.float_window is None:
-                self.float_window = FloatWindow(self, self._main_controller)
-                self._main_controller.add_axes(
+                self.float_window = FloatWindow(self, self._data_controller)
+                self._data_controller.add_axes(
                     "Trace",
                     "FloatAxes1",
                     self.float_window,
                     self.float_window.plot_widget,
                 )
                 # ここでfloat_windowのaxesのtagを設定する
-                # default = self.main_controller._model.get_data(
+                # default = self.data_controller._model.get_data(
                 # {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
                 # )
                 self.float_window.show()
         else:
             # disable baseline comp
-            self._main_controller.set_modifier_val("BlComp0", "Disable")
-            self._main_controller.set_tag(
+            self._data_controller.set_modifier_val("BlComp0", "Disable")
+            self._data_controller.set_tag(
                 list_name="modifier_list", new_tag="BlComp0", ax_key="FluoAxes"
             )
-            self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-            self._main_controller.update_view("FluoAxes")
+            self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
+            self._data_controller.update_view("FluoAxes")
 
             # Close FloatWindow if it exists
             if hasattr(self, "float_window") and self.float_window is not None:
@@ -519,52 +508,52 @@ class QtDataWindow(DataWindow):
         raise NotImplementedError()
 
     def switch_ch(self, text):
-        self._main_controller.set_tag(
+        self._data_controller.set_tag(
             list_name="ch_list", new_tag=text, ax_key="FluoAxes"
         )
-        self._main_controller.set_tag(
+        self._data_controller.set_tag(
             list_name="ch_list", new_tag=text, ax_key="ImageAxes"
         )
-        self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-        self._main_controller.set_update_flag(ax_name="ImageAxes", flag=True)
-        self._main_controller.update_view("FluoAxes")
-        self._main_controller.update_view("ImageAxes")
+        self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
+        self._data_controller.set_update_flag(ax_name="ImageAxes", flag=True)
+        self._data_controller.update_view("FluoAxes")
+        self._data_controller.update_view("ImageAxes")
 
     def switch_elec_ch(self, text):
-        self._main_controller.set_tag(
+        self._data_controller.set_tag(
             list_name="ch_list", new_tag=text, ax_key="ElecAxes"
         )
-        self._main_controller.set_update_flag(ax_name="ElecAxes", flag=True)
-        self._main_controller.update_view("ElecAxes")
+        self._data_controller.set_update_flag(ax_name="ElecAxes", flag=True)
+        self._data_controller.update_view("ElecAxes")
 
     def dif_image_switch(self):
-        self._main_controller.set_tag(
+        self._data_controller.set_tag(
             list_name="modifier_list", new_tag="DifImage0", ax_key="ImageAxes"
         )
         if self.dif_image_button.isChecked():
-            self._main_controller.change_color(color="plasma", ax_key="ImageAxes")
+            self._data_controller.change_color(color="plasma", ax_key="ImageAxes")
         else:
-            self._main_controller.change_color(color="grey", ax_key="ImageAxes")
-        self._main_controller.set_update_flag(ax_name="ImageAxes", flag=True)
-        self._main_controller.update_view("ImageAxes")
+            self._data_controller.change_color(color="grey", ax_key="ImageAxes")
+        self._data_controller.set_update_flag(ax_name="ImageAxes", flag=True)
+        self._data_controller.update_view("ImageAxes")
 
     def bl_use_roi1_switch(self):
         if self.bl_use_roi1.isChecked():
             roi = "Roi1"
         else:
             roi = "Roi0"
-        self._main_controller.replace_key_manager_tag(
+        self._data_controller.replace_key_manager_tag(
             "FluoAxes", "bl_roi_list", "Roi", roi
         )
-        self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-        self._main_controller.update_view("FluoAxes")
+        self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
+        self._data_controller.update_view("FluoAxes")
 
     def invert_fn(self):
-        self._main_controller.set_tag(
+        self._data_controller.set_tag(
             list_name="modifier_list", new_tag="Invert0", ax_key="FluoAxes"
         )
-        self._main_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-        self._main_controller.update_view("FluoAxes")
+        self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
+        self._data_controller.update_view("FluoAxes")
 
 
 class InputDialog(QtWidgets.QDialog):
@@ -601,9 +590,9 @@ class InputDialog(QtWidgets.QDialog):
 
 # This is for baseline comp.
 class FloatWindow(QtWidgets.QMainWindow):
-    def __init__(self, parent=None, main_controller=None):
+    def __init__(self, parent=None, data_controller=None):
         super().__init__(parent)
-        self._main_controller = main_controller
+        self._data_controller = data_controller
         self.setWindowTitle("Float Window")
         self.setGeometry(100, 100, 300, 200)  # Adjusted size for plot
 
@@ -647,11 +636,12 @@ class CustomImageView(pg.ImageView):
         )
         event.ignore()
 
-class MatplotlibDataWindow(DataWindow):
+class MatplotlibDataWindow(QtWidgets.QMainWindow):
     def __init__(self, window=None):
         super().__init__(window)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
-        self._main_controller = DataController(self)
+        from ScanDataPy.controller.controller_data import DataController
+        self._data_controller = DataController(self)
         self.setWindowTitle("SCANDATA (Matplotlib)")
 
         # Create central widget and layout
@@ -683,21 +673,21 @@ class MatplotlibDataWindow(DataWindow):
         main_layout.addLayout(control_layout)
 
         # Connect the axes to the controller
-        self._main_controller.add_axes("Image", "ImageAxes", self, self.image_ax)
-        self._main_controller.add_axes("Trace", "FluoAxes", self, self.fluo_ax)
-        self._main_controller.add_axes("Trace", "ElecAxes", self, self.elec_ax)
+        self._data_controller.add_axes("Image", "ImageAxes", self, self.image_ax)
+        self._data_controller.add_axes("Trace", "FluoAxes", self, self.fluo_ax)
+        self._data_controller.add_axes("Trace", "ElecAxes", self, self.elec_ax)
 
     def open_file(self, filename_obj=None):
         # make a model and get filename obj
-        filename_obj, same_ext_file_list = self._main_controller.open_file(filename_obj)
+        filename_obj, same_ext_file_list = self._data_controller.open_file(filename_obj)
 
         # make user controllers
-        self._main_controller.create_default_modifier(0)  # filename number
-        self._main_controller.default_settings(filename_obj.name)
+        self._data_controller.create_default_modifier(0)  # filename number
+        self._data_controller.default_settings(filename_obj.name)
 
-        self._main_controller.print_infor()
-        self._main_controller.update_view()
-        self._main_controller.set_marker(ax_key="ImageAxes", roi_tag="Roi1")
+        self._data_controller.print_infor()
+        self._data_controller.update_view()
+        self._data_controller.set_marker(ax_key="ImageAxes", roi_tag="Roi1")
 
     def update_plot(self):
         """Update all plots"""
