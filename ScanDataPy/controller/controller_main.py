@@ -24,7 +24,7 @@ class MainController:
 
         # Handle gui_app selection
         if self.gui_backend_name == "pyqt6":
-            print("[MainController] PyQt6 has been selected as the GUI backend.")
+            print("[MainController]: PyQt6 has been selected as the GUI backend.")
             # Ensure QApplication instance exists only if not already created
             self.scandata = QtWidgets.QApplication.instance()
             if self.scandata is None:
@@ -36,24 +36,24 @@ class MainController:
             ):  # Check if scandata is not None
                 self.scandata.exec()
         elif self.gui_backend_name == "matplotlib":
-            print("[MainController] matplotlib has been selected as the GUI backend.")
+            print("[MainController]: matplotlib has been selected as the GUI backend.")
             # Matplotlib integration is under construction
             raise NotImplementedError("Matplotlib integration is under construction.")
         elif self.gui_backend_name is None:  # Explicitly check for None
             print("[MainController:ERROR] No GUI backend was provided.")
-            print("[MainController] Application will be terminated.")
+            print("[MainController]: Application will be terminated.")
             sys.exit(0)
         else:  # Handle any other unsupported gui_app string
             print(
                 f"[MainController:ERROR] Unsupported GUI backend: {self.gui_backend_name}"
             )
-            print("[MainController] Application will be terminated.")
+            print("[MainController]: Application will be terminated.")
             sys.exit(1)  # Exit with an error code
 
     def open_file(self):
         filename_obj = self._file_service.open_file()
         if not filename_obj:
-            print("[MainController] File selection cancelled or failed.")
+            print("[MainController]: File selection cancelled or failed.")
             return
 
         # --- open_file specific behavior: update list with all same-extension files ---
@@ -63,7 +63,7 @@ class MainController:
             )
             self.main_list_window.update_file_list(self.current_file_list)
             print(
-                f"[MainController] Main file list updated with files sharing extension with {filename_obj.name}."
+                f"[MainController]: Main file list updated with files sharing extension with {filename_obj.name}."
             )
         except Exception as e:
             print(
@@ -110,19 +110,19 @@ class MainController:
 
         if filename_obj.name in self.data_controller_dict:
             print(
-                f"[MainController] DataController for {filename_obj.name} already exists. Using existing instance."
+                f"[MainController]: DataController for {filename_obj.name} already exists. Using existing instance."
             )
             return self.data_controller_dict[filename_obj.name], False
 
         try:
             print(
-                f"[MainController] Creating new DataController for {filename_obj.name}."
+                f"[MainController]: Creating new DataController for {filename_obj.name}."
             )
             # send view for setting list view as parent
             data_controller = DataController(view=self.main_list_window, filename_obj=filename_obj, gui_backend_name=self.gui_backend_name)
             self.data_controller_dict[filename_obj.name] = data_controller
             print(
-                f"[MainController] New DataController for {filename_obj.name} created and stored."
+                f"[MainController]: New DataController for {filename_obj.name} created and stored."
             )
             self.history_manager.add_file(filename_obj)
             return data_controller, True
@@ -140,7 +140,7 @@ class MainController:
         """Displays the recent file history to the console."""
         recent_files = self.history_manager.get_recent_files()
         if not recent_files:
-            print("[MainController] File history is empty.")
+            print("[MainController]: File history is empty.")
             if self.gui_backend_name == "pyqt6":
                 # Show message box for PyQt6
                 if (
@@ -182,7 +182,7 @@ class MainController:
         elif self.gui_backend_name == "matplotlib":
             # Matplotlib implementation is under construction
             print(
-                "[MainController] Matplotlib implementation for file history is under construction."
+                "[MainController]: Matplotlib implementation for file history is under construction."
             )
             raise NotImplementedError(
                 "Matplotlib implementation for file history is under construction."

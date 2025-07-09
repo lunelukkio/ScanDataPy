@@ -98,7 +98,7 @@ class DataController(ControllerInterface):
             new_axes_controller = None
             raise Exception(f"There is no {ax_type} axes controller")
         self._ax_dict[axes_name] = new_axes_controller
-        print(f"DataController: Added {axes_name} axes controller")
+        print(f"[DataController]: Added {axes_name} axes controller")
 
     def get_canvas_axes(self, view_controller) -> object:
         return self._ax_dict[view_controller].get_canvas_axes()
@@ -109,7 +109,7 @@ class DataController(ControllerInterface):
         if filename_obj is None:
             filename_obj = self._file_service.open_file()
         elif filename_obj.name == "":
-            print("DataController: File opening is Cancelled!!")
+            print("[DataController]: File opening is Cancelled!!")
             return {}
         # make experiments data
         open_experiments = self.create_experiments(filename_obj)
@@ -119,7 +119,7 @@ class DataController(ControllerInterface):
                 "============================================================================"
             )
             print(
-                f"========== DataController: Open {filename_obj.name}: suceeded!!! ==========          :)"
+                f"========== [DataController]: Open {filename_obj.name}: suceeded!!! ==========          :)"
             )
             print(
                 "============================================================================"
@@ -128,7 +128,7 @@ class DataController(ControllerInterface):
         else:
             print("=============================================================")
             print(
-                "========== DataController: Failed to open the file ==========                :("
+                "========== [DataController]: Failed to open the file ==========                :("
             )
             print("=============================================================")
             print("")
@@ -145,19 +145,19 @@ class DataController(ControllerInterface):
         return filename_obj, same_ext_file_list
 
     def create_experiments(self, filename_obj: object):
-        print("DataController: create_experiments() ----->")
+        print("[DataController]: Create_experiments() ----->")
         new_data = self._model.create_experiments(filename_obj.fullname)
         # create_model end process
         if new_data is not True:
             raise Exception("Failed to create a model.")
         else:
-            print("-----> DataController: create_experiments() Done")
+            print("-----> [DataController]: Create_experiments() Done")
             return True
 
     # filename number from the list in dict
     # prepare all default modifiers in this function from the json setting file
     def create_default_modifier(self, filename_number):
-        print("DataController: create_default_modifiers() ----->")
+        print("[DataController]: Create_default_modifiers() ----->")
 
         filename = self._key_manager.filename_list[self.current_filename[0]]
         # get default information from text data in the json setting file
@@ -167,11 +167,11 @@ class DataController(ControllerInterface):
 
         for modifier_name in default.data["default_settings"]["default_modifiers"]:
             self.create_modifier(modifier_name)
-        print("-----> DataController: create_default_modifier() Done")
+        print("-----> [DataController]: Create_default_modifier() Done")
 
         self._model.print_infor("Modifier")
         print("=======================================================================")
-        print("========== DataController: Made new Modifiers chain ==================")
+        print("========== [DataController]: Made new Modifiers chain ==================")
         print("=======================================================================")
         print("")
 

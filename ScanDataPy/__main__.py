@@ -13,7 +13,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
-from ScanDataPy.controller.controller_main import MainController
+from ScanDataPy.controller.controller_main import MainController  # noqa: E402
 
 if __name__ == "__main__":
     print("============== Main ==============")
