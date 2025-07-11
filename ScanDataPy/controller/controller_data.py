@@ -1,363 +1,384 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jul 21 11:45:37 2022
-lunelukkio@gmail.com
-main for controller
+Refactored DataController with event-driven architecture.
+No direct references to views - communicates via events only.
 """
 
 from abc import ABCMeta, abstractmethod
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QObject
 from pathlib import Path
 
 from ScanDataPy.model.model import DataService
-from ScanDataPy.controller.controller_axes import TraceAxesController
-from ScanDataPy.controller.controller_axes import ImageAxesController
+from ScanDataPy.controller.controller_axes import TraceAxesController, ImageAxesController
 from ScanDataPy.controller.controller_filename import FileService
 from ScanDataPy.controller.controller_key_manager import KeyManager
+from ScanDataPy.common_event import ViewEventBus, ControllerEventBus
 
 
-class ControllerInterface(metaclass=ABCMeta):
-    @abstractmethod
-    def get_filename(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def add_axes(self, axes_name: str, axes: object) -> None:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def open_file(self, filename_obj):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def create_experiments(self, filename_obj):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def onclick_axes(self, event, axes_name):
-        raise NotImplementedError()
-
-    # set a new traces to user controller with value from experiments entity
-    @abstractmethod
-    def update_view(self, axes):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def create_modifier(self, modifier_name):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def set_observer(self, controller_key: str, ax_num: int) -> None:
-        raise NotImplementedError()
-
-
-class DataController(ControllerInterface):
-    # view is for setting list view as parent
-    def __init__(self, view=None, filename_obj=None, gui_backend_name=None):
+class DataController(QObject):
+    """
+    Main data controller that manages the application logic.
+    Communicates with views only through event buses.
+    """
+    
+    def __init__(self, gui_backend_name=None):
+        super().__init__()
         self._gui_backend_name = gui_backend_name
-        self.filename_obj = filename_obj
+        self.filename_obj = None
         self.current_filename = [0]
         self._model = DataService()
         self._file_service = FileService(self._gui_backend_name)
         self._key_manager = KeyManager()
-        self._ax_dict = {}  # {"": ImageAxes class, FluoAxes: TraceAx class, ElecAxes: TraceAx class}
-        # Create appropriate data window based on GUI backend
-        if view is not None:
-            if self._gui_backend_name == "pyqt6":
-                from ScanDataPy.view.view_data import QtDataWindowFactory
-                WindowFactory = QtDataWindowFactory
-            elif self._gui_backend_name == "matplotlib":
-                # Matplotlib implementation is under construction
-                raise NotImplementedError("Matplotlib window creation is on hold.")
+        self._ax_dict = {}  # Axes controllers
+        
+        # Event buses for communication
+        self.view_event_bus = ViewEventBus()
+        self.controller_event_bus = ControllerEventBus()
+        
+        # Connect view events to controller methods
+        self._connect_view_events()
+        
+        # Initialize axes controllers after window is created
+        self._axes_initialized = False
+    
+    def _connect_view_events(self):
+        """Connect view events to appropriate handler methods"""
+        # File operations
+        self.view_event_bus.file_open_requested.connect(self._handle_file_open)
+        
+        # ROI operations
+        self.view_event_bus.roi_size_change_requested.connect(self._handle_roi_size_change)
+        self.view_event_bus.roi_clicked.connect(self._handle_roi_click)
+        self.view_event_bus.bl_roi_mode_changed.connect(self._handle_bl_roi_mode_change)
+        self.view_event_bus.bl_use_roi1_changed.connect(self._handle_bl_use_roi1_change)
+        
+        # Modifier operations
+        self.view_event_bus.modifier_value_change_requested.connect(self._handle_modifier_value_change)
+        self.view_event_bus.scale_mode_changed.connect(self._handle_scale_mode_change)
+        self.view_event_bus.bl_comp_toggled.connect(self._handle_bl_comp_toggle)
+        self.view_event_bus.dif_image_toggled.connect(self._handle_dif_image_toggle)
+        self.view_event_bus.invert_toggled.connect(self._handle_invert_toggle)
+        
+        # Channel operations
+        self.view_event_bus.fluo_channel_changed.connect(self._handle_fluo_channel_change)
+        self.view_event_bus.elec_channel_changed.connect(self._handle_elec_channel_change)
+        
+        # Time window operations
+        self.view_event_bus.time_window_change_requested.connect(self._handle_time_window_change)
+        
+        # View updates
+        self.view_event_bus.view_update_requested.connect(self._handle_view_update_request)
+        self.view_event_bus.axes_sync_requested.connect(self._handle_axes_sync)
+    
+    def initialize_axes(self, axes_config):
+        """
+        Initialize axes controllers based on configuration from view.
+        Called after the view window is created.
+        
+        Args:
+            axes_config: Dict with axes information
+                {
+                    "ImageAxes": {"type": "Image", "widget": image_ax},
+                    "FluoAxes": {"type": "Trace", "widget": trace_ax1},
+                    "ElecAxes": {"type": "Trace", "widget": trace_ax2}
+                }
+        """
+        for axes_name, config in axes_config.items():
+            ax_type = config["type"]
+            widget = config["widget"]
+            
+            if ax_type == "Image":
+                controller = ImageAxesController(self, self._model, None, widget)
+            elif ax_type == "Trace":
+                controller = TraceAxesController(self, self._model, None, widget)
             else:
-                raise ValueError(f"Unsupported GUI backend: {self._gui_backend_name}")
-            self._data_window = WindowFactory.create_data_window(view, self)
-            self._data_window.setParent(view)
-            self._data_window.show()
-        else:
-            raise ValueError("View is not set")
-
+                raise ValueError(f"Unknown axes type: {ax_type}")
+            
+            self._ax_dict[axes_name] = controller
+            print(f"[DataController]: Added {axes_name} axes controller")
+        
+        self._axes_initialized = True
+    
     def get_filename(self):
         """Return the filename as a string"""
         return self.filename_obj.name if self.filename_obj else None
-
+    
     @property
     def ax_dict(self):
         return self._ax_dict
-
+    
     @property
     def key_manager(self):
         return self._key_manager
-
-    def add_axes(self, ax_type, axes_name: str, canvas, ax: object) -> None:
-        if ax_type == "Image":
-            new_axes_controller = ImageAxesController(self, self._model, canvas, ax)
-        elif ax_type == "Trace":
-            new_axes_controller = TraceAxesController(self, self._model, canvas, ax)
-        else:
-            new_axes_controller = None
-            raise Exception(f"There is no {ax_type} axes controller")
-        self._ax_dict[axes_name] = new_axes_controller
-        print(f"[DataController]: Added {axes_name} axes controller")
-
-    def get_canvas_axes(self, view_controller) -> object:
-        return self._ax_dict[view_controller].get_canvas_axes()
-
-    def open_file(self, filename_obj=None) -> dict:
+    
+    # Event Handlers
+    
+    def _handle_file_open(self, filename_obj):
+        """Handle file open request from view"""
         self.__reset()
-        # get filename object
+        
         if filename_obj is None:
             filename_obj = self._file_service.open_file()
-        elif filename_obj.name == "":
-            print("[DataController]: File opening is Cancelled!!")
-            return {}
-        # make experiments data
-        open_experiments = self.create_experiments(filename_obj)
-        if open_experiments is True:
-            self._key_manager.set_tag("filename_list", filename_obj.name)
-            print(
-                "============================================================================"
-            )
-            print(
-                f"========== [DataController]: Open {filename_obj.name}: suceeded!!! ==========          :)"
-            )
-            print(
-                "============================================================================"
-            )
-            print("")
+        
+        if filename_obj is None or filename_obj.name == "":
+            self.controller_event_bus.status_message.emit("File opening cancelled")
+            return
+        
+        # Create experiments data
+        try:
+            success = self.create_experiments(filename_obj)
+            if success:
+                self.filename_obj = filename_obj
+                self._key_manager.set_tag("filename_list", filename_obj.name)
+                
+                # Create default modifiers and settings
+                self.create_default_modifier(0)
+                self.default_settings(filename_obj.name)
+                
+                # Get similar files
+                same_ext_files = self._file_service.get_files_with_same_extension(
+                    filename_obj.fullname
+                )
+                
+                # Emit success event
+                self.controller_event_bus.data_loaded.emit(
+                    filename_obj.name, 
+                    {"same_ext_files": same_ext_files}
+                )
+                
+                # Request view updates
+                self.view_event_bus.view_update_requested.emit(None)  # Update all
+                self.view_event_bus.marker_update_requested.emit("ImageAxes", "Roi1")
+                
+                print(f"[DataController]: Opened {filename_obj.name} successfully")
+            else:
+                self.controller_event_bus.error_occurred.emit("Failed to open file")
+        
+        except Exception as e:
+            self.controller_event_bus.error_occurred.emit(f"Error opening file: {str(e)}")
+    
+    def _handle_roi_size_change(self, command):
+        """Handle ROI size change request"""
+        if command == "large":
+            val = [None, None, 1, 1]
+        elif command == "small":
+            val = [None, None, -1, -1]
         else:
-            print("=============================================================")
-            print(
-                "========== [DataController]: Failed to open the file ==========                :("
-            )
-            print("=============================================================")
-            print("")
-
-        # get similer files
-        same_ext_file_list = self._file_service.get_files_with_same_extension(
-            filename_obj.fullname
-        )
-        print("----------------- Similer files:")
-        print(same_ext_file_list)
-        print("--------------------------------")
-        print("")
-
-        return filename_obj, same_ext_file_list
-
-    def create_experiments(self, filename_obj: object):
+            self.controller_event_bus.error_occurred.emit(f"Invalid ROI size command: {command}")
+            return
+        
+        if "FluoAxes" in self._ax_dict:
+            roi_tag = self._ax_dict["FluoAxes"].change_roi_size(val)
+            self.view_event_bus.view_update_requested.emit("FluoAxes")
+            self.view_event_bus.marker_update_requested.emit("ImageAxes", roi_tag)
+    
+    def _handle_roi_click(self, axes_name, position):
+        """Handle ROI click on image"""
+        if axes_name == "ImageAxes" and "FluoAxes" in self._ax_dict:
+            x, y = round(position[0]), round(position[1])
+            val = [x, y, None, None]
+            roi_tag = self._ax_dict["FluoAxes"].onclick_axes(val)
+            self.view_event_bus.view_update_requested.emit("FluoAxes")
+            self.view_event_bus.marker_update_requested.emit("ImageAxes", roi_tag)
+    
+    def _handle_bl_roi_mode_change(self, enabled):
+        """Handle baseline ROI mode change"""
+        mode = "Baseline_control" if enabled else "Normal"
+        if "FluoAxes" in self._ax_dict:
+            self._ax_dict["FluoAxes"].change_current_ax_mode(mode)
+            self.view_event_bus.view_update_requested.emit("FluoAxes")
+    
+    def _handle_bl_use_roi1_change(self, use_roi1):
+        """Handle baseline ROI selection change"""
+        roi = "Roi1" if use_roi1 else "Roi0"
+        if "FluoAxes" in self._ax_dict:
+            self._ax_dict["FluoAxes"].replace_key_manager_tag("bl_roi_list", "Roi", roi)
+            self._ax_dict["FluoAxes"].set_update_flag(True)
+            self.view_event_bus.view_update_requested.emit("FluoAxes")
+    
+    def _handle_modifier_value_change(self, modifier_name, value):
+        """Handle modifier value change request"""
+        self._model.set_modifier_val(modifier_name, value)
+        # Determine which axes need updating based on modifier
+        if modifier_name in ["TimeWindow0", "BlComp0"]:
+            self._ax_dict["FluoAxes"].set_update_flag(True)
+            self.view_event_bus.view_update_requested.emit("FluoAxes")
+        elif modifier_name in ["TimeWindow1"]:
+            self._ax_dict["ImageAxes"].set_update_flag(True)
+            self.view_event_bus.view_update_requested.emit("ImageAxes")
+    
+    def _handle_scale_mode_change(self, mode):
+        """Handle scale mode change (Original, DFoF, Normalize)"""
+        self._model.set_modifier_val("Scale0", mode)
+        if "FluoAxes" in self._ax_dict:
+            self._ax_dict["FluoAxes"].set_update_flag(True)
+            self.view_event_bus.view_update_requested.emit("FluoAxes")
+    
+    def _handle_bl_comp_toggle(self, enabled):
+        """Handle baseline compensation toggle"""
+        if "FluoAxes" in self._ax_dict:
+            if enabled:
+                self._ax_dict["FluoAxes"].set_tag("modifier_list", "BlComp0")
+                self._model.set_modifier_val("BlComp0", "Exponential")
+                self.controller_event_bus.float_window_requested.emit(True, {})
+            else:
+                self._model.set_modifier_val("BlComp0", "Disable")
+                self._ax_dict["FluoAxes"].set_tag("modifier_list", "BlComp0")
+                self.controller_event_bus.float_window_requested.emit(False, {})
+            
+            self._ax_dict["FluoAxes"].set_update_flag(True)
+            self.view_event_bus.view_update_requested.emit("FluoAxes")
+    
+    def _handle_dif_image_toggle(self, enabled):
+        """Handle differential image toggle"""
+        if "ImageAxes" in self._ax_dict:
+            self._ax_dict["ImageAxes"].set_tag("modifier_list", "DifImage0")
+            color = "plasma" if enabled else "grey"
+            self._ax_dict["ImageAxes"].change_color(color)
+            self._ax_dict["ImageAxes"].set_update_flag(True)
+            self.view_event_bus.view_update_requested.emit("ImageAxes")
+    
+    def _handle_invert_toggle(self, enabled):
+        """Handle invert toggle"""
+        if "FluoAxes" in self._ax_dict:
+            self._ax_dict["FluoAxes"].set_tag("modifier_list", "Invert0")
+            self._ax_dict["FluoAxes"].set_update_flag(True)
+            self.view_event_bus.view_update_requested.emit("FluoAxes")
+    
+    def _handle_fluo_channel_change(self, channel):
+        """Handle fluorescence channel change"""
+        for ax_name in ["FluoAxes", "ImageAxes"]:
+            if ax_name in self._ax_dict:
+                self._ax_dict[ax_name].set_tag("ch_list", channel)
+                self._ax_dict[ax_name].set_update_flag(True)
+        self.view_event_bus.view_update_requested.emit("FluoAxes")
+        self.view_event_bus.view_update_requested.emit("ImageAxes")
+    
+    def _handle_elec_channel_change(self, channel):
+        """Handle electrical channel change"""
+        if "ElecAxes" in self._ax_dict:
+            self._ax_dict["ElecAxes"].set_tag("ch_list", channel)
+            self._ax_dict["ElecAxes"].set_update_flag(True)
+            self.view_event_bus.view_update_requested.emit("ElecAxes")
+    
+    def _handle_time_window_change(self, window_type, axes_name, values):
+        """Handle time window change request"""
+        self._model.set_modifier_val(window_type, values)
+        if axes_name in self._ax_dict:
+            self._ax_dict[axes_name].set_update_flag(True)
+            self.view_event_bus.view_update_requested.emit(axes_name)
+    
+    def _handle_view_update_request(self, axes_name):
+        """Handle view update request"""
+        if axes_name is None:
+            # Update all axes
+            for ax in self._ax_dict.values():
+                ax.update()
+                ax.set_update_flag(False)
+        elif axes_name in self._ax_dict:
+            self._ax_dict[axes_name].update()
+            self._ax_dict[axes_name].set_update_flag(False)
+        
+        self.controller_event_bus.status_message.emit("View updated")
+    
+    def _handle_axes_sync(self, source_axes, range_data):
+        """Handle axes synchronization request"""
+        # This would be implemented based on specific sync requirements
+        pass
+    
+    # Existing methods (modified to remove view dependencies)
+    
+    def create_experiments(self, filename_obj):
+        """Create experiments from file"""
         print("[DataController]: Create_experiments() ----->")
         new_data = self._model.create_experiments(filename_obj.fullname)
-        # create_model end process
         if new_data is not True:
             raise Exception("Failed to create a model.")
-        else:
-            print("-----> [DataController]: Create_experiments() Done")
-            return True
-
-    # filename number from the list in dict
-    # prepare all default modifiers in this function from the json setting file
+        print("-----> [DataController]: Create_experiments() Done")
+        return True
+    
     def create_default_modifier(self, filename_number):
+        """Create default modifiers from settings"""
         print("[DataController]: Create_default_modifiers() ----->")
-
+        
         filename = self._key_manager.filename_list[self.current_filename[0]]
-        # get default information from text data in the json setting file
         default = self._model.get_data(
             {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
         )
-
+        
         for modifier_name in default.data["default_settings"]["default_modifiers"]:
             self.create_modifier(modifier_name)
+        
         print("-----> [DataController]: Create_default_modifier() Done")
-
         self._model.print_infor("Modifier")
-        print("=======================================================================")
-        print("========== [DataController]: Made new Modifiers chain ==================")
-        print("=======================================================================")
-        print("")
-
+    
     def create_modifier(self, modifier_name):
+        """Create a modifier"""
         self._model.add_modifier(modifier_name)
-
-    def set_observer(self, ax_name: str, modifier_tag: str) -> None:
-        self._ax_dict[ax_name].set_observer(modifier_tag)
-
-    # set modifier values e.g. 'Roi1', [40, 40, 1, 1]. Be call by view and self.default_settings.
-    def set_modifier_val(self, modifier, *args, **kwargs):
-        self._model.set_modifier_val(modifier, *args, **kwargs)
-
-    def set_marker(self, ax_key, roi_tag=None):
-        self._ax_dict[ax_key].set_marker(roi_tag)
-
-    def onclick_axes(self, event, axes_name):
-        if axes_name == "ImageAxes":
-            # get clicked position
-            image_pos = (
-                self._ax_dict["ImageAxes"]
-                ._ax_obj.getView()
-                .mapSceneToView(event.scenePos())
-            )
-            if event.button() == Qt.MouseButton.LeftButton:  # left click
-                x = round(image_pos.x())
-                y = round(image_pos.y())
-                val = [x, y, None, None]
-                roi_tag = self._ax_dict["FluoAxes"].onclick_axes(val)
-                self.update_view("FluoAxes")
-                # for RoiBOX
-                self.set_marker("ImageAxes", roi_tag)
-
-            elif event.button() == Qt.MouseButton.MiddleButton:
-                pass
-            # move to next controller
-            elif event.button() == Qt.MouseButton.RightButton:
-                pass
-        elif axes_name == "FluoAxes":
-            if event.inaxes == self._ax_dict["FluoAxes"]:
-                raise NotImplementedError()
-            elif event.inaxes == self._ax_dict["ElecAxes"]:
-                raise NotImplementedError()
-        elif axes_name == "ElecAxes":
-            raise NotImplementedError()
-
-    def change_roi_size(self, val: list):
-        roi_tag = self._ax_dict["FluoAxes"].change_roi_size(val)
-        self.update_view("FluoAxes")
-        # for RoiBOX
-        self.set_marker("ImageAxes", roi_tag)
-
-    def change_current_ax_mode(self, ax_key, mode):
-        self._ax_dict[ax_key].change_current_ax_mode(mode)
-        self.update_view("FluoAxes")
-
-    def set_tag(self, list_name, new_tag, ax_key=None):
-        if ax_key is None:
-            self._key_manager.set_tag(list_name, new_tag)
-        else:
-            self._ax_dict[ax_key].set_tag(list_name, new_tag)
-
-    def replace_key_manager_tag(self, ax_key, list_name, old_tag, new_tag):
-        self._ax_dict[ax_key].replace_key_manager_tag(list_name, old_tag, new_tag)
-
-    def change_color(self, color, ax_key=None):
-        if ax_key is None:
-            raise NotImplementedError()
-        else:
-            self._ax_dict[ax_key].change_color(color)
-
-    def get_current_file_path(self):
-        return self._file_service.get_current_file_path()
-
+    
+    def set_observer(self, ax_name, modifier_tag):
+        """Set observer for axes controller"""
+        if ax_name in self._ax_dict:
+            self._ax_dict[ax_name].set_observer(modifier_tag)
+    
     def default_settings(self, filename_key):
-        print("=============================================")
+        """Apply default settings from configuration"""
         print("========== Start default settings. ==========")
-        print("=============================================")
-        print("")
-
-        # get default information from text data in the json file
-        # get the first of the filename true list
+        
         filename = self._key_manager.filename_list[self.current_filename[0]]
-
-        # get default information from JSON
         default = self._model.get_data(
             {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
         )
-        print("")
-        print("========== observer setting ==========")
-        print("")
+        
+        # Set observers
         default_observer = default.data["default_settings"]["default_observer"]
-        # set_observer. see KeyManager and  file_setting.json
         for key, item_list in default_observer.items():
             for value in item_list:
                 self.set_observer(key, value)
-        print("")
-        print("========== controller setting ==========")
-        print("")
-        # DataController default settings from file_setting.json
+        
+        # Set main controller tags
         main_default_tag_list = default.data["default_settings"]["main_default_tag"]
-        # set_tags.   see KeyManager and file_setting.json in class common_class set_tag_list_to_dict, set_dict_to_dict
         for tag_list_name, tag_list in main_default_tag_list.items():
             for tag in tag_list:
                 self._key_manager.set_tag(tag_list_name, tag)
-        # show the final default infor of the main controller
-        print("============ DataController key manager infor =============")
-        self._key_manager.print_infor()
-
-        # set ax view flags
-        self.ax_dict["FluoAxes"].key_manager.set_tag("filename_list", filename)
-        fluo_default_tag_list = default.data["default_settings"]["trace_ax_default_tag"]
-        for tag_list_name, tag_list in fluo_default_tag_list.items():
-            for tag in tag_list:
-                self.ax_dict["FluoAxes"].key_manager.set_tag(tag_list_name, tag)
-        # show the final default infor of the main controller
-        print("========== Trace AxesController key manager infor =========")
-        self.ax_dict["FluoAxes"]._key_manager.print_infor()
-
-        self.ax_dict["ImageAxes"].key_manager.set_tag("filename_list", filename)
-        image_default_tag_list = default.data["default_settings"][
-            "image_ax_default_tag"
-        ]
-        for tag_list_name, tag_list in image_default_tag_list.items():
-            for tag in tag_list:
-                self.ax_dict["ImageAxes"].key_manager.set_tag(tag_list_name, tag)
-        # show the final default infor of the main controller
-        print("========== Image AxesController key manager infor =========")
-        self.ax_dict["ImageAxes"]._key_manager.print_infor()
-
-        self.ax_dict["ElecAxes"].key_manager.set_tag("filename_list", filename)
-        elec_default_tag_list = default.data["default_settings"]["elec_ax_default_tag"]
-        for tag_list_name, tag_list in elec_default_tag_list.items():
-            for tag in tag_list:
-                self.ax_dict["ElecAxes"].key_manager.set_tag(tag_list_name, tag)
-        # show the final default infor of the main controller
-        print("========== Elec AxesController key manager infor ==========")
-        self.ax_dict["ElecAxes"]._key_manager.print_infor()
-        print("")
-        print("========== modifier setting ==========")
-        print("")
-        # default modifiers values.
+        
+        # Set axes controller tags
+        for ax_name, ax_controller in self._ax_dict.items():
+            ax_controller.key_manager.set_tag("filename_list", filename)
+            
+            # Get appropriate default tags based on axes type
+            if ax_name == "FluoAxes":
+                tag_key = "trace_ax_default_tag"
+            elif ax_name == "ImageAxes":
+                tag_key = "image_ax_default_tag"
+            elif ax_name == "ElecAxes":
+                tag_key = "elec_ax_default_tag"
+            else:
+                continue
+            
+            default_tag_list = default.data["default_settings"].get(tag_key, {})
+            for tag_list_name, tag_list in default_tag_list.items():
+                for tag in tag_list:
+                    ax_controller.key_manager.set_tag(tag_list_name, tag)
+        
+        # Set modifier default values
         default_values_list = default.data["default_settings"]["modifier_default_val"]
         for modifier, value in default_values_list.items():
-            self.set_modifier_val(modifier, value)
-
-        print("")
+            self._model.set_modifier_val(modifier, value)
+        
         print("========== End of default settings ==========")
-        print("")
-
-    def set_update_flag(self, ax_name, flag):
-        self._ax_dict[ax_name].set_update_flag(flag)
-
-    def update_view(self, axes=None) -> None:
-        """
-        Update the view(s) for the specified axes controller(s).
-        If axes is None, update all registered axes controllers (e.g., FluoAxes, ImageAxes, ElecAxes).
-        If axes is specified, update only the corresponding axes controller.
-        After updating, reset the update flag to deactivate further updates until needed.
-
-        Args:
-            axes (str or None): The key of the axes controller to update, or None to update all.
-        """
-        if axes is None:
-            # Update all axes controllers
-            for ax in self._ax_dict.values():
-                ax.update()
-                ax.set_update_flag(False)  # return to deactive
-        else:
-            # Update only the specified axes controller
-            self._ax_dict[axes].update()
-            self._ax_dict[axes].set_update_flag(False)  # return to deactive
-        print("Main controller: Update done!")
-        print("")
-
+    
     def __reset(self):
+        """Reset all components"""
         self._model.reset()
         self._file_service.reset()
         self._key_manager.reset()
         for ax in self._ax_dict.values():
             ax.key_manager.reset()
-
+    
     def print_infor(self):
-        print("======================================")
+        """Print information about current state"""
         print("========== Data Information ==========")
-        print("======================================")
         self._model.print_infor()
         print("Operating controller list ---------->")
         self._key_manager.print_infor()
@@ -365,29 +386,3 @@ class DataController(ControllerInterface):
         for ax in self._ax_dict.values():
             ax.print_infor()
         print("========== Data Information End ==========")
-        print("")
-
-
-class WholeFilename:
-    def __init__(self, fullname: str):
-        self.path = Path(fullname).resolve()
-
-    @property
-    def fullname(self) -> str:
-        return str(self.path)
-
-    @property
-    def name(self) -> str:
-        return self.path.name
-
-    @property
-    def dir(self) -> str:
-        return str(self.path.parent)
-
-    @property
-    def stem(self) -> str:
-        return self.path.stem
-
-    @property
-    def extension(self) -> str:
-        return self.path.suffix

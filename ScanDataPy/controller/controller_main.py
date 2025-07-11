@@ -1,194 +1,106 @@
+# -*- coding: utf-8 -*-
+"""
+Refactored MainController that creates DataController and View separately,
+ensuring no circular dependencies.
+"""
+
 import sys
-import os
 from PyQt6 import QtWidgets
 
-from ScanDataPy.view.view_list import DataListWindow
-from ScanDataPy.controller.controller_data import DataController
-from ScanDataPy.controller.controller_filename import (
-    FileService,
-    WholeFilename,
-    FileHistoryManager,
-)
+from ScanDataPy.controller.controller_data_refactored import DataController
+from ScanDataPy.controller.controller_filename import WholeFilename
+from ScanDataPy.view.view_list import ListView
 
 
 class MainController:
-    def __init__(self, gui_app=None):
-        self.gui_backend_name = gui_app  # Store the name of the GUI backend
-        file_service = FileService(gui_app=self.gui_backend_name)
-        self._file_service = file_service
-
-        self.current_file_list = []
-        self.data_controller_dict = {}
-        self.data_window_list = {}  # Add this attribute for compatibility with view_list.py
-        self.history_manager = FileHistoryManager()
-
-        # Handle gui_app selection
-        if self.gui_backend_name == "pyqt6":
-            print("[MainController]: PyQt6 has been selected as the GUI backend.")
-            # Ensure QApplication instance exists only if not already created
-            self.scandata = QtWidgets.QApplication.instance()
-            if self.scandata is None:
-                self.scandata = QtWidgets.QApplication(sys.argv)
-            self.main_list_window = DataListWindow(self)
-            self.main_list_window.show()
-            if (
-                sys.flags.interactive == 0 and self.scandata
-            ):  # Check if scandata is not None
-                self.scandata.exec()
-        elif self.gui_backend_name == "matplotlib":
-            print("[MainController]: matplotlib has been selected as the GUI backend.")
-            # Matplotlib integration is under construction
-            raise NotImplementedError("Matplotlib integration is under construction.")
-        elif self.gui_backend_name is None:  # Explicitly check for None
-            print("[MainController:ERROR] No GUI backend was provided.")
-            print("[MainController]: Application will be terminated.")
-            sys.exit(0)
-        else:  # Handle any other unsupported gui_app string
-            print(
-                f"[MainController:ERROR] Unsupported GUI backend: {self.gui_backend_name}"
-            )
-            print("[MainController]: Application will be terminated.")
-            sys.exit(1)  # Exit with an error code
-
-    def open_file(self):
-        filename_obj = self._file_service.open_file()
-        if not filename_obj:
-            print("[MainController]: File selection cancelled or failed.")
-            return
-
-        # --- open_file specific behavior: update list with all same-extension files ---
-        try:
-            self.current_file_list = self._file_service.get_files_with_same_extension(
-                filename_obj.fullname
-            )
-            self.main_list_window.update_file_list(self.current_file_list)
-            print(
-                f"[MainController]: Main file list updated with files sharing extension with {filename_obj.name}."
-            )
-        except Exception as e:
-            print(
-                f"[MainController:ERROR] Failed to update main list with same-extension files for {filename_obj.name}: {e}"
-            )
-            # Continue to attempt to open the selected file itself, error in listing siblings should not block this.
-        # --- End of open_file specific behavior ---
-        self._prepare_data_controller(filename_obj)
-
-    def open_single_file_and_update_list(self):
-        filename_obj = self._file_service.open_file()
-        self._prepare_data_controller(filename_obj)
-        self.current_file_list.append(filename_obj.fullname)
-        self.main_list_window.update_file_list(self.current_file_list)
-
-    def open_file_from_list(self, full_name: str):
-        if not full_name or not os.path.exists(full_name):
-            print(f"[MainController:ERROR] Invalid file name from list: {full_name}")
-            return
-        filename_obj = self._file_service.open_file(full_name)
-        self._prepare_data_controller(filename_obj)
-
-    def _prepare_data_controller(
-        self, filename_obj: WholeFilename
-    ) -> tuple[DataController | None, bool]:
+    """
+    Main application controller that manages the overall application flow.
+    Creates and coordinates the DataController and Views.
+    """
+    
+    def __init__(self, gui_backend='pyqt6'):
+        self.gui_backend = gui_backend
+        self.app = None
+        self.list_window = None
+        self.data_controllers = []  # List of data controllers for multiple windows
+        
+        # Initialize the application
+        self._initialize_app()
+    
+    def _initialize_app(self):
+        """Initialize the GUI application"""
+        if self.gui_backend == 'pyqt6':
+            if QtWidgets.QApplication.instance() is None:
+                self.app = QtWidgets.QApplication(sys.argv)
+            else:
+                self.app = QtWidgets.QApplication.instance()
+            
+            # Create main list window
+            self.list_window = ListView()
+            self.list_window.show()
+            
+            # Connect list window events
+            self.list_window.open_data_window_requested.connect(self._create_data_window)
+            
+            # Start the application
+            if sys.flags.interactive == 0:
+                self.app.exec()
+        else:
+            raise ValueError(f"Unsupported GUI backend: {self.gui_backend}")
+    
+    def _create_data_window(self, filename_obj=None):
         """
-        Prepares a DataController for the given filename_obj.
-        Adds the file to history if a new controller is successfully created.
-        Returns a tuple: (DataController instance or None, was_newly_created_boolean).
-        - If filename_obj is None, returns (None, False).
-        - If a controller for filename_obj.name already exists, prints a message and returns (existing_controller, False).
-        - Otherwise, attempts to create a new DataController, stores it, and returns (new_controller, True).
-        - If creation fails, returns (None, False).
+        Create a new data window with its own DataController.
+        This ensures proper separation of concerns.
         """
-        if not filename_obj:
-            print(
-                "[MainController:_prepare_data_controller] Received no valid filename_obj. Cannot prepare DataController."
+        # Create the DataController (no view reference)
+        data_controller = DataController(self.gui_backend)
+        
+        # Create the data window factory based on backend
+        if self.gui_backend == 'pyqt6':
+            from ScanDataPy.view.view_data_refactored import QtDataWindowFactory
+            
+            # Create the window with event buses
+            data_window = QtDataWindowFactory.create_data_window(
+                self.list_window,
+                data_controller.view_event_bus,
+                data_controller.controller_event_bus
             )
-            return None, False
+            
+            # Initialize axes in the controller after window is created
+            axes_config = data_window.get_axes_config()
+            data_controller.initialize_axes(axes_config)
+            
+            # Show the window
+            data_window.show()
+            
+            # If a filename was provided, open it
+            if filename_obj:
+                data_controller.view_event_bus.file_open_requested.emit(filename_obj)
+            
+            # Store the controller
+            self.data_controllers.append(data_controller)
+            
+            # Clean up closed controllers
+            data_window.destroyed.connect(lambda: self._cleanup_controller(data_controller))
+        else:
+            raise ValueError(f"Unsupported GUI backend: {self.gui_backend}")
+    
+    def _cleanup_controller(self, controller):
+        """Remove controller when its window is closed"""
+        if controller in self.data_controllers:
+            self.data_controllers.remove(controller)
 
-        assert filename_obj is not None, (
-            "[MainController:ERROR] _prepare_data_controller received a null filename_obj despite initial check. This indicates a logic error."
-        )
 
-        if filename_obj.name in self.data_controller_dict:
-            print(
-                f"[MainController]: DataController for {filename_obj.name} already exists. Using existing instance."
-            )
-            return self.data_controller_dict[filename_obj.name], False
+def create_app(gui_backend='pyqt6'):
+    """Factory function to create the application"""
+    return MainController(gui_backend)
 
-        try:
-            print(
-                f"[MainController]: Creating new DataController for {filename_obj.name}."
-            )
-            # send view for setting list view as parent
-            data_controller = DataController(view=self.main_list_window, filename_obj=filename_obj, gui_backend_name=self.gui_backend_name)
-            self.data_controller_dict[filename_obj.name] = data_controller
-            print(
-                f"[MainController]: New DataController for {filename_obj.name} created and stored."
-            )
-            self.history_manager.add_file(filename_obj)
-            return data_controller, True
-        except Exception as e:
-            print(
-                f"[MainController:ERROR] Error creating DataController for {filename_obj.name}: {e}"
-            )
-            if (
-                filename_obj.name in self.data_controller_dict
-            ):  # Clean up if partially added
-                del self.data_controller_dict[filename_obj.name]
-            return None, False
 
-    def display_file_history(self):
-        """Displays the recent file history to the console."""
-        recent_files = self.history_manager.get_recent_files()
-        if not recent_files:
-            print("[MainController]: File history is empty.")
-            if self.gui_backend_name == "pyqt6":
-                # Show message box for PyQt6
-                if (
-                    hasattr(self, "main_list_window")
-                    and self.main_list_window.isVisible()
-                ):
-                    QtWidgets.QMessageBox.information(
-                        self.main_list_window,
-                        "File History",
-                        "File history is currently empty.",
-                    )
-            return
-
-        print("--- Recent File History ---")
-        for idx, file_obj in enumerate(recent_files):
-            print(f"{idx + 1}. {file_obj.fullname}")
-        print("-------------------------")
-
-        if self.gui_backend_name == "pyqt6":
-            # PyQt6 implementation
-            if hasattr(self, "main_list_window") and self.main_list_window.isVisible():
-                # Create a list of file names for the dialog
-                file_names = [file_obj.fullname for file_obj in recent_files]
-                # Show dialog to select file
-                selected_file, ok = QtWidgets.QInputDialog.getItem(
-                    self.main_list_window,
-                    "File History",
-                    "Select a file to open:",
-                    file_names,
-                    0,
-                    False,
-                )
-                if ok and selected_file:
-                    # Find the corresponding WholeFilename object
-                    for file_obj in recent_files:
-                        if file_obj.fullname == selected_file:
-                            self._prepare_data_controller(file_obj)
-                            break
-        elif self.gui_backend_name == "matplotlib":
-            # Matplotlib implementation is under construction
-            print(
-                "[MainController]: Matplotlib implementation for file history is under construction."
-            )
-            raise NotImplementedError(
-                "Matplotlib implementation for file history is under construction."
-            )
-
-    def close_file(self, filename_obj: WholeFilename):
-        if filename_obj.name in self.data_controller_dict:
-            self.data_controller_dict[filename_obj.name].close()
-            del self.data_controller_dict[filename_obj.name]
+if __name__ == "__main__":
+    print("============== Main ==============")
+    print("          Start SCANDATA          ")
+    print("==================================")
+    
+    # Create and run the application
+    app = create_app('pyqt6')

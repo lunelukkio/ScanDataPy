@@ -1,710 +1,437 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jul 21 11:43:13 2022
-
-lunelukkio@gmail.com
-main for view
+Refactored QtDataWindow using event-driven architecture.
+No direct calls to DataController - only emits events.
 """
 
 import sys
 import json
 from abc import ABCMeta, abstractmethod
 
-from ScanDataPy.controller.controller_filename import WholeFilename
-import PyQt6
 from PyQt6 import QtWidgets, QtCore
+from PyQt6.QtCore import Qt
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtWidgets
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
+
+from ScanDataPy.common_event import ViewEventBus, ControllerEventBus
 
 
 class AbstractDataWindowFactory(metaclass=ABCMeta):
     @abstractmethod
-    def create_data_window(self, gui_backend_name: str, controller):
+    def create_data_window(self, parent, view_event_bus, controller_event_bus):
         raise NotImplementedError()
-    
+
 
 class QtDataWindowFactory(AbstractDataWindowFactory):
-    """Factory class for creating appropriate data windows based on GUI backend"""
-
+    """Factory class for creating Qt data windows"""
+    
     @staticmethod
-    def create_data_window(view, controller):
-        return QtDataWindow(view, controller)
+    def create_data_window(parent, view_event_bus, controller_event_bus):
+        return QtDataWindow(parent, view_event_bus, controller_event_bus)
 
 
 class QtDataWindow(QtWidgets.QMainWindow):
-    def __init__(self, window=None, data_controller=None):
-        super().__init__(window)
+    """
+    Main data visualization window.
+    Communicates with controller only through event buses.
+    """
+    
+    def __init__(self, parent=None, view_event_bus=None, controller_event_bus=None):
+        super().__init__(parent)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
-        self._data_controller = data_controller
-        # import a JSON setting file
+        
+        # Event buses for communication
+        self.view_event_bus = view_event_bus
+        self.controller_event_bus = controller_event_bus
+        
+        # Connect controller events
+        self._connect_controller_events()
+        
+        # Load settings
+        self._load_settings()
+        
+        # Setup UI
+        self._setup_ui()
+        
+        # Store axes widgets for controller initialization
+        self.axes_widgets = {
+            "ImageAxes": {"type": "Image", "widget": self.image_ax},
+            "FluoAxes": {"type": "Trace", "widget": self.trace_ax1},
+            "ElecAxes": {"type": "Trace", "widget": self.trace_ax2}
+        }
+        
+        # Track UI state
+        self.current_scale_mode = "Original"
+        self.float_window = None
+    
+    def _connect_controller_events(self):
+        """Connect to controller events"""
+        self.controller_event_bus.data_loaded.connect(self._on_data_loaded)
+        self.controller_event_bus.axes_data_updated.connect(self._on_axes_updated)
+        self.controller_event_bus.roi_marker_updated.connect(self._on_roi_marker_updated)
+        self.controller_event_bus.float_window_requested.connect(self._on_float_window_requested)
+        self.controller_event_bus.status_message.connect(self._on_status_message)
+        self.controller_event_bus.error_occurred.connect(self._on_error)
+    
+    def _load_settings(self):
+        """Load window settings from JSON file"""
         setting = None
         search_paths = [
             "./setting/data_window_setting.json",
             "../setting/data_window_setting.json",
             "./ScanDataPy/setting/data_window_setting.json",
         ]
-
+        
         for path in search_paths:
             try:
                 with open(path, "r") as json_file:
                     setting = json.load(json_file)
-                print(f"[QtDataWindow]: Successfully loaded settings from: {path} for the windows position, size, color.")
+                print(f"[QtDataWindow]: Successfully loaded settings from: {path}")
                 break
             except FileNotFoundError:
                 continue
-            except json.JSONDecodeError:
-                print(f"Error: {path} is not a valid JSON file")
-                continue
             except Exception as e:
-                print(f"[QtDataWindow]: Unexpected error while reading {path}: {str(e)}")
+                print(f"[QtDataWindow]: Error loading {path}: {str(e)}")
                 continue
-
+        
         if setting is None:
-            print(
-                "[QtDataWindow]: Error: Could not find or load data_window_setting.json in any of these locations:"
-            )
-            for path in search_paths:
-                print(f"- {path}")
             raise FileNotFoundError("[QtDataWindow]: No valid settings file found")
-
-        # Set the window title to "datascan"
+        
+        self.settings = setting
+    
+    def _setup_ui(self):
+        """Setup the user interface"""
         self.setWindowTitle("datascan")
-
-        # window color, position and size
-        self.setStyleSheet("background-color: " + setting["main_window"]["color"] + ";")
+        
+        # Apply window settings
+        self.setStyleSheet("background-color: " + self.settings["main_window"]["color"] + ";")
         self.setGeometry(
-            setting["main_window"]["window_posX"],
-            setting["main_window"]["window_posY"],
-            setting["main_window"]["geometryX"],
-            setting["main_window"]["geometryY"],
+            self.settings["main_window"]["window_posX"],
+            self.settings["main_window"]["window_posY"],
+            self.settings["main_window"]["geometryX"],
+            self.settings["main_window"]["geometryY"],
         )
-
-        # set central widget
-        centralWidget = QtWidgets.QWidget()
-        self.setCentralWidget(centralWidget)
-        mainLayout = QtWidgets.QVBoxLayout(centralWidget)
-        size = centralWidget.size()  # noqa: F841
-
-        # image window
-        # image_ax = pg.ImageView()
-        image_ax = CustomImageView()
-        image_ax.ui.histogram.hide()  # hide contrast bar
-        image_ax.ui.menuBtn.hide()  # hide a menu button
-        image_ax.ui.roiBtn.hide()  # hide a ROI button
-        view = image_ax.getView()
-        view.setBackgroundColor(setting["main_window"]["color"])
-
-        # for fix a image
-        # it doesn't work
-        image_item = image_ax.getImageItem()
-        image_item.setFlag(
-            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False
-        )
-
-        self.horizontalSplitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
-        self.verticalSplitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
-
-        trace_ax1 = pg.PlotWidget()
-        trace_ax2 = pg.PlotWidget()
-        self.verticalSplitter.addWidget(trace_ax1)
-        self.verticalSplitter.addWidget(trace_ax2)
-
-        trace_ax1.setBackground("white")
-        trace_ax2.setBackground("white")
-        trace_ax1.getAxis("bottom").setPen(pg.mkPen(color=(0, 0, 0), width=2))
-        trace_ax1.getAxis("left").setPen(pg.mkPen(color=(0, 0, 0), width=2))
-        trace_ax2.getAxis("bottom").setPen(pg.mkPen(color=(0, 0, 0), width=2))
-        trace_ax2.getAxis("left").setPen(pg.mkPen(color=(0, 0, 0), width=2))
-        trace_ax2.setLabel("bottom", "Time (ms)", color="black", size=20, width=2)
-
-        self.horizontalSplitter.addWidget(image_ax)
-        self.horizontalSplitter.addWidget(self.verticalSplitter)
-
-        mainLayout.addWidget(self.horizontalSplitter)
-
-        self.horizontalSplitter.setSizes([600, 1000])
-        self.verticalSplitter.setSizes([450, 150])
-
-        self._data_controller.add_axes(
-            "Image", "ImageAxes", self, image_ax
-        )  # ax_dict["ImageAxes"]
-        self._data_controller.add_axes("Trace", "FluoAxes", self, trace_ax1)
-        self._data_controller.add_axes("Trace", "ElecAxes", self, trace_ax2)
-
-        # connect x axis of windows
-        self._data_controller.ax_dict["FluoAxes"].ax_obj.sigXRangeChanged.connect(
-            self.sync_x_axes
-        )
-        self._data_controller.ax_dict["ElecAxes"].ax_obj.sigXRangeChanged.connect(
-            self.sync_x_axes
-        )
-
-        # main buttons
-        bottom_btn_layout = QtWidgets.QHBoxLayout()
-        spacer = QtWidgets.QSpacerItem(
-            40,
-            20,
-            QtWidgets.QSizePolicy.Policy.Expanding,
-            QtWidgets.QSizePolicy.Policy.Minimum,
-        )
-
-        # differential image
+        
+        # Central widget
+        central_widget = QtWidgets.QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QtWidgets.QVBoxLayout(central_widget)
+        
+        # Create image view
+        self.image_ax = CustomImageView()
+        self.image_ax.ui.histogram.hide()
+        self.image_ax.ui.menuBtn.hide()
+        self.image_ax.ui.roiBtn.hide()
+        view = self.image_ax.getView()
+        view.setBackgroundColor(self.settings["main_window"]["color"])
+        
+        # Create splitters
+        self.horizontal_splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
+        self.vertical_splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
+        
+        # Create trace plots
+        self.trace_ax1 = pg.PlotWidget()
+        self.trace_ax2 = pg.PlotWidget()
+        self.vertical_splitter.addWidget(self.trace_ax1)
+        self.vertical_splitter.addWidget(self.trace_ax2)
+        
+        # Style trace plots
+        for ax in [self.trace_ax1, self.trace_ax2]:
+            ax.setBackground("white")
+            ax.getAxis("bottom").setPen(pg.mkPen(color=(0, 0, 0), width=2))
+            ax.getAxis("left").setPen(pg.mkPen(color=(0, 0, 0), width=2))
+        self.trace_ax2.setLabel("bottom", "Time (ms)", color="black", size=20, width=2)
+        
+        # Add to splitters
+        self.horizontal_splitter.addWidget(self.image_ax)
+        self.horizontal_splitter.addWidget(self.vertical_splitter)
+        main_layout.addWidget(self.horizontal_splitter)
+        
+        self.horizontal_splitter.setSizes([600, 1000])
+        self.vertical_splitter.setSizes([450, 150])
+        
+        # Connect axes synchronization
+        self.trace_ax1.sigXRangeChanged.connect(self._sync_x_axes)
+        self.trace_ax2.sigXRangeChanged.connect(self._sync_x_axes)
+        
+        # Add controls
+        self._setup_controls(main_layout)
+        
+        # Connect mouse click event on image
+        self.image_ax.getView().scene().sigMouseClicked.connect(self._on_image_clicked)
+    
+    def _setup_controls(self, main_layout):
+        """Setup control buttons and checkboxes"""
+        # Differential image checkbox
         self.dif_image_button = QtWidgets.QCheckBox("Differential Image")
-        self.dif_image_button.setChecked(False)  # default
-        self.dif_image_button.stateChanged.connect(self.dif_image_switch)
-        mainLayout.addWidget(self.dif_image_button)
-
-        # baseline compensation
+        self.dif_image_button.setChecked(False)
+        self.dif_image_button.stateChanged.connect(
+            lambda: self.view_event_bus.dif_image_toggled.emit(self.dif_image_button.isChecked())
+        )
+        main_layout.addWidget(self.dif_image_button)
+        
+        # Baseline compensation checkbox
         self.bl_comp_checkbox = QtWidgets.QCheckBox("Baseline Comp")
-        self.bl_comp_checkbox.setChecked(False)  # default
-        self.bl_comp_checkbox.stateChanged.connect(self.bl_comp)
-        mainLayout.addWidget(self.bl_comp_checkbox)
-
-        # radio check buttons for scale
+        self.bl_comp_checkbox.setChecked(False)
+        self.bl_comp_checkbox.stateChanged.connect(
+            lambda: self.view_event_bus.bl_comp_toggled.emit(self.bl_comp_checkbox.isChecked())
+        )
+        main_layout.addWidget(self.bl_comp_checkbox)
+        
+        # Scale mode radio buttons
         self.origin_trace = QtWidgets.QRadioButton("Original")
         self.dFoverF_trace = QtWidgets.QRadioButton("dF/F")
         self.normalized_trace = QtWidgets.QRadioButton("Normalize")
-        # make a group
+        
         self.trace_type = QtWidgets.QButtonGroup()
         self.trace_type.addButton(self.origin_trace)
         self.trace_type.addButton(self.dFoverF_trace)
         self.trace_type.addButton(self.normalized_trace)
-        # default setting
+        
         self.origin_trace.setChecked(True)
-        self.current_checked_button = self.origin_trace
-        # add buttons in the widget
-        mainLayout.addWidget(self.origin_trace)
-        mainLayout.addWidget(self.dFoverF_trace)
-        mainLayout.addWidget(self.normalized_trace)
-        # label. it need for label selection in self.scale
-        self.scale_label = QtWidgets.QLabel("Selected: None")
-        # send a signal for selected
-        self.trace_type.buttonClicked.connect(self.scale)
-
-        # file buttons
+        self.trace_type.buttonClicked.connect(self._on_scale_changed)
+        
+        for btn in [self.origin_trace, self.dFoverF_trace, self.normalized_trace]:
+            main_layout.addWidget(btn)
+        
+        # Bottom button layout
+        bottom_btn_layout = QtWidgets.QHBoxLayout()
+        spacer = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Policy.Expanding, 
+                                       QtWidgets.QSizePolicy.Policy.Minimum)
+        
+        # File operations
         load_btn = QtWidgets.QPushButton("Load")
         load_btn.setFixedSize(40, 30)
-        bottom_btn_layout.addWidget(
-            load_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-        load_btn.clicked.connect(lambda: self.open_file())
-
+        load_btn.clicked.connect(lambda: self.view_event_bus.file_open_requested.emit(None))
+        bottom_btn_layout.addWidget(load_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
+        # ROI size buttons
         large_btn = QtWidgets.QPushButton("Large")
         large_btn.setFixedSize(60, 30)
-        bottom_btn_layout.addWidget(
-            large_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-        large_btn.clicked.connect(lambda: self.roi_size("large"))
-
+        large_btn.clicked.connect(lambda: self.view_event_bus.roi_size_change_requested.emit("large"))
+        bottom_btn_layout.addWidget(large_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
         small_btn = QtWidgets.QPushButton("Small")
         small_btn.setFixedSize(60, 30)
-        bottom_btn_layout.addWidget(
-            small_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-        small_btn.clicked.connect(lambda: self.roi_size("small"))
-
-        """ for baseline"""
+        small_btn.clicked.connect(lambda: self.view_event_bus.roi_size_change_requested.emit("small"))
+        bottom_btn_layout.addWidget(small_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
+        # Baseline ROI checkbox
         self.bl_roi_change_btn = QtWidgets.QCheckBox("BL")
-        self.bl_roi_change_btn.setChecked(False)  # default
+        self.bl_roi_change_btn.setChecked(False)
         self.bl_roi_change_btn.setFixedSize(40, 30)
-        self.bl_roi_change_btn.clicked.connect(self.bl_roi)
-        bottom_btn_layout.addWidget(
-            self.bl_roi_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
+        self.bl_roi_change_btn.clicked.connect(
+            lambda: self.view_event_bus.bl_roi_mode_changed.emit(self.bl_roi_change_btn.isChecked())
         )
-
-        """ for baseline use roi1"""
+        bottom_btn_layout.addWidget(self.bl_roi_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
+        # Baseline use ROI1 checkbox
         self.bl_use_roi1 = QtWidgets.QCheckBox("BL=Roi1")
-        self.bl_use_roi1.setChecked(False)  # default
+        self.bl_use_roi1.setChecked(False)
         self.bl_use_roi1.setFixedSize(60, 30)
-        self.bl_use_roi1.clicked.connect(self.bl_use_roi1_switch)
-        bottom_btn_layout.addWidget(
-            self.bl_use_roi1, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
+        self.bl_use_roi1.clicked.connect(
+            lambda: self.view_event_bus.bl_use_roi1_changed.emit(self.bl_use_roi1.isChecked())
         )
-
-        """ for baseline cutting time window"""
+        bottom_btn_layout.addWidget(self.bl_use_roi1, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
+        # Time window buttons
         self.bl_time_button = QtWidgets.QPushButton("BL cut")
-        bottom_btn_layout.addWidget(
-            self.bl_time_button, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-        self.bl_time_button.clicked.connect(
-            lambda: self.two_input_dialog("BlComp0", "FluoAxes")
-        )
-
-        """ values for the image"""
+        self.bl_time_button.clicked.connect(lambda: self._show_time_dialog("BlComp0", "FluoAxes"))
+        bottom_btn_layout.addWidget(self.bl_time_button, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
         self.image_time_button = QtWidgets.QPushButton("Img time window")
-        bottom_btn_layout.addWidget(
-            self.image_time_button, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-        self.image_time_button.clicked.connect(
-            lambda: self.two_input_dialog("TimeWindow0", "ImageAxes")
-        )
-
-        """ values for the difference image"""
+        self.image_time_button.clicked.connect(lambda: self._show_time_dialog("TimeWindow0", "ImageAxes"))
+        bottom_btn_layout.addWidget(self.image_time_button, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
         self.dif_button = QtWidgets.QPushButton("dif image")
-        bottom_btn_layout.addWidget(
-            self.dif_button, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-        self.dif_button.clicked.connect(
-            lambda: self.two_input_dialog("TimeWindow1", "ImageAxes")
-        )
-
-        """ for Fluo Ch """
+        self.dif_button.clicked.connect(lambda: self._show_time_dialog("TimeWindow1", "ImageAxes"))
+        bottom_btn_layout.addWidget(self.dif_button, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
+        # Fluorescence channel checkboxes
         self.ch0_change_btn = QtWidgets.QCheckBox("Ch0")
-        self.ch0_change_btn.setChecked(False)  # default
+        self.ch0_change_btn.setChecked(False)
         self.ch0_change_btn.setFixedSize(50, 30)
-        self.ch0_change_btn.clicked.connect(lambda: self.switch_ch("Ch0"))
-        bottom_btn_layout.addWidget(
-            self.ch0_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-
+        self.ch0_change_btn.clicked.connect(lambda: self.view_event_bus.fluo_channel_changed.emit("Ch0"))
+        bottom_btn_layout.addWidget(self.ch0_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
         self.ch1_change_btn = QtWidgets.QCheckBox("Ch1")
-        self.ch1_change_btn.setChecked(True)  # default
+        self.ch1_change_btn.setChecked(True)
         self.ch1_change_btn.setFixedSize(50, 30)
-        self.ch1_change_btn.clicked.connect(lambda: self.switch_ch("Ch1"))
-        bottom_btn_layout.addWidget(
-            self.ch1_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-
+        self.ch1_change_btn.clicked.connect(lambda: self.view_event_bus.fluo_channel_changed.emit("Ch1"))
+        bottom_btn_layout.addWidget(self.ch1_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
         self.ch2_change_btn = QtWidgets.QCheckBox("Ch2")
-        self.ch2_change_btn.setChecked(False)  # default
+        self.ch2_change_btn.setChecked(False)
         self.ch2_change_btn.setFixedSize(50, 30)
-        self.ch2_change_btn.clicked.connect(lambda: self.switch_ch("Ch2"))
-        bottom_btn_layout.addWidget(
-            self.ch2_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-
-        """ for invert trace"""
+        self.ch2_change_btn.clicked.connect(lambda: self.view_event_bus.fluo_channel_changed.emit("Ch2"))
+        bottom_btn_layout.addWidget(self.ch2_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
+        # Invert checkbox
         self.invert_switch = QtWidgets.QCheckBox("Invert")
-        self.invert_switch.setChecked(False)  # default
+        self.invert_switch.setChecked(False)
         self.invert_switch.setFixedSize(60, 30)
-        self.invert_switch.clicked.connect(self.invert_fn)
-        bottom_btn_layout.addWidget(
-            self.invert_switch, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
+        self.invert_switch.clicked.connect(
+            lambda: self.view_event_bus.invert_toggled.emit(self.invert_switch.isChecked())
         )
-
+        bottom_btn_layout.addWidget(self.invert_switch, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        
         bottom_btn_layout.addSpacerItem(spacer)
-        mainLayout.addLayout(bottom_btn_layout)
-
-        """ for elec channel"""
-        self.elec_ch1_change_btn = QtWidgets.QCheckBox("Ch1")
-        self.elec_ch1_change_btn.setChecked(True)  # default
-        self.elec_ch1_change_btn.setFixedSize(50, 30)
-        self.elec_ch1_change_btn.clicked.connect(lambda: self.switch_elec_ch("Ch1"))
-        bottom_btn_layout.addWidget(
-            self.elec_ch1_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-
-        self.elec_ch2_change_btn = QtWidgets.QCheckBox("Ch2")
-        self.elec_ch2_change_btn.setChecked(False)  # default
-        self.elec_ch2_change_btn.setFixedSize(50, 30)
-        self.elec_ch2_change_btn.clicked.connect(lambda: self.switch_elec_ch("Ch2"))
-        bottom_btn_layout.addWidget(
-            self.elec_ch2_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-
-        self.elec_ch3_change_btn = QtWidgets.QCheckBox("Ch3")
-        self.elec_ch3_change_btn.setChecked(False)  # default
-        self.elec_ch3_change_btn.setFixedSize(50, 30)
-        self.elec_ch3_change_btn.clicked.connect(lambda: self.switch_elec_ch("Ch3"))
-        bottom_btn_layout.addWidget(
-            self.elec_ch3_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-
-        self.elec_ch4_change_btn = QtWidgets.QCheckBox("Ch4")
-        self.elec_ch4_change_btn.setChecked(False)  # default
-        self.elec_ch4_change_btn.setFixedSize(50, 30)
-        self.elec_ch4_change_btn.clicked.connect(lambda: self.switch_elec_ch("Ch4"))
-        bottom_btn_layout.addWidget(
-            self.elec_ch4_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-
-        self.elec_ch5_change_btn = QtWidgets.QCheckBox("Ch5")
-        self.elec_ch5_change_btn.setChecked(False)  # default
-        self.elec_ch5_change_btn.setFixedSize(50, 30)
-        self.elec_ch5_change_btn.clicked.connect(lambda: self.switch_elec_ch("Ch5"))
-        bottom_btn_layout.addWidget(
-            self.elec_ch5_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-
-        self.elec_ch6_change_btn = QtWidgets.QCheckBox("Ch6")
-        self.elec_ch6_change_btn.setChecked(False)  # default
-        self.elec_ch6_change_btn.setFixedSize(50, 30)
-        self.elec_ch6_change_btn.clicked.connect(lambda: self.switch_elec_ch("Ch6"))
-        bottom_btn_layout.addWidget(
-            self.elec_ch6_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-
-        self.elec_ch7_change_btn = QtWidgets.QCheckBox("Ch7")
-        self.elec_ch7_change_btn.setChecked(False)  # default
-        self.elec_ch7_change_btn.setFixedSize(50, 30)
-        self.elec_ch7_change_btn.clicked.connect(lambda: self.switch_elec_ch("Ch7"))
-        bottom_btn_layout.addWidget(
-            self.elec_ch7_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-
-        self.elec_ch8_change_btn = QtWidgets.QCheckBox("Ch8")
-        self.elec_ch8_change_btn.setChecked(False)  # default
-        self.elec_ch8_change_btn.setFixedSize(50, 30)
-        self.elec_ch8_change_btn.clicked.connect(lambda: self.switch_elec_ch("Ch8"))
-        bottom_btn_layout.addWidget(
-            self.elec_ch8_change_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-
-        """ mouse click event """
-        image_ax.getView().scene().sigMouseClicked.connect(
-            lambda event: self._data_controller.onclick_axes(event, "ImageAxes")
-        )
-
-    # timewindow = TimeWindow0 or BlComp,  axes is for update
-    def two_input_dialog(self, timewindow, axes):
+        
+        # Electrical channel checkboxes
+        for i in range(1, 9):
+            ch_btn = QtWidgets.QCheckBox(f"Ch{i}")
+            ch_btn.setChecked(i == 1)
+            ch_btn.setFixedSize(50, 30)
+            ch_btn.clicked.connect(lambda checked, ch=f"Ch{i}": self.view_event_bus.elec_channel_changed.emit(ch))
+            bottom_btn_layout.addWidget(ch_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+            setattr(self, f"elec_ch{i}_change_btn", ch_btn)
+        
+        main_layout.addLayout(bottom_btn_layout)
+    
+    def _on_scale_changed(self, button):
+        """Handle scale mode change"""
+        text = button.text()
+        scale_map = {"Original": "Original", "dF/F": "DFoF", "Normalize": "Normalize"}
+        mode = scale_map.get(text, "Original")
+        self.current_scale_mode = mode
+        self.view_event_bus.scale_mode_changed.emit(mode)
+    
+    def _show_time_dialog(self, window_type, axes_name):
+        """Show time window input dialog"""
         dialog = InputDialog(self)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
-            val = dialog.get_numbers()
-            if val is not None:
-                print(f"Input values: {val}")
-                self._data_controller.set_modifier_val(timewindow, val)
-                self._data_controller.set_update_flag(axes, True)
-                self._data_controller.update_view(axes)
+            values = dialog.get_numbers()
+            if values is not None:
+                self.view_event_bus.time_window_change_requested.emit(window_type, axes_name, values)
             else:
                 print("Only numerical values are available")
-
-        # connect x axis of windows
-
-    def sync_x_axes(self, view):
-        # get the x axis setting of the fluo axes
-        x_range1 = self._data_controller.ax_dict["FluoAxes"].ax_obj.viewRange()[0]
-
-        # set the x axis of the elec axes
-        self._data_controller.ax_dict["ElecAxes"].ax_obj.setXRange(
-            x_range1[0], x_range1[1], padding=0
-        )
-
-        # get the x axis setting of the elec axes
-        x_range2 = self._data_controller.ax_dict["ElecAxes"].ax_obj.viewRange()[0]
-
-        # set the x axis of the fluo axes
-        self._data_controller.ax_dict["FluoAxes"].ax_obj.setXRange(
-            x_range2[0], x_range2[1], padding=0
-        )
-
-    """ button functions """
-
-    def open_file(self, filename_obj=None):
-        # make a model and get filename obj
-        filename_obj, same_ext_file_list = self._data_controller.open_file(filename_obj)
-
-        # make user controllers
-        self._data_controller.create_default_modifier(0)  # filename number
-        self._data_controller.default_settings(filename_obj.name)
-
-        self._data_controller.print_infor()
-        self._data_controller.update_view()
-        self._data_controller.set_marker(ax_key="ImageAxes", roi_tag="Roi1")
-
-        self.default()
-
-    def default(self):
+    
+    def _sync_x_axes(self, view):
+        """Synchronize x-axes between trace plots"""
+        x_range1 = self.trace_ax1.viewRange()[0]
+        x_range2 = self.trace_ax2.viewRange()[0]
+        
+        # Synchronize both axes
+        self.trace_ax1.setXRange(x_range1[0], x_range1[1], padding=0)
+        self.trace_ax2.setXRange(x_range1[0], x_range1[1], padding=0)
+    
+    def _on_image_clicked(self, event):
+        """Handle mouse click on image"""
+        if event.button() == Qt.MouseButton.LeftButton:
+            image_pos = self.image_ax.getView().mapSceneToView(event.scenePos())
+            position = [image_pos.x(), image_pos.y(), None, None]
+            self.view_event_bus.roi_clicked.emit("ImageAxes", position)
+    
+    def get_axes_config(self):
+        """Get axes configuration for controller initialization"""
+        return self.axes_widgets
+    
+    # Event handlers for controller events
+    
+    def _on_data_loaded(self, filename, data_info):
+        """Handle data loaded event"""
+        print(f"[QtDataWindow]: Data loaded: {filename}")
+        # Apply default UI settings
         self.bl_use_roi1.setChecked(True)
-        self.bl_use_roi1_switch()
         self.dFoverF_trace.setChecked(True)
-        self.scale(self.dFoverF_trace)
-        # self.bl_comp_checkbox.setChecked(True)
-
-    def roi_size(self, command):
-        if command == "large":
-            val = [None, None, 1, 1]
-        elif command == "small":
-            val = [None, None, -1, -1]
+    
+    def _on_axes_updated(self, axes_name, data):
+        """Handle axes data update"""
+        # This would be implemented based on how the controller sends data
+        pass
+    
+    def _on_roi_marker_updated(self, axes_name, roi_tag, position):
+        """Handle ROI marker update"""
+        # This would update ROI visualization
+        pass
+    
+    def _on_float_window_requested(self, show, window_data):
+        """Handle float window request"""
+        if show:
+            if self.float_window is None:
+                self.float_window = FloatWindow(self)
+                # Emit event to notify controller about float window axes
+                float_axes_config = {
+                    "FloatAxes1": {"type": "Trace", "widget": self.float_window.plot_widget}
+                }
+                # Controller would need to handle this additional axes
+            self.float_window.show()
         else:
-            raise Exception("Should be Small or Large")
-        self._data_controller.change_roi_size(val)
-
-    def bl_roi(self):
-        """
-        Handle the event when the BL (baseline ROI) checkbox is toggled.
-        If the checkbox is checked, switch the FluoAxes controller to 'Baseline_control' mode.
-        If unchecked, switch it back to 'Normal' mode.
-        This allows the user to interactively change the ROI mode for baseline correction.
-        """
-        if self.bl_roi_change_btn.isChecked():
-            self._data_controller.change_current_ax_mode(
-                ax_key="FluoAxes", mode="Baseline_control"
-            )
-        else:
-            self._data_controller.change_current_ax_mode(
-                ax_key="FluoAxes", mode="Normal"
-            )
-
-    # under construction
-    """
-    def change_roi(self, state):
-        if self..isChecked():
-            remove_tag = 'Roi'
-            add_tag = 'Roi0'
-        else:
-            remove_tag = 'Roi'
-            add_tag = 'Roi1'
-        self._data_controller.replace_key_manager_tag(
-            'FluoAxes',
-            'modifier_list',
-            remove_tag,
-            add_tag
-        )
-    """
-
-    def scale(self, button):
-        if self.current_checked_button == button:
-            return
-
-        self.current_checked_button = button
-        if button:
-            text = button.text()
-            self.scale_label.setText(f"Selected: {text}")
-            scale_values = {"dF/F": "DFoF", "Normalize": "Normalize"}
-            selected_text = scale_values.get(text, "Original")
-            # send value to modifier through main controller
-            self._data_controller.set_modifier_val("Scale0", selected_text)
-            self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-            self._data_controller.update_view("FluoAxes")
-
-    def bl_comp(self, state):
-        if self.bl_comp_checkbox.isChecked():
-            # activate baseline comp
-            self._data_controller.set_tag(
-                list_name="modifier_list", new_tag="BlComp0", ax_key="FluoAxes"
-            )
-            self._data_controller.set_modifier_val("BlComp0", "Exponential")
-            self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-            self._data_controller.update_view("FluoAxes")
-
-            # Create and show FloatWindow
-            if not hasattr(self, "float_window") or self.float_window is None:
-                self.float_window = FloatWindow(self, self._data_controller)
-                self._data_controller.add_axes(
-                    "Trace",
-                    "FloatAxes1",
-                    self.float_window,
-                    self.float_window.plot_widget,
-                )
-                # ここでfloat_windowのaxesのtagを設定する
-                # default = self.data_controller._model.get_data(
-                # {"Filename": filename, "Attribute": "Default", "DataType": "Text"}
-                # )
-                self.float_window.show()
-        else:
-            # disable baseline comp
-            self._data_controller.set_modifier_val("BlComp0", "Disable")
-            self._data_controller.set_tag(
-                list_name="modifier_list", new_tag="BlComp0", ax_key="FluoAxes"
-            )
-            self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-            self._data_controller.update_view("FluoAxes")
-
-            # Close FloatWindow if it exists
-            if hasattr(self, "float_window") and self.float_window is not None:
+            if self.float_window is not None:
                 self.float_window.close()
                 self.float_window = None
-
-    def switch_bl_roi(self, state):
-        raise NotImplementedError()
-
-    def switch_ch(self, text):
-        self._data_controller.set_tag(
-            list_name="ch_list", new_tag=text, ax_key="FluoAxes"
-        )
-        self._data_controller.set_tag(
-            list_name="ch_list", new_tag=text, ax_key="ImageAxes"
-        )
-        self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-        self._data_controller.set_update_flag(ax_name="ImageAxes", flag=True)
-        self._data_controller.update_view("FluoAxes")
-        self._data_controller.update_view("ImageAxes")
-
-    def switch_elec_ch(self, text):
-        self._data_controller.set_tag(
-            list_name="ch_list", new_tag=text, ax_key="ElecAxes"
-        )
-        self._data_controller.set_update_flag(ax_name="ElecAxes", flag=True)
-        self._data_controller.update_view("ElecAxes")
-
-    def dif_image_switch(self):
-        self._data_controller.set_tag(
-            list_name="modifier_list", new_tag="DifImage0", ax_key="ImageAxes"
-        )
-        if self.dif_image_button.isChecked():
-            self._data_controller.change_color(color="plasma", ax_key="ImageAxes")
-        else:
-            self._data_controller.change_color(color="grey", ax_key="ImageAxes")
-        self._data_controller.set_update_flag(ax_name="ImageAxes", flag=True)
-        self._data_controller.update_view("ImageAxes")
-
-    def bl_use_roi1_switch(self):
-        if self.bl_use_roi1.isChecked():
-            roi = "Roi1"
-        else:
-            roi = "Roi0"
-        self._data_controller.replace_key_manager_tag(
-            "FluoAxes", "bl_roi_list", "Roi", roi
-        )
-        self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-        self._data_controller.update_view("FluoAxes")
-
-    def invert_fn(self):
-        self._data_controller.set_tag(
-            list_name="modifier_list", new_tag="Invert0", ax_key="FluoAxes"
-        )
-        self._data_controller.set_update_flag(ax_name="FluoAxes", flag=True)
-        self._data_controller.update_view("FluoAxes")
+    
+    def _on_status_message(self, message):
+        """Handle status message"""
+        print(f"[QtDataWindow]: {message}")
+    
+    def _on_error(self, error_message):
+        """Handle error message"""
+        print(f"[QtDataWindow]: Error - {error_message}")
+        QtWidgets.QMessageBox.warning(self, "Error", error_message)
 
 
 class InputDialog(QtWidgets.QDialog):
+    """Dialog for inputting time window values"""
+    
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("difference image: input values")
+        self.setWindowTitle("Input values")
         self.setGeometry(100, 100, 200, 100)
-
+        
         layout = QtWidgets.QVBoxLayout(self)
-
+        
         self.inputs = []
         for i in range(2):
             number_input = QtWidgets.QLineEdit(self)
             if i == 0:
                 number_input.setPlaceholderText("Start")
             elif i == 1:
-                number_input.setPlaceholderText("width")
+                number_input.setPlaceholderText("Width")
             self.inputs.append(number_input)
             layout.addWidget(number_input)
-
+        
         self.ok_button = QtWidgets.QPushButton("OK", self)
         layout.addWidget(self.ok_button)
-
-        # close dialog
         self.ok_button.clicked.connect(self.accept)
-
+    
     def get_numbers(self):
         try:
-            # return four numbers
             return [int(input_field.text()) for input_field in self.inputs]
         except ValueError:
             return None
 
 
-# This is for baseline comp.
 class FloatWindow(QtWidgets.QMainWindow):
-    def __init__(self, parent=None, data_controller=None):
+    """Float window for baseline compensation display"""
+    
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self._data_controller = data_controller
         self.setWindowTitle("Float Window")
-        self.setGeometry(100, 100, 300, 200)  # Adjusted size for plot
-
-        # Set central widget and layout
+        self.setGeometry(100, 100, 300, 200)
+        
         central_widget = QtWidgets.QWidget()
         self.setCentralWidget(central_widget)
         layout = QtWidgets.QVBoxLayout(central_widget)
-
-        # Create PlotWidget
-        plot_widget = pg.PlotWidget()
-        layout.addWidget(plot_widget)
-
-        # Style the plot widget (optional, similar to QtDataWindow)
-        plot_widget.setBackground("w")  # White background
-        plot_widget.getAxis("bottom").setPen(pg.mkPen(color=(0, 0, 0), width=2))
-        plot_widget.getAxis("left").setPen(pg.mkPen(color=(0, 0, 0), width=2))
-        plot_widget.setLabel("bottom", "X Axis", color="black")
-        plot_widget.setLabel("left", "Y Axis", color="black")
-
-        # Store the plot widget if you need to access it later
-        self.plot_widget = plot_widget
+        
+        self.plot_widget = pg.PlotWidget()
+        layout.addWidget(self.plot_widget)
+        
+        self.plot_widget.setBackground("w")
+        self.plot_widget.getAxis("bottom").setPen(pg.mkPen(color=(0, 0, 0), width=2))
+        self.plot_widget.getAxis("left").setPen(pg.mkPen(color=(0, 0, 0), width=2))
+        self.plot_widget.setLabel("bottom", "X Axis", color="black")
+        self.plot_widget.setLabel("left", "Y Axis", color="black")
 
 
 class CustomImageView(pg.ImageView):
+    """Custom ImageView that ignores certain mouse events"""
+    
     def __init__(self, parent=None):
         super().__init__(parent)
-
-        # This is to ignore every mouse event.
-        # self.setAttribute(QtCore.Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.setMouseTracking(True)
-
+    
     def mouseMoveEvent(self, event):
-        print(
-            "yyyyyyyyyyyyyyCustomImageViewylmousePressEvent event ignoreyyyyyyyyyyyyyyyyy"
-        )
         event.ignore()
-
+    
     def mouseDragEvent(self, event):
-        print(
-            "xxxxxxxxxxxxxxxxxxxxCustomImageViewxPressEvent event ignoredxxxxxxxxxxxxxxxxxxxxx"
-        )
         event.ignore()
-
-class MatplotlibDataWindow(QtWidgets.QMainWindow):
-    def __init__(self, window=None):
-        super().__init__(window)
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
-        from ScanDataPy.controller.controller_data import DataController
-        self._data_controller = DataController(self)
-        self.setWindowTitle("SCANDATA (Matplotlib)")
-
-        # Create central widget and layout
-        central_widget = QtWidgets.QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QtWidgets.QVBoxLayout(central_widget)
-
-        # Create figure with subplots
-        self.figure = Figure(figsize=(12, 8))
-        self.canvas = FigureCanvas(self.figure)
-
-        # Create subplots
-        self.image_ax = self.figure.add_subplot(221)  # Image plot
-        self.fluo_ax = self.figure.add_subplot(223)  # Fluorescence trace
-        self.elec_ax = self.figure.add_subplot(224)  # Electrical trace
-
-        # Add canvas to layout
-        main_layout.addWidget(self.canvas)
-
-        # Add buttons and controls
-        control_layout = QtWidgets.QHBoxLayout()
-
-        # Load button
-        load_btn = QtWidgets.QPushButton("Load")
-        load_btn.clicked.connect(self.open_file)
-        control_layout.addWidget(load_btn)
-
-        # Add control layout to main layout
-        main_layout.addLayout(control_layout)
-
-        # Connect the axes to the controller
-        self._data_controller.add_axes("Image", "ImageAxes", self, self.image_ax)
-        self._data_controller.add_axes("Trace", "FluoAxes", self, self.fluo_ax)
-        self._data_controller.add_axes("Trace", "ElecAxes", self, self.elec_ax)
-
-    def open_file(self, filename_obj=None):
-        # make a model and get filename obj
-        filename_obj, same_ext_file_list = self._data_controller.open_file(filename_obj)
-
-        # make user controllers
-        self._data_controller.create_default_modifier(0)  # filename number
-        self._data_controller.default_settings(filename_obj.name)
-
-        self._data_controller.print_infor()
-        self._data_controller.update_view()
-        self._data_controller.set_marker(ax_key="ImageAxes", roi_tag="Roi1")
-
-    def update_plot(self):
-        """Update all plots"""
-        self.canvas.draw()
-
-
-if __name__ == "__main__":
-    fullname = "..\\..\\220408\\20408B002.tsm"
-    filename_obj = WholeFilename(fullname)
-
-    scandata = PyQt6.QtWidgets.QApplication(sys.argv)
-    mainWindow = QtDataWindow()
-    mainWindow.open_file(filename_obj)
-    mainWindow.show()
-
-    if sys.flags.interactive == 0:
-        scandata.exec()
